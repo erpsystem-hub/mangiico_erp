@@ -11,13 +11,19 @@ export type TrangThaiHoatDong = (typeof TRANG_THAI_HOAT_DONG)[number];
 export const TRANG_THAI_PHIEU_3 = ['Chờ duyệt', 'Đã duyệt', 'Không duyệt'] as const;
 export type TrangThaiPhieu3 = (typeof TRANG_THAI_PHIEU_3)[number];
 
+/** Chuẩn hoá mọi biến thể trạng thái → giá trị lưu DB. */
+export function normalizeTrangThaiHoatDong(raw: unknown): TrangThaiHoatDong {
+  const s = String(raw ?? '').trim();
+  if (s === 'Đang hoạt động' || s === 'Hoạt động' || s === 'Active') return 'Đang hoạt động';
+  if (s === 'Ngừng hoạt động' || s === 'Ngừng' || s === 'Inactive') return 'Ngừng hoạt động';
+  const n = Number(raw);
+  if (Number.isFinite(n)) return n === 0 ? 'Ngừng hoạt động' : 'Đang hoạt động';
+  return 'Đang hoạt động';
+}
+
 /**
  * Import Excel/CSV: ưu tiên đúng chuỗi lưu DB; vẫn chấp nhật cột số 0/1 cũ.
  */
 export function parseTrangThaiHoatDongImport(raw: unknown): TrangThaiHoatDong {
-  const s = String(raw ?? '').trim();
-  if (s === 'Đang hoạt động' || s === 'Ngừng hoạt động') return s;
-  const n = Number(raw);
-  if (Number.isFinite(n)) return n === 0 ? 'Ngừng hoạt động' : 'Đang hoạt động';
-  return 'Đang hoạt động';
+  return normalizeTrangThaiHoatDong(raw);
 }

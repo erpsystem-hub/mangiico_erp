@@ -9,6 +9,6 @@ export const NHAN_VIEN_SEARCHABLE_KEYS: string[] = [
   'ten_phong_ban',
   'ten_bo_phan',
   'ten_chuc_vu',
-  'cap_quan_ly',
+  'ten_chi_nhanh',
   'trang_thai',
 ];

@@ -4,7 +4,6 @@ export const POSITION_SEARCHABLE_KEYS: string[] = [
   'ten_chuc_vu',
   'ten_cap_bac',
   'cap_bac',
-  'cap_quan_ly',
   'ten_phong_ban',
   'mo_ta',
   'trang_thai',

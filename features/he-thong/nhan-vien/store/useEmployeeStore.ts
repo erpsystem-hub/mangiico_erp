@@ -14,13 +14,7 @@ const DEFAULT_COLUMNS: ColumnConfig[] = [
   { id: 'ten_phong_ban', label: txt('employee.store.departmentCol'), visible: true, ...P.branch, order: 2 },
   { id: 'ten_bo_phan', label: txt('employee.store.unitCol'), visible: true, ...P.branch, order: 3 },
   { id: 'ten_chuc_vu', label: txt('employee.store.positionCol'), visible: true, ...P.titleShort, order: 4 },
-  {
-    id: 'cap_quan_ly',
-    label: txt('position.store.managementLevelCol'),
-    visible: true,
-    ...P.enumBadgeShort,
-    order: 5,
-  },
+  { id: 'ten_chi_nhanh', label: txt('employee.store.branchCol'), visible: true, ...P.branch, order: 5 },
   { id: 'trang_thai', label: txt('employee.store.statusCol'), visible: true, ...P.enumBadge, order: 6 },
 ];
 
@@ -29,6 +23,7 @@ const initialFilters: EmployeeFilters = {
   trang_thai: [],
   id_phong_ban: [],
   id_chuc_vu: [],
+  id_chi_nhanh: [],
 };
 
 export const useEmployeeStore = createGenericStore<EmployeeFilters>(initialFilters, DEFAULT_COLUMNS);

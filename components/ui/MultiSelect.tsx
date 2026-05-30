@@ -411,59 +411,61 @@ const MultiSelect: React.FC<MultiSelectProps> = ({
       {dropdownOnly && renderDropdownTrigger
         ? renderDropdownTrigger({ open: isOpen, toggle, hasValue, listboxId })
         : !dropdownOnly && (
-      <button
-        type="button"
-        aria-expanded={isOpen}
-        aria-haspopup="listbox"
-        aria-controls={listboxId}
-        onClick={toggle}
+      <div
         className={cn(
-          "w-full flex items-center justify-between px-2 text-xs border rounded-lg transition-all",
+          "w-full flex items-center text-xs border rounded-lg transition-all overflow-hidden",
           heightClass,
           isOpen ? "border-primary ring-2 ring-primary/10 bg-background" : hasValue ? "border-primary/40 bg-primary/[0.03]" : "border-border bg-background hover:bg-muted/50",
           hasValue ? "text-foreground" : "text-muted-foreground"
         )}
       >
-        <div className="flex items-center gap-1.5 min-w-0 flex-1 mr-1">
-          {Icon && <Icon size={12} className={cn("shrink-0", hasValue ? "text-primary" : "text-muted-foreground")} />}
-          {label && <span className="font-medium text-foreground shrink-0">{label}:</span>}
+        <button
+          type="button"
+          aria-expanded={isOpen}
+          aria-haspopup="listbox"
+          aria-controls={listboxId}
+          onClick={toggle}
+          className="flex flex-1 min-w-0 items-center justify-between px-2 h-full bg-transparent text-inherit"
+        >
+          <div className="flex items-center gap-1.5 min-w-0 flex-1 mr-1">
+            {Icon && <Icon size={12} className={cn("shrink-0", hasValue ? "text-primary" : "text-muted-foreground")} />}
+            {label && <span className="font-medium text-foreground shrink-0">{label}:</span>}
 
-          {!hasValue ? (
-            <span className="truncate text-muted-foreground">{placeholder}</span>
-          ) : (
-            <div className="flex items-center gap-1 min-w-0">
-              <span className="truncate text-xs font-medium">{firstName}</span>
-              {extraCount > 0 && (
-                <span
-                  className="shrink-0 bg-primary/10 text-primary text-xs font-bold px-1.5 py-0.5 rounded-full tabular-nums"
-                  title={selectedValues
-                    .map((v) => safeOptions.find((o) => o.value === v)?.label)
-                    .filter(Boolean)
-                    .join(', ')}
-                >
-                  +{extraCount}
-                </span>
-              )}
-            </div>
-          )}
-        </div>
-        <div className="flex items-center gap-0.5 shrink-0">
-          {hasValue && (
-            <button
-              type="button"
-              aria-label={txt('common.clearSelection')}
-              onClick={(e) => {
-                e.stopPropagation();
-                onChange([]);
-              }}
-              className="p-0.5 rounded-full hover:bg-muted text-muted-foreground"
-            >
-              <X size={10} />
-            </button>
-          )}
-          <ChevronDown size={11} className={cn("text-muted-foreground transition-transform", isOpen && "rotate-180")} />
-        </div>
-      </button>
+            {!hasValue ? (
+              <span className="truncate text-muted-foreground">{placeholder}</span>
+            ) : (
+              <div className="flex items-center gap-1 min-w-0">
+                <span className="truncate text-xs font-medium">{firstName}</span>
+                {extraCount > 0 && (
+                  <span
+                    className="shrink-0 bg-primary/10 text-primary text-xs font-bold px-1.5 py-0.5 rounded-full tabular-nums"
+                    title={selectedValues
+                      .map((v) => safeOptions.find((o) => o.value === v)?.label)
+                      .filter(Boolean)
+                      .join(', ')}
+                  >
+                    +{extraCount}
+                  </span>
+                )}
+              </div>
+            )}
+          </div>
+          <ChevronDown size={11} className={cn("shrink-0 text-muted-foreground transition-transform", isOpen && "rotate-180")} />
+        </button>
+        {hasValue && (
+          <button
+            type="button"
+            aria-label={txt('common.clearSelection')}
+            onClick={(e) => {
+              e.stopPropagation();
+              onChange([]);
+            }}
+            className="shrink-0 self-stretch px-1.5 border-l border-border/60 hover:bg-muted text-muted-foreground"
+          >
+            <X size={10} />
+          </button>
+        )}
+      </div>
       )}
 
       {isOpen &&

@@ -2,9 +2,10 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { txt } from '../../../../lib/text';
 import { useForm, Controller, SubmitHandler, useWatch, type Resolver } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { User, AtSign, Building2, Layers, Briefcase } from 'lucide-react';
+import { User, AtSign, Building2, Layers, Briefcase, MapPinned } from 'lucide-react';
 import Input from '../../../../components/ui/Input';
 import Combobox from '../../../../components/ui/Combobox';
+import MultiSelect from '../../../../components/ui/MultiSelect';
 import ToggleSwitch from '../../../../components/ui/ToggleSwitch';
 import SingleImageInput from '../../../../components/ui/SingleImageInput';
 import { EmployeeFormValues, buildEmployeeSchema } from '../core/schema';
@@ -15,6 +16,7 @@ import {
   useUpdateEmployee,
   useUpdateEmployeeWithAuthDecision,
 } from '../hooks/use-nhan-vien';
+import { useSupabaseReady } from '@/lib/supabase/use-supabase-list-enabled';
 import type { AuthConflictDecision } from '../services/nhan-vien-service';
 import GenericDrawer, { DRAWER_WIDTH_FORM } from '../../../../components/shared/GenericDrawer';
 import FormDrawerFooter from '../../../../components/shared/FormDrawerFooter';
@@ -25,6 +27,7 @@ import type { Position } from '../../chuc-vu/core/types';
 import { getDefaultEmployeeFormValues, employeeToFormValues } from '../utils/employee-to-form';
 import AuthConflictDialog from './auth-conflict-dialog';
 import { useSignedEmployeeAvatarSrc } from '../hooks/use-signed-employee-avatar-src';
+import { useBranches } from '../../chi-nhanh/hooks/use-chi-nhanh';
 
 interface Props {
   initialData?: Employee | null;
@@ -35,6 +38,7 @@ interface Props {
 
 const EmployeeForm: React.FC<Props> = ({ initialData, departments, positions, onClose }) => {
   const isEdit = !!initialData;
+  const sessionReady = useSupabaseReady();
 
   const [conflictUsername, setConflictUsername] = useState<string | null>(null);
   const [pendingValues, setPendingValues] = useState<EmployeeFormValues | null>(null);
@@ -58,6 +62,30 @@ const EmployeeForm: React.FC<Props> = ({ initialData, departments, positions, on
     closeConflict();
     onClose();
   });
+
+  const { data: branches = [] } = useBranches();
+
+  const branchOptions = useMemo(() => {
+    const active = branches
+      .filter((b) => b.trang_thai === 'Đang hoạt động')
+      .map((b) => ({ label: b.ten_chi_nhanh, value: b.id }));
+    const selectedIds = initialData?.id_chi_nhanh ?? [];
+    for (const id of selectedIds) {
+      if (!active.some((o) => o.value === id)) {
+        const sel = branches.find((b) => b.id === id);
+        if (sel) {
+          active.push({
+            label:
+              sel.trang_thai !== 'Đang hoạt động'
+                ? `${sel.ten_chi_nhanh} (${txt('branch.inactive')})`
+                : sel.ten_chi_nhanh,
+            value: sel.id,
+          });
+        }
+      }
+    }
+    return active;
+  }, [branches, initialData?.id_chi_nhanh]);
 
   const employeeResolver = useMemo(
     () => zodResolver(buildEmployeeSchema(positions)) as Resolver<EmployeeFormValues>,
@@ -145,6 +173,7 @@ const EmployeeForm: React.FC<Props> = ({ initialData, departments, positions, on
   };
 
   const isLoading =
+    !sessionReady ||
     createMutation.isPending ||
     updateMutation.isPending ||
     createDecisionMutation.isPending ||
@@ -286,6 +315,24 @@ const EmployeeForm: React.FC<Props> = ({ initialData, departments, positions, on
                   required
                   dropdownInPortal
                 />
+              )}
+            />
+            <Controller
+              name="id_chi_nhanh"
+              control={control}
+              render={({ field }) => (
+                <div className="sm:col-span-3">
+                  <MultiSelect
+                    label={txt('employee.form.branch')}
+                    options={branchOptions}
+                    value={field.value ?? []}
+                    onChange={(ids) => field.onChange(ids)}
+                    placeholder={txt('employee.form.branchPlaceholder')}
+                  />
+                  {errors.id_chi_nhanh?.message ? (
+                    <p className="text-xs text-destructive mt-1">{errors.id_chi_nhanh.message}</p>
+                  ) : null}
+                </div>
               )}
             />
             <Controller

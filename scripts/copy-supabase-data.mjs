@@ -17,7 +17,9 @@ const TABLES = [
   'var_thong_tin_to_chuc',
   'var_phong_ban',
   'var_chuc_vu',
+  'var_chi_nhanh',
   'var_nhan_vien',
+  'var_nhan_vien_chi_nhanh',
   'var_phan_quyen',
 ];
 

@@ -10,6 +10,7 @@ export function getDefaultEmployeeFormValues(): EmployeeFormValues {
     id_phong_ban: '',
     id_bo_phan: '',
     id_chuc_vu: '',
+    id_chi_nhanh: [],
     trang_thai: 'Hoạt động',
   };
 }
@@ -28,6 +29,7 @@ export function employeeToFormValues(emp: Employee): EmployeeFormValues {
     id_phong_ban: fkToFormString(emp.id_phong_ban),
     id_bo_phan: fkToFormString(emp.id_bo_phan),
     id_chuc_vu: fkToFormString(emp.id_chuc_vu),
+    id_chi_nhanh: emp.id_chi_nhanh?.map(String) ?? [],
     trang_thai: emp.trang_thai,
   };
 }

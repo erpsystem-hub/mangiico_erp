@@ -11,6 +11,8 @@ export interface FilterCounts {
   unitCounts: Record<string, number>;
   /** Số lượng nhân viên thuộc mỗi chức vụ. */
   posCounts: Record<string, number>;
+  /** Số lượng nhân viên theo chi nhánh. */
+  branchCounts: Record<string, number>;
   /** Số lượng nhân viên theo trạng thái (`Hoạt động` | `Khóa`). */
   statusCounts: Record<string, number>;
 }
@@ -39,26 +41,35 @@ export function useFilterCounts(
     const passesPos = (e: Employee) =>
       filters.id_chuc_vu.length === 0 ||
       (e.id_chuc_vu != null && filters.id_chuc_vu.includes(e.id_chuc_vu));
+    const passesBranch = (e: Employee) =>
+      filters.id_chi_nhanh.length === 0 ||
+      (e.id_chi_nhanh ?? []).some((id) => filters.id_chi_nhanh.includes(id));
 
     const deptCounts: Record<string, number> = {};
     const unitCounts: Record<string, number> = {};
     const posCounts: Record<string, number> = {};
+    const branchCounts: Record<string, number> = {};
     const statusCounts: Record<string, number> = {};
 
     for (const e of employees) {
       if (!passesText(e)) continue;
-      if (passesStatus(e) && passesPos(e)) {
+      if (passesStatus(e) && passesPos(e) && passesBranch(e)) {
         if (e.id_phong_ban) deptCounts[e.id_phong_ban] = (deptCounts[e.id_phong_ban] ?? 0) + 1;
         if (e.id_bo_phan) unitCounts[e.id_bo_phan] = (unitCounts[e.id_bo_phan] ?? 0) + 1;
       }
-      if (passesStatus(e) && passesDept(e) && e.id_chuc_vu) {
+      if (passesStatus(e) && passesDept(e) && passesBranch(e) && e.id_chuc_vu) {
         posCounts[e.id_chuc_vu] = (posCounts[e.id_chuc_vu] ?? 0) + 1;
       }
-      if (passesDept(e) && passesPos(e)) {
+      if (passesStatus(e) && passesDept(e) && passesPos(e)) {
+        for (const branchId of e.id_chi_nhanh ?? []) {
+          branchCounts[branchId] = (branchCounts[branchId] ?? 0) + 1;
+        }
+      }
+      if (passesDept(e) && passesPos(e) && passesBranch(e)) {
         statusCounts[e.trang_thai] = (statusCounts[e.trang_thai] ?? 0) + 1;
       }
     }
 
-    return { deptCounts, unitCounts, posCounts, statusCounts };
+    return { deptCounts, unitCounts, posCounts, branchCounts, statusCounts };
   }, [employees, searchTerm, filters]);
 }

@@ -1,7 +1,6 @@
 import React, { useMemo } from 'react';
 import { txt } from '../../lib/text';
 import { useNavigate } from 'react-router-dom';
-import { Users, Building, Shield, Briefcase } from 'lucide-react';
 import ModuleDashboardLayout from '../../components/dashboard/ModuleDashboardLayout';
 import type { ModuleGroup } from '../../components/dashboard/ModuleDashboardLayout';
 import type { ModuleItem } from '../../components/dashboard/SubModuleCard';
@@ -9,6 +8,7 @@ import { useAuthStore } from '../../store/useStore';
 import { usePermissionGrantStore } from '../../store/usePermissionGrantStore';
 import { can } from '../../lib/permissions';
 import { appResourceForDashboardNavigatePath } from '../../lib/nav-module-visibility';
+import { navPathIcon } from '../../lib/nav-path-icons';
 
 const SystemDashboard: React.FC = () => {
   const navigate = useNavigate();
@@ -27,21 +27,21 @@ const SystemDashboard: React.FC = () => {
             path: '/he-thong/phong-ban',
             title: txt('page.systemDashboard.department'),
             description: txt('page.systemDashboard.departmentDesc'),
-            icon: Building,
+            icon: navPathIcon('/he-thong/phong-ban'),
             color: 'bg-indigo-500',
           },
           {
             path: '/he-thong/chuc-vu',
             title: txt('page.systemDashboard.position'),
             description: txt('page.systemDashboard.positionDesc'),
-            icon: Briefcase,
+            icon: navPathIcon('/he-thong/chuc-vu'),
             color: 'bg-blue-500',
           },
           {
             path: '/he-thong/nhan-vien',
             title: txt('page.systemDashboard.employee'),
             description: txt('page.systemDashboard.employeeDesc'),
-            icon: Users,
+            icon: navPathIcon('/he-thong/nhan-vien'),
             color: 'bg-emerald-500',
           },
         ],
@@ -53,14 +53,21 @@ const SystemDashboard: React.FC = () => {
             path: '/he-thong/thong-tin-to-chuc',
             title: txt('page.systemDashboard.companyInfo'),
             description: txt('page.systemDashboard.companyInfoDesc'),
-            icon: Building,
+            icon: navPathIcon('/he-thong/thong-tin-to-chuc'),
             color: 'bg-violet-500',
+          },
+          {
+            path: '/he-thong/chi-nhanh',
+            title: txt('page.systemDashboard.branch'),
+            description: txt('page.systemDashboard.branchDesc'),
+            icon: navPathIcon('/he-thong/chi-nhanh'),
+            color: 'bg-teal-500',
           },
           {
             path: '/he-thong/phan-quyen',
             title: txt('page.systemDashboard.permission'),
             description: txt('page.systemDashboard.permissionDesc'),
-            icon: Shield,
+            icon: navPathIcon('/he-thong/phan-quyen'),
             color: 'bg-rose-500',
           },
         ],

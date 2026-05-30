@@ -29,6 +29,73 @@ export type PermissionActionType = (typeof PERMISSION_ACTIONS)[number];
 /** Thứ tự submenu = thứ tự mục trong sidebar (sau Trang chủ), bỏ qua bản quyền. */
 export const PERMISSION_FUNCTIONS: PermissionFunction[] = [
   {
+    id: 'kinh-doanh',
+    nameKey: 'nav.business',
+    color: 'sky',
+    groups: [],
+  },
+  {
+    id: 'san-xuat',
+    nameKey: 'nav.production',
+    color: 'emerald',
+    groups: [
+      {
+        groupTitleKey: 'page.productionDashboard.productionGroup',
+        modules: [
+          { id: 'san-xuat/lenh-san-xuat', nameKey: 'page.productionDashboard.productionOrder' },
+          { id: 'san-xuat/bao-cao-san-xuat', nameKey: 'page.productionDashboard.productionReport' },
+        ],
+      },
+      {
+        groupTitleKey: 'page.productionDashboard.warehouseGroup',
+        modules: [
+          { id: 'san-xuat/phieu-kho', nameKey: 'page.productionDashboard.warehouseSlip' },
+          { id: 'san-xuat/bao-cao-kho', nameKey: 'page.productionDashboard.warehouseReport' },
+          { id: 'san-xuat/danh-sach-kho', nameKey: 'page.productionDashboard.warehouseList' },
+        ],
+      },
+      {
+        groupTitleKey: 'page.productionDashboard.goodsGroup',
+        modules: [
+          { id: 'san-xuat/danh-muc-hang-hoa', nameKey: 'page.productionDashboard.productCategory' },
+          { id: 'san-xuat/danh-sach-hang-hoa', nameKey: 'page.productionDashboard.productList' },
+          { id: 'san-xuat/thuoc-tinh-hang-hoa', nameKey: 'page.productionDashboard.productAttributes' },
+          { id: 'san-xuat/thong-so-do', nameKey: 'page.productionDashboard.measurementSpec' },
+          { id: 'san-xuat/bom', nameKey: 'page.productionDashboard.bom' },
+        ],
+      },
+      {
+        groupTitleKey: 'page.productionDashboard.materialsGroup',
+        modules: [
+          { id: 'san-xuat/danh-muc-nguyen-lieu', nameKey: 'page.productionDashboard.materialCategory' },
+          { id: 'san-xuat/danh-sach-nguyen-lieu', nameKey: 'page.productionDashboard.materialList' },
+        ],
+      },
+    ],
+  },
+  {
+    id: 'tai-chinh',
+    nameKey: 'nav.finance',
+    color: 'amber',
+    groups: [
+      {
+        groupTitleKey: 'page.financeDashboard.incomeExpenseGroup',
+        modules: [
+          { id: 'tai-chinh/so-thu-chi', nameKey: 'page.financeDashboard.ledger' },
+          { id: 'tai-chinh/tai-khoan', nameKey: 'page.financeDashboard.account' },
+          { id: 'tai-chinh/danh-muc-tai-chinh', nameKey: 'page.financeDashboard.category' },
+        ],
+      },
+      {
+        groupTitleKey: 'page.financeDashboard.reportsGroup',
+        modules: [
+          { id: 'tai-chinh/tra-cuu-tai-khoan', nameKey: 'page.financeDashboard.accountLookup' },
+          { id: 'tai-chinh/bao-cao-tai-chinh', nameKey: 'page.financeDashboard.financialReport' },
+        ],
+      },
+    ],
+  },
+  {
     id: 'he-thong',
     nameKey: 'nav.system',
     color: 'slate',
@@ -45,6 +112,7 @@ export const PERMISSION_FUNCTIONS: PermissionFunction[] = [
         groupTitleKey: 'page.systemDashboard.securityGroup',
         modules: [
           { id: 'he-thong/thong-tin-to-chuc', nameKey: 'page.systemDashboard.companyInfo' },
+          { id: 'he-thong/chi-nhanh', nameKey: 'page.systemDashboard.branch' },
           { id: 'he-thong/phan-quyen', nameKey: 'page.systemDashboard.permission' },
         ],
       },

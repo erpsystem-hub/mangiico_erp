@@ -9,7 +9,6 @@ echo "==> Kiểm tra .env.local"
 ENV_FILE="$ROOT/.env.local"
 if [[ ! -f "$ENV_FILE" ]]; then
   echo "⚠️  Chưa có .env.local — copy từ .env.example và điền VITE_SUPABASE_URL + VITE_SUPABASE_ANON_KEY"
-  echo "   App sẽ chạy mock mode (danh sách trống)."
   exit 1
 fi
 
@@ -24,17 +23,10 @@ if [[ -z "$URL" || -z "$KEY" ]]; then
   exit 1
 fi
 
-if grep -q '^VITE_FORCE_MOCK=true' "$ENV_FILE" 2>/dev/null; then
-  echo "⚠️  VITE_FORCE_MOCK=true — app đang ép mock mode dù có URL/key"
-fi
-
-MATRIX_ENABLED=false
-if grep -qE '^VITE_USE_PERMISSION_MATRIX=true' "$ENV_FILE" 2>/dev/null; then
-  MATRIX_ENABLED=true
-  echo "✓ Ma trận phân quyền: bật (VITE_USE_PERMISSION_MATRIX=true)"
+if grep -qE '^VITE_USE_PERMISSION_MATRIX=false' "$ENV_FILE" 2>/dev/null; then
+  echo "⚠️  Ma trận phân quyền bị tắt thủ công (VITE_USE_PERMISSION_MATRIX=false)"
 else
-  echo "⚠️  Ma trận phân quyền TẮT — app chỉ cho xem, không CRUD (kể cả cap_bac=1)"
-  echo "   Thêm vào .env.local: VITE_USE_PERMISSION_MATRIX=true rồi restart dev server"
+  echo "✓ Ma trận phân quyền: bật (mặc định)"
 fi
 
 echo "✓ Env Supabase: ${URL}"
@@ -92,11 +84,6 @@ if [[ "${PQ:-0}" -eq 0 ]]; then
 elif [[ "${CV:-0}" -gt 1 && "${PQ_CV:-0}" -le 1 ]]; then
   echo "⚠️  Phân quyền chỉ gán cho 1 chức vụ — nhân viên khác không vào được module khi ma trận bật."
   echo "   Gợi ý: npx supabase db query --linked --file supabase/scripts/seed_var_phan_quyen_other_roles.sql"
-fi
-
-if [[ "$MATRIX_ENABLED" == "false" && "${PQ:-0}" -gt 0 ]]; then
-  echo ""
-  echo "⚠️  DB đã có phân quyền nhưng ma trận client đang tắt — bật VITE_USE_PERMISSION_MATRIX=true"
 fi
 
 echo "  Nếu app vẫn trống: kiểm tra đã đăng nhập (RLS yêu cầu authenticated)."

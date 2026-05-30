@@ -6,15 +6,17 @@ import { toast } from 'sonner';
 import { txt } from '../../../../lib/text';
 import { queryKeys } from '@/lib/query-keys';
 import { masterDataQueryOptions } from '@/lib/supabase/query-config';
+import { useSupabaseReady } from '@/lib/supabase/use-supabase-list-enabled';
 import { getErrorMessage } from '@/lib/utils';
 
 const rolesQueryKey = queryKeys.roles.all;
 
 export const useRoles = (options?: { enabled?: boolean }) => {
+  const enabled = useSupabaseReady(options?.enabled !== false);
   return useQuery({
     queryKey: rolesQueryKey,
     queryFn: getRoles,
-    enabled: options?.enabled !== false,
+    enabled,
     ...masterDataQueryOptions,
   });
 };

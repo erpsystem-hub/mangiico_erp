@@ -1,6 +1,7 @@
 import React from 'react';
 import { cn } from '../../lib/utils';
 import { Check, X } from 'lucide-react';
+import { TRANG_THAI_HOAT_DONG, normalizeTrangThaiHoatDong } from '@/lib/constants/trang-thai';
 import { renderInputIcon, type InputProps } from './Input';
 
 export interface StatusToggleProps {
@@ -26,8 +27,8 @@ const StatusToggle: React.FC<StatusToggleProps> = ({
   label,
   value,
   onChange,
-  activeLabel = 'Hoạt động',
-  inactiveLabel = 'Ngừng hoạt động',
+  activeLabel = TRANG_THAI_HOAT_DONG[1],
+  inactiveLabel = TRANG_THAI_HOAT_DONG[0],
   error,
   required,
   disabled = false,
@@ -39,7 +40,7 @@ const StatusToggle: React.FC<StatusToggleProps> = ({
 
   const isActive =
     typeof value === 'string'
-      ? value === activeLabel
+      ? normalizeTrangThaiHoatDong(value) === activeLabel
       : Number(value) === 1;
 
   const handleToggle = () => {

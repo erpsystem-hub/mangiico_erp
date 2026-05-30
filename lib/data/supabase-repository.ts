@@ -1,4 +1,5 @@
 import { getSupabase } from '@/lib/supabase/client';
+import { ensureAuthenticated } from '@/lib/auth/session-manager';
 import { handleSupabaseError } from '@/lib/supabase/errors';
 import type { Json, PublicTableName } from '@/lib/supabase/database.types';
 import type {
@@ -12,10 +13,32 @@ import type {
 /** Giới hạn mặc định mỗi lần getAll — tránh tải bảng lớn một lượt (PostgREST/Supabase). Tăng limit trong RepositoryQueryOptions nếu cần. */
 export const SUPABASE_DEFAULT_MAX_ROWS = 5_000;
 
+/** Tránh mutation treo vô hạn — UI luôn nhận reject sau timeout. */
+export const SUPABASE_REQUEST_TIMEOUT_MS = 30_000;
+
+async function withSupabaseTimeout<T>(label: string, promise: PromiseLike<T>): Promise<T> {
+  let timeoutId: ReturnType<typeof setTimeout> | undefined;
+  const timeoutPromise = new Promise<never>((_, reject) => {
+    timeoutId = setTimeout(() => {
+      reject(new Error(`Hết thời gian chờ phản hồi Supabase (${label})`));
+    }, SUPABASE_REQUEST_TIMEOUT_MS);
+  });
+  try {
+    return await Promise.race([Promise.resolve(promise), timeoutPromise]);
+  } finally {
+    if (timeoutId !== undefined) clearTimeout(timeoutId);
+  }
+}
+
 function ensureClient() {
   const client = getSupabase();
   if (!client) throw new Error('Supabase client is not configured. Set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY.');
   return client;
+}
+
+async function ensureAuthenticatedClient() {
+  await ensureAuthenticated();
+  return ensureClient();
 }
 
 /**
@@ -66,40 +89,45 @@ export class SupabaseRepository<T extends { id: string | number }> implements IR
   }
 
   async getById(id: string | number, options?: RepositoryGetByIdOptions): Promise<T | null> {
-    const supabase = ensureClient();
+    const supabase = await ensureAuthenticatedClient();
     const select = options?.select ?? this.select;
-    const { data, error } = await supabase
-      .from(this.tableName)
-      .select(select)
-      .eq('id', id as never)
-      .maybeSingle();
+    const { data, error } = await withSupabaseTimeout(
+      `${this.tableName}.getById`,
+      supabase.from(this.tableName).select(select).eq('id', id as never).maybeSingle(),
+    );
     if (error) handleSupabaseError(error);
     return data as unknown as T | null;
   }
 
   async insert(row: Omit<T, 'id'> & { id?: string }, opts?: RepositoryMutationOptions): Promise<T> {
-    const supabase = ensureClient();
+    const supabase = await ensureAuthenticatedClient();
     const payload = { ...row } as Record<string, Json>;
     if (payload.id === undefined) delete payload.id;
-    const { data, error } = await supabase
-      .from(this.tableName)
-      .insert(payload as never)
-      .select(this.mutationSelect(opts))
-      .single();
+    const { data, error } = await withSupabaseTimeout(
+      `${this.tableName}.insert`,
+      supabase
+        .from(this.tableName)
+        .insert(payload as never)
+        .select(this.mutationSelect(opts))
+        .single(),
+    );
     if (error) handleSupabaseError(error);
     return data as unknown as T;
   }
 
   async update(id: string | number, partial: Partial<T>, opts?: RepositoryMutationOptions): Promise<T> {
-    const supabase = ensureClient();
+    const supabase = await ensureAuthenticatedClient();
     const payload = { ...partial } as Record<string, Json>;
     delete payload.id;
-    const { data, error } = await supabase
-      .from(this.tableName)
-      .update(payload)
-      .eq('id', id as never)
-      .select(this.mutationSelect(opts))
-      .single();
+    const { data, error } = await withSupabaseTimeout(
+      `${this.tableName}.update`,
+      supabase
+        .from(this.tableName)
+        .update(payload)
+        .eq('id', id as never)
+        .select(this.mutationSelect(opts))
+        .single(),
+    );
     if (error) handleSupabaseError(error);
     return data as unknown as T;
   }
@@ -110,25 +138,28 @@ export class SupabaseRepository<T extends { id: string | number }> implements IR
     opts?: RepositoryMutationOptions,
   ): Promise<void> {
     if (ids.length === 0) return;
-    const supabase = ensureClient();
+    const supabase = await ensureAuthenticatedClient();
     const payload = { ...partial } as Record<string, Json>;
     delete payload.id;
-    const { error } = await supabase
-      .from(this.tableName)
-      .update(payload)
-      .in('id', ids as never);
+    const { error } = await withSupabaseTimeout(
+      `${this.tableName}.updateMany`,
+      supabase.from(this.tableName).update(payload).in('id', ids as never),
+    );
     if (error) handleSupabaseError(error);
   }
 
   async remove(ids: (string | number)[]): Promise<void> {
     if (ids.length === 0) return;
-    const supabase = ensureClient();
-    const { error } = await supabase.from(this.tableName).delete().in('id', ids as never);
+    const supabase = await ensureAuthenticatedClient();
+    const { error } = await withSupabaseTimeout(
+      `${this.tableName}.remove`,
+      supabase.from(this.tableName).delete().in('id', ids as never),
+    );
     if (error) handleSupabaseError(error);
   }
 
   async upsert(rows: (Omit<T, 'id'> & { id?: string }) | ((Omit<T, 'id'> & { id?: string })[])): Promise<T[]> {
-    const supabase = ensureClient();
+    const supabase = await ensureAuthenticatedClient();
     const arr = Array.isArray(rows) ? rows : [rows];
     const payload = arr.map((r) => ({ ...r } as Record<string, Json>));
     const { data, error } = await supabase

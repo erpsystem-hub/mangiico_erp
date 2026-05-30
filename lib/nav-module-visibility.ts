@@ -2,11 +2,25 @@ import type { User } from '@/types';
 import { can, APP_RESOURCE_TO_MODULE, type AppResource } from '@/lib/permissions';
 
 const HE_THONG_PREFIX = 'he-thong/';
+const TAI_CHINH_PREFIX = 'tai-chinh/';
+const SAN_XUAT_PREFIX = 'san-xuat/';
 
 /** Các `AppResource` thuộc nhóm Hệ thống (prefix `he-thong/` trong ma trận). */
 export function getHeThongAppResources(): AppResource[] {
   return (Object.entries(APP_RESOURCE_TO_MODULE) as [AppResource, string][])
     .filter(([, mod]) => typeof mod === 'string' && mod.startsWith(HE_THONG_PREFIX))
+    .map(([res]) => res);
+}
+
+export function getTaiChinhAppResources(): AppResource[] {
+  return (Object.entries(APP_RESOURCE_TO_MODULE) as [AppResource, string][])
+    .filter(([, mod]) => typeof mod === 'string' && mod.startsWith(TAI_CHINH_PREFIX))
+    .map(([res]) => res);
+}
+
+export function getSanXuatAppResources(): AppResource[] {
+  return (Object.entries(APP_RESOURCE_TO_MODULE) as [AppResource, string][])
+    .filter(([, mod]) => typeof mod === 'string' && mod.startsWith(SAN_XUAT_PREFIX))
     .map(([res]) => res);
 }
 
@@ -18,12 +32,22 @@ export function getSidebarPathGateResources(path: string): AppResource[] | null 
   if (path === '/he-thong') {
     return getHeThongAppResources();
   }
+  if (path === '/tai-chinh') {
+    return getTaiChinhAppResources();
+  }
+  if (path === '/san-xuat') {
+    return getSanXuatAppResources();
+  }
   return null; // `/`, `/thong-tin-ban-quyen` → luôn hiện
 }
 
-/** `/` và bản quyền luôn hiện (yêu cầu nghiệp vụ). */
+/** `/`, submenu placeholder và bản quyền luôn hiện (chưa gắn ma trận quyền). */
 export function isSidebarPathAlwaysVisible(path: string): boolean {
-  return path === '/' || path === '/thong-tin-ban-quyen';
+  return (
+    path === '/' ||
+    path === '/thong-tin-ban-quyen' ||
+    path === '/kinh-doanh'
+  );
 }
 
 export function isSidebarPathVisibleForUser(user: User | null | undefined, path: string): boolean {

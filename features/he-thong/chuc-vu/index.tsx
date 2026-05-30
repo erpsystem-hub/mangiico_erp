@@ -15,6 +15,8 @@ import { useNavigate } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
 import { useAuthStore } from '../../../store/useStore';
 import { useCan } from '../../../hooks/use-can';
+import { useAppSessionReady } from '@/hooks/use-auth-session';
+import { SessionInitializingSpinner } from '@/components/auth/SessionInitializingSpinner';
 import { useResourcePermissions } from '@/hooks/use-resource-permissions';
 import { matchesSearchTerm } from '../../../lib/searchUtils';
 import type { TrangThaiHoatDong } from '@/lib/constants/trang-thai';
@@ -67,6 +69,7 @@ type FormOrigin = 'list' | 'detail';
 const PositionPage: React.FC = () => {
   const user = useAuthStore((s) => s.user);
   const canView = useCan('view', 'positions');
+  const { isInitializing } = useAppSessionReady();
   const { canCreate, canEdit, canDelete, canExport, canImport } = useResourcePermissions('positions');
   const navigate = useNavigate();
   const didRedirect = useRef(false);
@@ -128,7 +131,6 @@ const PositionPage: React.FC = () => {
       { key: 'ma_cap_bac', label: `${txt('position.form.level')} (mã)` },
       { key: 'ten_phong_ban', label: `${txt('position.form.department')} (tên)`, required: true },
       { key: 'mo_ta', label: txt('position.form.description') },
-      { key: 'cap_quan_ly', label: txt('position.store.managementLevelCol'), required: true },
       { key: 'thu_tu', label: txt('position.store.orderCol') },
       { key: 'trang_thai', label: txt('common.status') },
     ],
@@ -175,7 +177,6 @@ const PositionPage: React.FC = () => {
     () => [
       { key: 'ten_chuc_vu', label: txt('position.exportName') },
       { key: 'mo_ta', label: txt('position.exportDesc') },
-      { key: 'cap_quan_ly', label: txt('position.store.managementLevelCol') },
       { key: 'trang_thai_text', label: txt('position.exportStatus') },
     ],
     []
@@ -185,7 +186,6 @@ const PositionPage: React.FC = () => {
     (item: Position) => ({
       ten_chuc_vu: item.ten_chuc_vu,
       mo_ta: item.mo_ta ?? '',
-      cap_quan_ly: item.cap_quan_ly ?? '',
       trang_thai_text: item.trang_thai,
     }),
     []
@@ -304,6 +304,10 @@ const PositionPage: React.FC = () => {
     }
     setFormOrigin('list');
   };
+
+  if (isInitializing) {
+    return <SessionInitializingSpinner />;
+  }
 
   if (!canView) {
     return (

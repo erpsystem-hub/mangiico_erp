@@ -11,6 +11,15 @@ import { department } from '../../features/he-thong/phong-ban/text';
 import { position } from '../../features/he-thong/chuc-vu/text';
 import { permission } from '../../features/he-thong/phan-quyen/text';
 import { company } from '../../features/he-thong/thong-tin-to-chuc/text';
+import { branch } from '../../features/he-thong/chi-nhanh/text';
+import { financeCategory } from '../../features/tai-chinh/danh-muc-tai-chinh/text';
+import { financeAccount } from '../../features/tai-chinh/tai-khoan/text';
+import { productAttribute } from '../../features/san-xuat/thuoc-tinh-hang-hoa/text';
+import { measurementSpec } from '../../features/san-xuat/thong-so-do/text';
+import { productCategory } from '../../features/san-xuat/danh-muc-hang-hoa/text';
+import { productCatalog } from '../../features/san-xuat/danh-sach-hang-hoa/text';
+import { materialCategory } from '../../features/san-xuat/danh-muc-nguyen-lieu/text';
+import { materialCatalog } from '../../features/san-xuat/danh-sach-nguyen-lieu/text';
 
 function flatten(prefix: string, obj: unknown): Record<string, string> {
   const out: Record<string, string> = {};
@@ -37,6 +46,15 @@ export const STRINGS: Readonly<Record<string, string>> = Object.freeze({
   ...flatten('position', position),
   ...flatten('permission', permission),
   ...flatten('company', company),
+  ...flatten('branch', branch),
+  ...flatten('financeCategory', financeCategory),
+  ...flatten('financeAccount', financeAccount),
+  ...flatten('productAttribute', productAttribute),
+  ...flatten('measurementSpec', measurementSpec),
+  ...flatten('productCategory', productCategory),
+  ...flatten('productCatalog', productCatalog),
+  ...flatten('materialCategory', materialCategory),
+  ...flatten('materialCatalog', materialCatalog),
   ...flatten('tenure', tenure),
   ...flatten('taiLieu', taiLieu),
 });
@@ -76,5 +94,6 @@ export {
   position,
   permission,
   company,
+  branch,
 };
 export { fmt };

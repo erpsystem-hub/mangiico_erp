@@ -4,13 +4,13 @@ import { BrowserRouter as Router } from 'react-router-dom';
 import * as Sentry from '@sentry/react';
 import './index.css';
 import App from './App';
-import { QueryCache, QueryClient, defaultShouldDehydrateQuery } from '@tanstack/react-query';
+import { defaultShouldDehydrateQuery } from '@tanstack/react-query';
 import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client';
 import { createSyncStoragePersister } from '@tanstack/query-sync-storage-persister';
-import { toast } from 'sonner';
 import ErrorBoundary from './components/shared/ErrorBoundary';
 import { QueryDevtoolsPanel } from './components/dev/QueryDevtoolsPanel';
-import { SERVER_GC_TIME_MS, SERVER_STALE_TIME_MS } from './lib/supabase/query-config';
+import { SERVER_GC_TIME_MS } from './lib/supabase/query-config';
+import { queryClient } from './lib/query-client';
 
 const sentryDsn = import.meta.env.VITE_SENTRY_DSN;
 if (sentryDsn && typeof sentryDsn === 'string' && sentryDsn.trim() !== '') {
@@ -23,42 +23,6 @@ if (sentryDsn && typeof sentryDsn === 'string' && sentryDsn.trim() !== '') {
 
 // PWA: đăng ký SW + toast cập nhật/offline trong App (PwaRegister)
 
-function queryErrorToast(error: unknown) {
-  const msg =
-    error instanceof Error ? error.message : typeof error === 'string' ? error : 'Đã xảy ra lỗi';
-  toast.error(msg);
-}
-
-function isRetryableError(error: unknown): boolean {
-  const msg = error instanceof Error ? error.message : String(error);
-  return /network|timeout|ECONNREFUSED|ETIMEDOUT|Failed to fetch|fetch/i.test(msg);
-}
-
-const queryClient = new QueryClient({
-  queryCache: new QueryCache({
-    onError: queryErrorToast,
-  }),
-  defaultOptions: {
-    queries: {
-      // `staleTime` đã đủ bảo vệ chống refetch dày đặc; bỏ refetch tự động khi
-      // window focus/reconnect/remount để tiết kiệm egress (free-tier 5GB/tháng).
-      // Mỗi feature có thể opt-in lại nếu thực sự cần.
-      staleTime: SERVER_STALE_TIME_MS,
-      gcTime: SERVER_GC_TIME_MS,
-      refetchOnWindowFocus: false,
-      refetchOnReconnect: false,
-      refetchOnMount: false,
-      retry: (failureCount, error) => {
-        if (failureCount >= 2) return false;
-        return isRetryableError(error);
-      },
-    },
-    mutations: {
-      onError: queryErrorToast,
-    },
-  },
-});
-
 /**
  * Persist React Query cache to localStorage so page reloads within the gcTime
  * window (30 min) restore data instantly without re-fetching from Supabase.
@@ -68,6 +32,7 @@ const queryClient = new QueryClient({
  * v4: không persist `['employees','list',…]` và `['employee', id]` — tránh danh sách/chi tiết
  *     cũ sau khi bản ghi đã xóa khỏi DB (reload vẫn thấy nhân viên “ảo”).
  * v6: drop modules MTTQ / viết bài / giao việc — bump buster invalidate cache cũ.
+ * v7: bỏ cột `cap_quan_ly` khỏi chức vụ / nhân viên.
  */
 const localStoragePersister = createSyncStoragePersister({
   storage: window.localStorage,
@@ -89,7 +54,7 @@ root.render(
           persistOptions={{
             persister: localStoragePersister,
             maxAge: SERVER_GC_TIME_MS,
-            buster: '6',
+            buster: '7',
             dehydrateOptions: {
               shouldDehydrateQuery: (query) => {
                 const k = query.queryKey;

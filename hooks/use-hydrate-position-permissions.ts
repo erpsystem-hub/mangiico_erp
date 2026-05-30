@@ -5,15 +5,16 @@ import { usePermissionGrantStore } from '@/store/usePermissionGrantStore';
 import { isPermissionMatrixEnabled } from '@/lib/permission-matrix-env';
 import { fetchPositionPermissionGrants } from '@/lib/fetch-position-permission-grants';
 import { MASTER_DATA_STALE_TIME_MS, SERVER_GC_TIME_MS } from '@/lib/supabase/query-config';
+import { useSupabaseReady } from '@/lib/supabase/use-supabase-list-enabled';
 
 /**
- * Sau đăng nhập / đổi user: hydrate `grantsByModule` theo chức vụ (khi `VITE_USE_PERMISSION_MATRIX=true`).
+ * Sau đăng nhập / đổi user: hydrate `grantsByModule` theo chức vụ (Supabase: bật mặc định).
  * Dùng TanStack Query để cache kết quả 30 phút — re-mount không re-fetch.
  * Mọi user (kể cả admin) đều hydrate từ `var_chuc_vu` + `var_phan_quyen`; không dùng Supabase Auth role.
  */
 export function useHydratePositionPermissions(): void {
   const user = useAuthStore((s) => s.user);
-  const hasHydrated = useAuthStore((s) => s._hasHydrated);
+  const sessionReady = useSupabaseReady();
   const matrixEnabled = isPermissionMatrixEnabled();
 
   const chucVuKey = user
@@ -22,7 +23,7 @@ export function useHydratePositionPermissions(): void {
       : (user.id_chuc_vu ?? '')
     : '';
 
-  const enabled = hasHydrated && matrixEnabled && !!user && !!chucVuKey;
+  const enabled = sessionReady && matrixEnabled && !!user && !!chucVuKey;
 
   // Permission matrix theo chức vụ rất ít thay đổi (admin tinh chỉnh occasional);
   // dùng `MASTER_DATA_STALE_TIME_MS` (30 phút) thay vì `staleTime: 0` để tránh
@@ -46,7 +47,7 @@ export function useHydratePositionPermissions(): void {
     if (payload) {
       usePermissionGrantStore
         .getState()
-        .setMatrixGrants(payload.grantsByModule, payload.chucVuCapBac, payload.chucVuCapQuanLy);
+        .setMatrixGrants(payload.grantsByModule, payload.chucVuCapBac);
     }
   }, [enabled, payload]);
 }

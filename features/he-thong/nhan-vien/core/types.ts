@@ -16,8 +16,8 @@ export interface Employee {
   ten_phong_ban?: string;
   ten_bo_phan?: string;
   ten_chuc_vu?: string;
-  /** `cap_quan_ly` của chức vụ đang gán (enrich từ `var_chuc_vu`). */
-  cap_quan_ly?: string | null;
+  id_chi_nhanh?: string[];
+  ten_chi_nhanh?: string;
 }
 
 export interface EmployeeFilters {
@@ -25,4 +25,5 @@ export interface EmployeeFilters {
   trang_thai: string[];
   id_phong_ban: string[];
   id_chuc_vu: string[];
+  id_chi_nhanh: string[];
 }

@@ -28,6 +28,8 @@ export interface AuthState {
   /** Chỉ dùng nội bộ: true khi đã đọc xong state từ localStorage/sessionStorage (tránh redirect về login khi reload). */
   _hasHydrated?: boolean;
   login: (user: User) => void;
+  /** Xóa state app (không gọi Supabase signOut). */
+  clearAuthState: () => void;
   logout: () => void;
 }
 

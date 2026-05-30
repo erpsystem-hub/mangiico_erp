@@ -2,32 +2,20 @@ import React, { useCallback, useLayoutEffect, useMemo, useRef, useState } from '
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  Home,
-  FileKey,
-  LayoutDashboard,
-  Users,
-  Network,
-  Briefcase,
-  Landmark,
-  Shield,
   UserCircle,
   Bell,
   Settings,
+  LayoutDashboard,
   type LucideIcon,
 } from 'lucide-react';
 import { txt } from '@/lib/text';
 import { COMMAND_PALETTE_ENTRIES, type CommandPaletteEntry } from '@/lib/command-palette-entries';
+import { NAV_PATH_ICONS } from '@/lib/nav-path-icons';
 import { cn } from '@/lib/utils';
 
 const PATH_ICONS: Record<string, LucideIcon> = {
-  '/': Home,
-  '/thong-tin-ban-quyen': FileKey,
+  ...NAV_PATH_ICONS,
   '/he-thong': LayoutDashboard,
-  '/he-thong/nhan-vien': Users,
-  '/he-thong/phong-ban': Network,
-  '/he-thong/chuc-vu': Briefcase,
-  '/he-thong/thong-tin-to-chuc': Landmark,
-  '/he-thong/phan-quyen': Shield,
   '/ho-so': UserCircle,
   '/cai-dat': Settings,
   '/thong-bao': Bell,

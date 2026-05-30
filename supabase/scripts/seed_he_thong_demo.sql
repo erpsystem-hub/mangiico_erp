@@ -70,31 +70,31 @@ WHERE NOT EXISTS (
 -- ============================================================================
 -- 3. Chức vụ (20 — một chức vụ / phòng ban)
 -- ============================================================================
-INSERT INTO public.var_chuc_vu (ten_chuc_vu, phong_ban_id, cap_bac, cap_quan_ly, thu_tu, trang_thai)
-SELECT v.ten_cv, pb.id, v.cap_bac, v.cap_quan_ly, v.thu_tu, 'Đang hoạt động'
+INSERT INTO public.var_chuc_vu (ten_chuc_vu, phong_ban_id, cap_bac, thu_tu, trang_thai)
+SELECT v.ten_cv, pb.id, v.cap_bac, v.thu_tu, 'Đang hoạt động'
 FROM (
   VALUES
-    ('Ban Giám đốc', 'Giám đốc điều hành', 1::smallint, 'Tỉnh', 1),
-    ('Văn phòng Ban Giám đốc', 'Thư ký Ban Giám đốc', 4, 'Tỉnh', 2),
-    ('Phòng Pháp chế', 'Trưởng phòng Pháp chế', 3, 'Tỉnh', 3),
-    ('Bộ phận ISO', 'Chuyên viên ISO', 4, 'Xã phường', 4),
-    ('Phòng Hành chính - Tổng hợp', 'Trưởng phòng Hành chính', 3, 'Tỉnh', 5),
-    ('Bộ phận Nhân sự', 'Chuyên viên Nhân sự', 4, 'Xã phường', 6),
-    ('Bộ phận Văn thư - Lưu trữ', 'Chuyên viên Văn thư', 4, 'Xã phường', 7),
-    ('Bộ phận Hành chính', 'Nhân viên Hành chính', 4, 'Xã phường', 8),
-    ('Phòng Tài chính - Kế toán', 'Trưởng phòng Tài chính', 3, 'Tỉnh', 9),
-    ('Bộ phận Kế toán tổng hợp', 'Kế toán trưởng', 3, 'Tỉnh', 10),
-    ('Bộ phận Thu chi', 'Chuyên viên Thu chi', 4, 'Xã phường', 11),
-    ('Bộ phận Ngân sách', 'Chuyên viên Ngân sách', 4, 'Xã phường', 12),
-    ('Phòng Kinh doanh', 'Trưởng phòng Kinh doanh', 3, 'Tỉnh', 13),
-    ('Bộ phận Bán hàng', 'Nhân viên Kinh doanh', 4, 'Xã phường', 14),
-    ('Bộ phận Marketing', 'Chuyên viên Marketing', 4, 'Xã phường', 15),
-    ('Bộ phận Chăm sóc khách hàng', 'Chuyên viên CSKH', 4, 'Xã phường', 16),
-    ('Phòng Kỹ thuật - Vận hành', 'Trưởng phòng Kỹ thuật', 3, 'Tỉnh', 17),
-    ('Bộ phận Sản xuất', 'Giám sát Sản xuất', 3, 'Tỉnh', 18),
-    ('Bộ phận Bảo trì', 'Kỹ thuật viên Bảo trì', 4, 'Xã phường', 19),
-    ('Bộ phận Kiểm soát chất lượng', 'Chuyên viên QA', 4, 'Xã phường', 20)
-) AS v(ten_pb, ten_cv, cap_bac, cap_quan_ly, thu_tu)
+    ('Ban Giám đốc', 'Giám đốc điều hành', 1::smallint, 1),
+    ('Văn phòng Ban Giám đốc', 'Thư ký Ban Giám đốc', 4, 2),
+    ('Phòng Pháp chế', 'Trưởng phòng Pháp chế', 3, 3),
+    ('Bộ phận ISO', 'Chuyên viên ISO', 4, 4),
+    ('Phòng Hành chính - Tổng hợp', 'Trưởng phòng Hành chính', 3, 5),
+    ('Bộ phận Nhân sự', 'Chuyên viên Nhân sự', 4, 6),
+    ('Bộ phận Văn thư - Lưu trữ', 'Chuyên viên Văn thư', 4, 7),
+    ('Bộ phận Hành chính', 'Nhân viên Hành chính', 4, 8),
+    ('Phòng Tài chính - Kế toán', 'Trưởng phòng Tài chính', 3, 9),
+    ('Bộ phận Kế toán tổng hợp', 'Kế toán trưởng', 3, 10),
+    ('Bộ phận Thu chi', 'Chuyên viên Thu chi', 4, 11),
+    ('Bộ phận Ngân sách', 'Chuyên viên Ngân sách', 4, 12),
+    ('Phòng Kinh doanh', 'Trưởng phòng Kinh doanh', 3, 13),
+    ('Bộ phận Bán hàng', 'Nhân viên Kinh doanh', 4, 14),
+    ('Bộ phận Marketing', 'Chuyên viên Marketing', 4, 15),
+    ('Bộ phận Chăm sóc khách hàng', 'Chuyên viên CSKH', 4, 16),
+    ('Phòng Kỹ thuật - Vận hành', 'Trưởng phòng Kỹ thuật', 3, 17),
+    ('Bộ phận Sản xuất', 'Giám sát Sản xuất', 3, 18),
+    ('Bộ phận Bảo trì', 'Kỹ thuật viên Bảo trì', 4, 19),
+    ('Bộ phận Kiểm soát chất lượng', 'Chuyên viên QA', 4, 20)
+) AS v(ten_pb, ten_cv, cap_bac, thu_tu)
 JOIN public.var_phong_ban pb
   ON lower(trim(pb.ten_phong_ban)) = lower(trim(v.ten_pb))
 WHERE NOT EXISTS (

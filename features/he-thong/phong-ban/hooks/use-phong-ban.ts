@@ -7,13 +7,13 @@ import { toast } from "sonner";
 import { txt } from '../../../../lib/text';
 import { queryKeys } from '@/lib/query-keys';
 import { masterDataQueryOptions, supabaseListQueryRetryOptions } from '@/lib/supabase/query-config';
-import { useSupabaseListEnabled } from '@/lib/supabase/use-supabase-list-enabled';
+import { useSupabaseReady } from '@/lib/supabase/use-supabase-list-enabled';
 import { getErrorMessage } from '@/lib/utils';
 
 const departmentsQueryKey = queryKeys.departments.all;
 
 export const useDepartments = (options?: { enabled?: boolean }) => {
-  const enabled = useSupabaseListEnabled(options?.enabled !== false);
+  const enabled = useSupabaseReady(options?.enabled !== false);
   return useQuery({
     queryKey: departmentsQueryKey,
     queryFn: getDepartments,

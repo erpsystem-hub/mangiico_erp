@@ -15,6 +15,8 @@ import { useNavigate } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
 import { useAuthStore } from '../../../store/useStore';
 import { useCan } from '../../../hooks/use-can';
+import { useAppSessionReady } from '@/hooks/use-auth-session';
+import { SessionInitializingSpinner } from '@/components/auth/SessionInitializingSpinner';
 import { useResourcePermissions } from '@/hooks/use-resource-permissions';
 import { useTabSearchParam } from '@/hooks/use-tab-search-param';
 import { List, BarChart3 } from 'lucide-react';
@@ -24,6 +26,7 @@ import { queryKeys } from '@/lib/query-keys';
 import { defaultServerQueryOptions, masterDataQueryOptions, SERVER_GC_TIME_MS } from '@/lib/supabase/query-config';
 import { useDepartments } from '../phong-ban/hooks/use-phong-ban';
 import { usePositions } from '../chuc-vu/hooks/use-chuc-vu';
+import { useBranches } from '../chi-nhanh/hooks/use-chi-nhanh';
 import { DRAWER_Z_CONTENT_BASE } from '@/lib/dialog-sizes';
 import EmployeeToolbar from './components/nhan-vien-toolbar';
 import EmployeeTable from './components/nhan-vien-table';
@@ -94,6 +97,7 @@ type FormOrigin = 'list' | 'detail';
 const EmployeePage: React.FC = () => {
   const user = useAuthStore((s) => s.user);
   const canView = useCan('view', 'employees');
+  const { isInitializing } = useAppSessionReady();
   const { canCreate, canEdit, canDelete } = useResourcePermissions('employees');
   const navigate = useNavigate();
   const didRedirect = useRef(false);
@@ -126,6 +130,7 @@ const EmployeePage: React.FC = () => {
   const queryClient = useQueryClient();
   const { data: departments = [] } = useDepartments({ enabled: canView });
   const { data: positions = [] } = usePositions({ enabled: canView });
+  const { data: branches = [] } = useBranches({ enabled: canView });
 
   const {
     employees: employeesDisplay,
@@ -225,8 +230,11 @@ const EmployeePage: React.FC = () => {
       const matchesPos =
         f.id_chuc_vu.length === 0 ||
         (emp.id_chuc_vu != null && f.id_chuc_vu.includes(emp.id_chuc_vu));
+      const matchesBranch =
+        f.id_chi_nhanh.length === 0 ||
+        (emp.id_chi_nhanh ?? []).some((id) => f.id_chi_nhanh.includes(id));
       const matchesColumnText = employeeMatchesColumnSearch(emp, f.columnSearch);
-      return matchesSearch && matchesStatus && matchesDept && matchesPos && matchesColumnText;
+      return matchesSearch && matchesStatus && matchesDept && matchesPos && matchesBranch && matchesColumnText;
     },
     [],
   );
@@ -258,8 +266,18 @@ const EmployeePage: React.FC = () => {
     (item: Employee) => {
       if (!canEdit) return;
       const origin: FormOrigin = viewingEmpRef.current ? 'detail' : 'list';
+      startTransition(() => {
+        setFormOrigin(origin);
+        setEditingEmp(item);
+        setShowForm(true);
+      });
       void (async () => {
         try {
+          await queryClient.invalidateQueries({
+            queryKey: queryKeys.employees.detail(item.id),
+            exact: true,
+            refetchType: 'none',
+          });
           const full = await queryClient.fetchQuery({
             queryKey: queryKeys.employees.detail(item.id),
             queryFn: () => getEmployeeById(item.id),
@@ -269,19 +287,15 @@ const EmployeePage: React.FC = () => {
             queryClient.removeQueries({ queryKey: queryKeys.employees.detail(item.id) });
             patchEmployeesListCaches(queryClient, (old) => old.filter((e) => e.id !== item.id), -1);
             toast.error(txt('employee.service.notFound'));
+            startTransition(() => {
+              setShowForm(false);
+              setEditingEmp(null);
+            });
             return;
           }
-          startTransition(() => {
-            setFormOrigin(origin);
-            setEditingEmp(full);
-            setShowForm(true);
-          });
+          startTransition(() => setEditingEmp(full));
         } catch {
-          startTransition(() => {
-            setFormOrigin(origin);
-            setEditingEmp(item);
-            setShowForm(true);
-          });
+          // Giữ dữ liệu từ list nếu fetch full row thất bại.
         }
       })();
     },
@@ -398,6 +412,10 @@ const EmployeePage: React.FC = () => {
     });
   };
 
+  if (isInitializing) {
+    return <SessionInitializingSpinner />;
+  }
+
   if (!canView) {
     return (
       <div
@@ -429,10 +447,12 @@ const EmployeePage: React.FC = () => {
             employees={employeesDisplay}
             departments={departments}
             positions={positions}
+            branches={branches}
             onAdd={() => {
               if (!canCreate) return;
               startTransition(() => {
                 setFormOrigin('list');
+                setEditingEmp(null);
                 setShowForm(true);
               });
             }}
@@ -456,6 +476,7 @@ const EmployeePage: React.FC = () => {
               employeesForFilterCounts={employeesDisplay}
               departments={departments}
               positions={positions}
+              branches={branches}
               serverSidePagination={isServerPaginated}
               serverTotalRecords={listTotal}
               onEdit={handleEdit}

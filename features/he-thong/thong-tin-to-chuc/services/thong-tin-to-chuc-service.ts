@@ -1,5 +1,4 @@
 import { getSupabase } from '@/lib/supabase/client';
-import { isSupabase } from '@/lib/data/config';
 import type { Database } from '@/lib/supabase/database.types';
 import type { CompanyInfo } from '@/store/useStore';
 import { DEFAULT_COMPANY_INFO } from '@/store/useStore';
@@ -24,7 +23,7 @@ function mapRowToCompanyInfo(row: ThongTinRow): CompanyInfo {
   };
 }
 
-function formToDbPayload(data: CompanyFormValues & { appLogo: string | null }): ThongTinUpdate {
+function formToDbPayload(data: CompanyFormValues): ThongTinUpdate {
   return {
     ten_ung_dung: data.appName.trim(),
     mo_ta_ngan: data.appDescription?.trim() || null,
@@ -37,11 +36,7 @@ function formToDbPayload(data: CompanyFormValues & { appLogo: string | null }): 
   };
 }
 
-/** Đọc cấu hình tổ chức: Supabase row id=1, hoặc mock = default store. */
 export async function getThongTinToChuc(): Promise<CompanyInfo> {
-  if (!isSupabase()) {
-    return { ...DEFAULT_COMPANY_INFO };
-  }
   const sb = getSupabase();
   if (!sb) return { ...DEFAULT_COMPANY_INFO };
 
@@ -56,20 +51,7 @@ export async function getThongTinToChuc(): Promise<CompanyInfo> {
   return mapRowToCompanyInfo(data as unknown as ThongTinRow);
 }
 
-/** Lưu cấu hình (cập nhật dòng id = 1). */
-export async function saveThongTinToChuc(data: CompanyFormValues & { appLogo: string | null }): Promise<CompanyInfo> {
-  if (!isSupabase()) {
-    return {
-      appName: data.appName.trim(),
-      appDescription: data.appDescription?.trim() ?? '',
-      appLogo: data.appLogo,
-      companyName: data.companyName.trim(),
-      address: data.address?.trim() ?? '',
-      phone: data.phone?.trim() ?? '',
-      email: data.email?.trim() ?? '',
-      website: data.website?.trim() ?? '',
-    };
-  }
+export async function saveThongTinToChuc(data: CompanyFormValues): Promise<CompanyInfo> {
   const sb = getSupabase();
   if (!sb) {
     throw new Error('Supabase client không khả dụng');

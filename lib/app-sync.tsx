@@ -1,7 +1,6 @@
 import React, { useEffect, useRef, useSyncExternalStore } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useUIStore } from '../store/useStore';
-import { isSupabase } from './data/config';
 import { queryKeys } from './query-keys';
 import { masterDataQueryOptions } from './supabase/query-config';
 import { getThongTinToChuc } from '../features/he-thong/thong-tin-to-chuc/services/thong-tin-to-chuc-service';
@@ -82,13 +81,12 @@ export const ThemeSynchronizer: React.FC = () => {
   return null;
 };
 
-/** Khi Supabase: tải `var_thong_tin_to_chuc` vào Zustand (sidebar, favicon, PWA) — đọc được cả trước đăng nhập. */
+/** Tải `var_thong_tin_to_chuc` vào Zustand (sidebar, favicon, PWA) — đọc được cả trước đăng nhập. */
 export const ThongTinToChucSynchronizer: React.FC = () => {
   const setCompanyInfo = useUIStore((s) => s.setCompanyInfo);
   const { data } = useQuery({
     queryKey: queryKeys.thongTinToChuc.singleton,
     queryFn: getThongTinToChuc,
-    enabled: isSupabase(),
     ...masterDataQueryOptions,
   });
   useEffect(() => {

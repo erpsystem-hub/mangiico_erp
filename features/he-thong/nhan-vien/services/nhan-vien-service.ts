@@ -5,7 +5,6 @@ import { getDepartments } from '../../phong-ban/services/phong-ban-service';
 import { createRepository } from '@/lib/data/create-repository';
 import { EMPLOYEES_LIST_QUERY_PARAMS } from '@/lib/query-keys';
 import { txt } from '../../../../lib/text';
-import { isSupabase } from '@/lib/data/config';
 import {
   AuthUserConflictError,
   createAuthUser,
@@ -23,11 +22,9 @@ import { isPostgrestRelationshipError, isPostgrestRpcMissingError } from '@/lib/
 import { getSupabase } from '@/lib/supabase/client';
 import { handleSupabaseError } from '@/lib/supabase/errors';
 import { uploadEmployeeAvatarIfDataUrl } from './avatar-storage';
-import { normalizeCapQuanLyInput } from '../../chuc-vu/utils/cap-quan-ly';
 import type { RepositoryListResult } from '@/lib/data/repository';
 import type { EmployeeStatsFilterParams, EmployeeStatsServerPayload } from '../core/stats-types';
 import {
-  computeEmployeeStatsPayloadFromRows,
   parseEmployeeStatsServerPayload,
   statsDateToEndOfDayIso,
   statsDateToStartOfDayIso,
@@ -53,7 +50,6 @@ const now = () => new Date().toISOString();
 const repo = createRepository<Employee>({
   tableName: 'var_nhan_vien',
   select: EMPLOYEE_SELECT_FULL,
-  delay: 200,
 });
 
 export type GetEmployeesParams = {
@@ -69,18 +65,43 @@ export type EmployeesListResult = {
 };
 
 /** Flatten PostgREST embed response → Employee shape. */
+type EmployeeBranchLinkRow = {
+  chi_nhanh_id?: number | string | null;
+  cn?: { ten_chi_nhanh?: string | null; thu_tu?: number | null } | null;
+};
+
+function parseBranchLinks(raw: unknown): { id_chi_nhanh: string[]; ten_chi_nhanh?: string } {
+  const rows = (Array.isArray(raw) ? raw : []) as EmployeeBranchLinkRow[];
+  const sorted = [...rows].sort((a, b) => {
+    const ta = a.cn?.thu_tu ?? 0;
+    const tb = b.cn?.thu_tu ?? 0;
+    if (ta !== tb) return ta - tb;
+    return String(a.cn?.ten_chi_nhanh ?? '').localeCompare(String(b.cn?.ten_chi_nhanh ?? ''), 'vi');
+  });
+  const id_chi_nhanh = sorted
+    .map((r) => (r.chi_nhanh_id == null ? '' : String(r.chi_nhanh_id)))
+    .filter(Boolean);
+  const names = sorted
+    .map((r) => r.cn?.ten_chi_nhanh)
+    .filter((n): n is string => Boolean(n && String(n).trim()));
+  return {
+    id_chi_nhanh,
+    ten_chi_nhanh: names.length > 0 ? names.join(', ') : undefined,
+  };
+}
+
 function flattenSupabaseRow(row: Record<string, unknown>): Employee {
   const pb = row.pb as { ten_phong_ban?: string } | null | undefined;
   const bp = row.bp as { ten_phong_ban?: string } | null | undefined;
-  const cv = row.cv as { ten_chuc_vu?: string; cap_quan_ly?: string | null } | null | undefined;
-  const { pb: _pb, bp: _bp, cv: _cv, ...rest } = row;
-  const cap_quan_ly = normalizeCapQuanLyInput(cv?.cap_quan_ly);
+  const cv = row.cv as { ten_chuc_vu?: string } | null | undefined;
+  const branchInfo = parseBranchLinks(row.nvcn);
+  const { pb: _pb, bp: _bp, cv: _cv, nvcn: _nvcn, ...rest } = row;
   return normalizeEmployeeRow({
     ...(rest as unknown as Employee),
     ten_phong_ban: pb?.ten_phong_ban,
     ten_bo_phan: bp?.ten_phong_ban,
     ten_chuc_vu: cv?.ten_chuc_vu,
-    cap_quan_ly: cap_quan_ly ?? null,
+    ...branchInfo,
   });
 }
 
@@ -92,15 +113,16 @@ function normalizeEmployeeRow(raw: Employee): Employee {
     id_phong_ban: raw.id_phong_ban == null ? null : String(raw.id_phong_ban),
     id_bo_phan: raw.id_bo_phan == null ? null : String(raw.id_bo_phan),
     id_chuc_vu: raw.id_chuc_vu == null ? null : String(raw.id_chuc_vu),
+    id_chi_nhanh: raw.id_chi_nhanh?.map(String) ?? [],
   };
 }
 
-type PositionLookupRow = { id: string; ten_chuc_vu: string; cap_quan_ly?: string | null };
+type PositionLookupRow = { id: string; ten_chuc_vu: string };
 
 function rowNeedsDisplayEnrich(row: Employee): boolean {
   if (row.id_phong_ban && row.ten_phong_ban == null) return true;
   if (row.id_bo_phan && row.ten_bo_phan == null) return true;
-  if (row.id_chuc_vu && (row.ten_chuc_vu == null || row.cap_quan_ly == null)) return true;
+  if (row.id_chuc_vu && row.ten_chuc_vu == null) return true;
   return false;
 }
 
@@ -116,24 +138,22 @@ async function enrichEmployeeRowsBatch(list: Employee[]): Promise<Employee[]> {
   return normalized.map((row) => {
     const cvId = row.id_chuc_vu == null ? '' : String(row.id_chuc_vu).trim();
     const pos: PositionLookupRow | undefined = cvId ? positionMap.get(cvId) : undefined;
-    const cap_quan_ly = normalizeCapQuanLyInput(pos?.cap_quan_ly as string | null | undefined);
     return {
       ...row,
       ten_phong_ban: row.ten_phong_ban ?? (row.id_phong_ban ? deptById.get(row.id_phong_ban)?.ten_phong_ban : undefined),
       ten_bo_phan: row.ten_bo_phan ?? (row.id_bo_phan ? deptById.get(row.id_bo_phan)?.ten_phong_ban : undefined),
       ten_chuc_vu: row.ten_chuc_vu ?? pos?.ten_chuc_vu,
-      cap_quan_ly: row.cap_quan_ly ?? cap_quan_ly ?? null,
     };
   });
 }
 
 function rowHasPostgrestEmbed(row: Record<string, unknown>): boolean {
-  return 'pb' in row || 'bp' in row || 'cv' in row;
+  return 'pb' in row || 'bp' in row || 'cv' in row || 'nvcn' in row;
 }
 
 async function mapEmployeeRow(row: Employee | Record<string, unknown>): Promise<Employee> {
   const record = row as Record<string, unknown>;
-  if (isSupabase() && rowHasPostgrestEmbed(record)) {
+  if (rowHasPostgrestEmbed(record)) {
     return flattenSupabaseRow(record);
   }
   const [mapped] = await enrichEmployeeRowsBatch([row as Employee]);
@@ -143,7 +163,7 @@ async function mapEmployeeRow(row: Employee | Record<string, unknown>): Promise<
 async function mapEmployeeRows(list: Employee[]): Promise<Employee[]> {
   if (list.length === 0) return list;
   const first = list[0] as unknown as Record<string, unknown>;
-  if (isSupabase() && rowHasPostgrestEmbed(first)) {
+  if (rowHasPostgrestEmbed(first)) {
     return (list as unknown as Record<string, unknown>[]).map(flattenSupabaseRow);
   }
   return enrichEmployeeRowsBatch(list);
@@ -188,7 +208,7 @@ type NhanVienPageRpcRow = {
   ten_phong_ban: string | null;
   ten_bo_phan: string | null;
   ten_chuc_vu: string | null;
-  cap_quan_ly: string | null;
+  ten_chi_nhanh: string | null;
   total_count: number;
 };
 
@@ -207,7 +227,8 @@ function mapRpcPageRowToEmployee(row: NhanVienPageRpcRow): Employee {
     ten_phong_ban: row.ten_phong_ban ?? undefined,
     ten_bo_phan: row.ten_bo_phan ?? undefined,
     ten_chuc_vu: row.ten_chuc_vu ?? undefined,
-    cap_quan_ly: normalizeCapQuanLyInput(row.cap_quan_ly) ?? null,
+    ten_chi_nhanh: row.ten_chi_nhanh ?? undefined,
+    id_chi_nhanh: [],
   });
 }
 
@@ -224,6 +245,7 @@ async function getEmployeesPageViaRpc(
     p_trang_thai: null,
     p_id_phong_ban: null,
     p_id_chuc_vu: null,
+    p_id_chi_nhanh: null,
     p_order_by: params.orderBy,
     p_ascending: params.ascending,
   });
@@ -266,12 +288,10 @@ export const getEmployeesPage = async (
   const orderBy = params.orderBy ?? EMPLOYEES_LIST_QUERY_PARAMS.orderBy;
   const ascending = params.ascending ?? EMPLOYEES_LIST_QUERY_PARAMS.ascending;
 
-  if (isSupabase()) {
-    try {
-      return await getEmployeesPageViaRpc({ limit, offset, orderBy, ascending });
-    } catch (err) {
-      if (!isPostgrestRpcMissingError(err)) throw err;
-    }
+  try {
+    return await getEmployeesPageViaRpc({ limit, offset, orderBy, ascending });
+  } catch (err) {
+    if (!isPostgrestRpcMissingError(err)) throw err;
   }
 
   return getEmployeesPageViaRepository({ limit, offset, orderBy, ascending });
@@ -316,6 +336,40 @@ function toRowPayload(data: EmployeeFormValues) {
   };
 }
 
+async function syncEmployeeBranches(nhanVienId: string, branchIds: string[]): Promise<void> {
+  const supabase = getSupabase();
+  if (!supabase) return;
+  const nvId = Number(nhanVienId);
+  if (!Number.isFinite(nvId)) return;
+
+  const desired = new Set(branchIds.map((id) => String(id).trim()).filter(Boolean));
+  const { data: existing, error } = await supabase
+    .from('var_nhan_vien_chi_nhanh')
+    .select('id,chi_nhanh_id')
+    .eq('nhan_vien_id', nvId);
+  handleSupabaseError(error);
+
+  const toDelete = (existing ?? [])
+    .filter((row) => !desired.has(String(row.chi_nhanh_id)))
+    .map((row) => row.id);
+  const existingIds = new Set((existing ?? []).map((row) => String(row.chi_nhanh_id)));
+  const toInsert = [...desired]
+    .filter((id) => !existingIds.has(id))
+    .map((chi_nhanh_id) => ({
+      nhan_vien_id: nvId,
+      chi_nhanh_id: Number(chi_nhanh_id),
+    }));
+
+  if (toDelete.length > 0) {
+    const { error: delErr } = await supabase.from('var_nhan_vien_chi_nhanh').delete().in('id', toDelete);
+    handleSupabaseError(delErr);
+  }
+  if (toInsert.length > 0) {
+    const { error: insErr } = await supabase.from('var_nhan_vien_chi_nhanh').insert(toInsert);
+    handleSupabaseError(insErr);
+  }
+}
+
 async function insertEmployeeRow(data: EmployeeFormValues): Promise<Employee> {
   const payload = toRowPayload(data);
   const hinhAnhRaw = payload.hinh_anh;
@@ -342,7 +396,9 @@ async function insertEmployeeRow(data: EmployeeFormValues): Promise<Employee> {
       { returningSelect: EMPLOYEE_RETURNING_FULL },
     );
   }
-  return mapEmployeeRow(row);
+  await syncEmployeeBranches(insertedId, data.id_chi_nhanh);
+  const full = await getEmployeeById(insertedId);
+  return full ?? mapEmployeeRow(row);
 }
 
 async function updateEmployeeRow(id: string, data: EmployeeFormValues): Promise<Employee> {
@@ -369,7 +425,9 @@ async function updateEmployeeRow(id: string, data: EmployeeFormValues): Promise<
       { returningSelect: EMPLOYEE_FULL_COLUMNS },
     );
   }
-  return mapEmployeeRow(updated);
+  await syncEmployeeBranches(id, data.id_chi_nhanh);
+  const full = await getEmployeeById(id);
+  return full ?? mapEmployeeRow(updated);
 }
 
 function mapAuthConflict(err: unknown, username: string): never {
@@ -381,16 +439,13 @@ function mapAuthConflict(err: unknown, username: string): never {
 
 /**
  * Tạo nhân viên mới. Gọi Auth trực tiếp — 409 → {@link AuthUserExistsError}.
- * Khi mock (chưa nối Supabase) thì bỏ qua bước Auth.
  */
 export const createEmployee = async (data: EmployeeFormValues): Promise<Employee> => {
-  if (isSupabase()) {
-    const username = data.ten_tai_khoan.trim().toLowerCase();
-    try {
-      await createAuthUser(username);
-    } catch (err) {
-      mapAuthConflict(err, username);
-    }
+  const username = data.ten_tai_khoan.trim().toLowerCase();
+  try {
+    await createAuthUser(username);
+  } catch (err) {
+    mapAuthConflict(err, username);
   }
   return insertEmployeeRow(data);
 };
@@ -400,11 +455,9 @@ export const createEmployeeWithAuthDecision = async (
   data: EmployeeFormValues,
   decision: AuthConflictDecision,
 ): Promise<Employee> => {
-  if (isSupabase()) {
-    const username = data.ten_tai_khoan.trim().toLowerCase();
-    if (decision === 'reset') {
-      await resetAuthUserPassword(username);
-    }
+  const username = data.ten_tai_khoan.trim().toLowerCase();
+  if (decision === 'reset') {
+    await resetAuthUserPassword(username);
   }
   return insertEmployeeRow(data);
 };
@@ -421,21 +474,19 @@ export const updateEmployee = async (
   const existing = await repo.getById(id);
   if (!existing) throw new Error(txt('employee.service.notFound'));
 
-  if (isSupabase()) {
-    const oldUsername = String(existing.ten_tai_khoan ?? '').trim().toLowerCase();
-    const newUsername = data.ten_tai_khoan.trim().toLowerCase();
-    if (oldUsername !== newUsername) {
+  const oldUsername = String(existing.ten_tai_khoan ?? '').trim().toLowerCase();
+  const newUsername = data.ten_tai_khoan.trim().toLowerCase();
+  if (oldUsername !== newUsername) {
+    try {
+      await createAuthUser(newUsername);
+    } catch (err) {
+      mapAuthConflict(err, newUsername);
+    }
+    if (oldUsername) {
       try {
-        await createAuthUser(newUsername);
-      } catch (err) {
-        mapAuthConflict(err, newUsername);
-      }
-      if (oldUsername) {
-        try {
-          await deleteAuthUser(oldUsername);
-        } catch {
-          // Không chặn cập nhật nếu xoá Auth cũ thất bại.
-        }
+        await deleteAuthUser(oldUsername);
+      } catch {
+        // Không chặn cập nhật nếu xoá Auth cũ thất bại.
       }
     }
   }
@@ -452,19 +503,17 @@ export const updateEmployeeWithAuthDecision = async (
   const existing = await repo.getById(id);
   if (!existing) throw new Error(txt('employee.service.notFound'));
 
-  if (isSupabase()) {
-    const oldUsername = String(existing.ten_tai_khoan ?? '').trim().toLowerCase();
-    const newUsername = data.ten_tai_khoan.trim().toLowerCase();
-    if (oldUsername !== newUsername) {
-      if (decision === 'reset') {
-        await resetAuthUserPassword(newUsername);
-      }
-      if (oldUsername) {
-        try {
-          await deleteAuthUser(oldUsername);
-        } catch {
-          // Bỏ qua lỗi xoá Auth cũ.
-        }
+  const oldUsername = String(existing.ten_tai_khoan ?? '').trim().toLowerCase();
+  const newUsername = data.ten_tai_khoan.trim().toLowerCase();
+  if (oldUsername !== newUsername) {
+    if (decision === 'reset') {
+      await resetAuthUserPassword(newUsername);
+    }
+    if (oldUsername) {
+      try {
+        await deleteAuthUser(oldUsername);
+      } catch {
+        // Bỏ qua lỗi xoá Auth cũ.
       }
     }
   }
@@ -485,7 +534,7 @@ export const updateEmployeeStatus = async (
 };
 
 async function safeDeleteAuthUsersByIds(ids: string[]): Promise<void> {
-  if (!isSupabase() || ids.length === 0) return;
+  if (ids.length === 0) return;
   const rows = await Promise.all(ids.map((id) => repo.getById(id).catch(() => null)));
   const usernames = rows
     .map((row) => String((row as Employee | null)?.ten_tai_khoan ?? '').trim().toLowerCase())
@@ -523,13 +572,6 @@ export const restoreEmployees = async (employees: Employee[]): Promise<void> => 
 export type EmployeeSummaryStats = { tong: number; hoat_dong: number; khoa: number };
 
 export async function getEmployeeSummaryStats(): Promise<EmployeeSummaryStats> {
-  if (!isSupabase()) {
-    const all = await getEmployees();
-    const hoat_dong = all.filter((e) => e.trang_thai === 'Hoạt động').length;
-    return { tong: all.length, hoat_dong, khoa: all.length - hoat_dong };
-  }
-  const { getSupabase } = await import('@/lib/supabase/client');
-  const { handleSupabaseError } = await import('@/lib/supabase/errors');
   const supabase = getSupabase();
   if (!supabase) return { tong: 0, hoat_dong: 0, khoa: 0 };
   const { data, error } = await supabase.rpc('get_nhan_vien_summary');
@@ -545,17 +587,6 @@ export async function getEmployeeSummaryStats(): Promise<EmployeeSummaryStats> {
 export type CountByKey = { id: string; so_nhan_vien: number };
 
 export async function getEmployeeCountByPhongBan(): Promise<CountByKey[]> {
-  if (!isSupabase()) {
-    const all = await getEmployees();
-    const map = new Map<string, number>();
-    for (const e of all) {
-      if (!e.id_phong_ban) continue;
-      map.set(e.id_phong_ban, (map.get(e.id_phong_ban) ?? 0) + 1);
-    }
-    return Array.from(map.entries()).map(([id, so_nhan_vien]) => ({ id, so_nhan_vien }));
-  }
-  const { getSupabase } = await import('@/lib/supabase/client');
-  const { handleSupabaseError } = await import('@/lib/supabase/errors');
   const supabase = getSupabase();
   if (!supabase) return [];
   const { data, error } = await supabase.rpc('get_nhan_vien_count_by_phong_ban');
@@ -567,17 +598,6 @@ export async function getEmployeeCountByPhongBan(): Promise<CountByKey[]> {
 }
 
 export async function getEmployeeCountByChucVu(): Promise<CountByKey[]> {
-  if (!isSupabase()) {
-    const all = await getEmployees();
-    const map = new Map<string, number>();
-    for (const e of all) {
-      if (!e.id_chuc_vu) continue;
-      map.set(e.id_chuc_vu, (map.get(e.id_chuc_vu) ?? 0) + 1);
-    }
-    return Array.from(map.entries()).map(([id, so_nhan_vien]) => ({ id, so_nhan_vien }));
-  }
-  const { getSupabase } = await import('@/lib/supabase/client');
-  const { handleSupabaseError } = await import('@/lib/supabase/errors');
   const supabase = getSupabase();
   if (!supabase) return [];
   const { data, error } = await supabase.rpc('get_nhan_vien_count_by_chuc_vu');
@@ -602,12 +622,6 @@ const EMPTY_STATS_PAYLOAD: EmployeeStatsServerPayload = {
 export async function getEmployeeStatsFiltered(
   params: EmployeeStatsFilterParams,
 ): Promise<EmployeeStatsServerPayload> {
-  if (!isSupabase()) {
-    const all = await getEmployees();
-    return computeEmployeeStatsPayloadFromRows(all, params);
-  }
-  const { getSupabase } = await import('@/lib/supabase/client');
-  const { handleSupabaseError } = await import('@/lib/supabase/errors');
   const supabase = getSupabase();
   if (!supabase) return EMPTY_STATS_PAYLOAD;
 

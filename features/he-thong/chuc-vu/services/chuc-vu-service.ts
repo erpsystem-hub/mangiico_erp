@@ -4,7 +4,6 @@ import { parseTrangThaiHoatDongImport, type TrangThaiHoatDong } from '@/lib/cons
 import { getJobLevels } from '../../cap-bac/services/cap-bac-service';
 import { getDepartments } from '../../phong-ban/services/phong-ban-service';
 import { createRepository } from '@/lib/data/create-repository';
-import { isSupabase } from '@/lib/data/config';
 import {
   POSITION_RETURNING_FULL,
   POSITION_RETURNING_STATUS_ONLY,
@@ -13,12 +12,10 @@ import {
 } from '../core/supabase-select';
 import { isPostgrestRelationshipError } from '@/lib/supabase/postgrest-errors';
 import { txt } from '../../../../lib/text';
-import { normalizeCapQuanLyInput } from '../utils/cap-quan-ly';
 
 const repo = createRepository<Position>({
   tableName: 'var_chuc_vu',
   select: POSITION_SELECT_FULL,
-  delay: 600,
 });
 
 function pickEmbedded<T>(v: unknown): T | undefined {
@@ -37,7 +34,6 @@ function flattenSupabaseRow(row: Record<string, unknown>): Position {
   } as Position;
 }
 
-/** Chuẩn hoá cap_bac (int2 từ PostgREST: number / bigint / chuỗi số) → chuỗi hiển thị/lưu form. */
 function normalizeCapBacFromApi(raw: unknown): string | null {
   if (raw == null || raw === '') return null;
   if (typeof raw === 'bigint') return String(raw);
@@ -54,7 +50,6 @@ function normalizePositionRow(raw: Position): Position {
     id: String(raw.id),
     phong_ban_id: raw.phong_ban_id == null || raw.phong_ban_id === '' ? null : String(raw.phong_ban_id),
     cap_bac: normalizeCapBacFromApi(raw.cap_bac as unknown),
-    cap_quan_ly: normalizeCapQuanLyInput(raw.cap_quan_ly as string | null | undefined),
     thu_tu: typeof raw.thu_tu === 'number' ? raw.thu_tu : Number(raw.thu_tu),
   };
 }
@@ -76,11 +71,9 @@ function normInt16Fk(v: string | null | undefined): number | null {
 export type PositionLookupRow = {
   id: string;
   ten_chuc_vu: string;
-  cap_quan_ly?: string | null;
 };
 
 function mapRawPositions(list: Position[]): Position[] {
-  if (!isSupabase()) return list.map((r) => normalizePositionRow(r));
   return (list as unknown as Record<string, unknown>[]).map((r) =>
     'var_phong_ban' in r
       ? normalizePositionRow(flattenSupabaseRow(r))
@@ -115,7 +108,6 @@ async function enrichPosition(raw: Position): Promise<Position> {
   return enriched;
 }
 
-/** Lookup nhẹ cho enrich nhân viên — không gọi getDepartments / cap_bac. */
 export async function getPositionLookupMap(): Promise<Map<string, PositionLookupRow>> {
   const list = await getPositionRepositoryAll();
   const map = new Map<string, PositionLookupRow>();
@@ -124,7 +116,6 @@ export async function getPositionLookupMap(): Promise<Map<string, PositionLookup
     map.set(row.id, {
       id: row.id,
       ten_chuc_vu: row.ten_chuc_vu,
-      cap_quan_ly: row.cap_quan_ly ?? null,
     });
   }
   return map;
@@ -153,79 +144,43 @@ export const createPosition = async (data: PositionFormValues): Promise<Position
   const ten = data.ten_chuc_vu.trim();
   const moTa = data.mo_ta && String(data.mo_ta).trim() !== '' ? String(data.mo_ta).trim() : null;
 
-  if (isSupabase()) {
-    const inserted = await repo.insert(
-      {
-        ten_chuc_vu: ten,
-        mo_ta: moTa,
-        cap_bac: normInt16Fk(data.cap_bac ?? undefined),
-        cap_quan_ly: normalizeCapQuanLyInput(data.cap_quan_ly ?? undefined),
-        phong_ban_id: normInt8Fk(data.phong_ban_id ?? undefined),
-        thu_tu: data.thu_tu ?? 0,
-        trang_thai: data.trang_thai,
-        tg_tao: now,
-        tg_cap_nhat: now,
-      } as unknown as Omit<Position, 'id'> & { id?: string },
-      { returningSelect: POSITION_RETURNING_FULL },
-    );
-    const flat = flattenSupabaseRow(inserted as unknown as Record<string, unknown>);
-    return enrichPosition(flat);
-  }
-
-  const id = `pos-${Date.now()}`;
   const inserted = await repo.insert(
     {
-      id,
       ten_chuc_vu: ten,
-      cap_bac: data.cap_bac && String(data.cap_bac).trim() !== '' ? String(data.cap_bac).trim() : null,
-      cap_quan_ly: normalizeCapQuanLyInput(data.cap_quan_ly ?? undefined),
-      phong_ban_id: data.phong_ban_id && String(data.phong_ban_id).trim() !== '' ? String(data.phong_ban_id).trim() : null,
       mo_ta: moTa,
+      cap_bac: normInt16Fk(data.cap_bac ?? undefined),
+      phong_ban_id: normInt8Fk(data.phong_ban_id ?? undefined),
       thu_tu: data.thu_tu ?? 0,
       trang_thai: data.trang_thai,
       tg_tao: now,
       tg_cap_nhat: now,
-    } as Omit<Position, 'id'> & { id: string },
+    } as unknown as Omit<Position, 'id'> & { id?: string },
     { returningSelect: POSITION_RETURNING_FULL },
   );
-  return enrichPosition(inserted as Position);
+  const flat = flattenSupabaseRow(inserted as unknown as Record<string, unknown>);
+  return enrichPosition(flat);
 };
 
 export const updatePosition = async (id: string, data: PositionFormValues): Promise<Position> => {
   const existingRaw = await repo.getById(id);
   if (!existingRaw) throw new Error(txt('position.service.notFound'));
-  const existing = isSupabase()
-    ? normalizePositionRow(flattenSupabaseRow(existingRaw as unknown as Record<string, unknown>))
-    : (existingRaw as Position);
+  const existing = normalizePositionRow(flattenSupabaseRow(existingRaw as unknown as Record<string, unknown>));
 
   const ten = data.ten_chuc_vu.trim();
   const moTa = data.mo_ta && String(data.mo_ta).trim() !== '' ? String(data.mo_ta).trim() : null;
 
-  const payload = isSupabase()
-    ? ({
-        ten_chuc_vu: ten,
-        mo_ta: moTa,
-        cap_bac: normInt16Fk(data.cap_bac ?? undefined),
-        cap_quan_ly: normalizeCapQuanLyInput(data.cap_quan_ly ?? undefined),
-        phong_ban_id: normInt8Fk(data.phong_ban_id ?? undefined),
-        thu_tu: data.thu_tu ?? existing.thu_tu,
-        trang_thai: data.trang_thai,
-        tg_cap_nhat: new Date().toISOString(),
-      } as unknown as Partial<Position>)
-    : ({
-        ten_chuc_vu: ten,
-        mo_ta: moTa,
-        cap_bac: data.cap_bac && String(data.cap_bac).trim() !== '' ? String(data.cap_bac).trim() : null,
-        cap_quan_ly: normalizeCapQuanLyInput(data.cap_quan_ly ?? undefined),
-        phong_ban_id:
-          data.phong_ban_id && String(data.phong_ban_id).trim() !== '' ? String(data.phong_ban_id).trim() : null,
-        thu_tu: data.thu_tu ?? existing.thu_tu,
-        trang_thai: data.trang_thai,
-        tg_cap_nhat: new Date().toISOString(),
-      } as Partial<Position>);
+  const payload = {
+    ten_chuc_vu: ten,
+    mo_ta: moTa,
+    cap_bac: normInt16Fk(data.cap_bac ?? undefined),
+    phong_ban_id: normInt8Fk(data.phong_ban_id ?? undefined),
+    thu_tu: data.thu_tu ?? existing.thu_tu,
+    trang_thai: data.trang_thai,
+    tg_cap_nhat: new Date().toISOString(),
+  } as unknown as Partial<Position>;
 
   const updated = await repo.update(id, payload, { returningSelect: POSITION_RETURNING_FULL });
-  const flat = isSupabase() ? flattenSupabaseRow(updated as unknown as Record<string, unknown>) : updated;
+  const flat = flattenSupabaseRow(updated as unknown as Record<string, unknown>);
   return enrichPosition(flat as Position);
 };
 
@@ -241,8 +196,7 @@ export const updatePositionStatus = async (ids: string[], status: TrangThaiHoatD
     ),
   );
   if (ids.length !== 1) return undefined;
-  let result = results[0] as Position;
-  if (isSupabase()) result = flattenSupabaseRow(result as unknown as Record<string, unknown>);
+  const result = flattenSupabaseRow(results[0] as unknown as Record<string, unknown>);
   return enrichPosition(result);
 };
 
@@ -250,9 +204,8 @@ export const deletePositions = async (ids: string[]): Promise<void> => {
   await repo.remove(ids);
 };
 
-/** Import nhiều chức vụ (chỉ thêm mới). Cột: ten_chuc_vu; cấp bậc: cap_bac | ma_cap_bac | cap_bac_id (legacy); phòng ban: phong_ban_id | ten_phong_ban; mo_ta, thu_tu, trang_thai */
 export const importPositions = async (
-  rows: Record<string, unknown>[]
+  rows: Record<string, unknown>[],
 ): Promise<{ created: number; errors: string[] }> => {
   const levels = await getJobLevels();
   const depts = await getDepartments();
@@ -289,14 +242,6 @@ export const importPositions = async (
 
     const capRaw = row.cap_bac ?? row['cap_bac_id'] ?? row.ma_cap_bac;
     const pbRaw = row.phong_ban_id ?? row.ten_phong_ban;
-    const capQuanLyRaw = row.cap_quan_ly;
-    const resolvedCapQuanLy = normalizeCapQuanLyInput(
-      capQuanLyRaw != null && String(capQuanLyRaw).trim() !== '' ? String(capQuanLyRaw) : undefined,
-    );
-    if (capQuanLyRaw != null && String(capQuanLyRaw).trim() !== '' && resolvedCapQuanLy == null) {
-      errors.push(`Dòng ${i + 2}: ${txt('position.validation.managementLevelInvalid')}`);
-      continue;
-    }
     const resolvedCapBac = resolveCapId(capRaw);
     const phong_ban_id = resolveDeptId(pbRaw);
     if (!resolvedCapBac) {
@@ -311,15 +256,10 @@ export const importPositions = async (
       );
       continue;
     }
-    if (!resolvedCapQuanLy) {
-      errors.push(`Dòng ${i + 2}: ${txt('position.validation.managementLevelRequired')}`);
-      continue;
-    }
 
     const parsed = positionSchema.safeParse({
       ten_chuc_vu,
       cap_bac: resolvedCapBac,
-      cap_quan_ly: resolvedCapQuanLy,
       phong_ban_id,
       mo_ta: row.mo_ta != null ? String(row.mo_ta) : '',
       thu_tu: row.thu_tu != null && String(row.thu_tu).trim() !== '' ? Number(row.thu_tu) : 0,

@@ -10,6 +10,7 @@ import ParentSelect from '../../../../components/ui/ParentSelect';
 import { DepartmentFormValues, departmentSchema } from '../core/schema';
 import { Department } from '../core/types';
 import { useCreateDepartment, useUpdateDepartment } from '../hooks/use-phong-ban';
+import { useSupabaseReady } from '@/lib/supabase/use-supabase-list-enabled';
 import GenericDrawer, { DRAWER_WIDTH_FORM } from '../../../../components/shared/GenericDrawer';
 import FormSection from '../../../../components/shared/FormSection';
 import FormGrid from '../../../../components/shared/FormGrid';
@@ -25,6 +26,7 @@ interface Props {
 
 const DepartmentForm: React.FC<Props> = ({ initialData, allDepartments, onClose, defaultParentId }) => {
   const isEdit = !!initialData;
+  const sessionReady = useSupabaseReady();
   const createMutation = useCreateDepartment(onClose);
   const updateMutation = useUpdateDepartment(onClose);
 
@@ -78,7 +80,7 @@ const DepartmentForm: React.FC<Props> = ({ initialData, allDepartments, onClose,
     }
   };
 
-  const isLoading = createMutation.isPending || updateMutation.isPending;
+  const isLoading = !sessionReady || createMutation.isPending || updateMutation.isPending;
 
   return (
     <GenericDrawer

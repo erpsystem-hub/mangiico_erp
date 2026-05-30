@@ -12,8 +12,21 @@ const Home = lazy(() => import('./pages/Home'));
 const LicenseInfo = lazy(() => import('./pages/LicenseInfo'));
 const NotificationPage = lazy(() => import('./pages/NotificationPage'));
 const SystemDashboard = lazy(() => import('./pages/dashboards/SystemDashboard'));
+const BusinessDashboard = lazy(() => import('./pages/dashboards/BusinessDashboard'));
+const ProductionDashboard = lazy(() => import('./pages/dashboards/ProductionDashboard'));
+const FinanceDashboard = lazy(() => import('./pages/dashboards/FinanceDashboard'));
 
 import { ProtectedRoute } from './components/auth/ProtectedRoute';
+import FinanceModulePlaceholder from './pages/tai-chinh/FinanceModulePlaceholder';
+import ProductionModulePlaceholder from './pages/san-xuat/ProductionModulePlaceholder';
+const ProductAttributePage = lazy(() => import('./features/san-xuat/thuoc-tinh-hang-hoa/index'));
+const MeasurementSpecPage = lazy(() => import('./features/san-xuat/thong-so-do/index'));
+const ProductCategoryPage = lazy(() => import('./features/san-xuat/danh-muc-hang-hoa/index'));
+const ProductCatalogPage = lazy(() => import('./features/san-xuat/danh-sach-hang-hoa/index'));
+const MaterialCategoryPage = lazy(() => import('./features/san-xuat/danh-muc-nguyen-lieu/index'));
+const MaterialCatalogPage = lazy(() => import('./features/san-xuat/danh-sach-nguyen-lieu/index'));
+const FinanceCategoryPage = lazy(() => import('./features/tai-chinh/danh-muc-tai-chinh/index'));
+const FinanceAccountPage = lazy(() => import('./features/tai-chinh/tai-khoan/index'));
 import {
   ThemeSynchronizer,
   MetadataSynchronizer,
@@ -29,6 +42,7 @@ const ThongTinToChucPage = lazy(() => import('./features/he-thong/thong-tin-to-c
 const SecurityPage = lazy(() => import('./features/he-thong/phan-quyen/index'));
 const DepartmentPage = lazy(() => import('./features/he-thong/phong-ban/index'));
 const PositionPage = lazy(() => import('./features/he-thong/chuc-vu/index'));
+const BranchPage = lazy(() => import('./features/he-thong/chi-nhanh/index'));
 const NotFoundPage = lazy(() => import('./pages/NotFound'));
 
 const PageFallback = () => (
@@ -70,17 +84,58 @@ const App = () => {
           <Route path="/" element={<Home />} />
           <Route path="/thong-tin-ban-quyen" element={<LicenseInfo />} />
 
+          <Route path="/kinh-doanh" element={<BusinessDashboard />} />
+          <Route path="/san-xuat" element={<ProductionDashboard />} />
+          <Route
+            path="/san-xuat/lenh-san-xuat"
+            element={<ProductionModulePlaceholder moduleKey="lenh-san-xuat" />}
+          />
+          <Route
+            path="/san-xuat/bao-cao-san-xuat"
+            element={<ProductionModulePlaceholder moduleKey="bao-cao-san-xuat" />}
+          />
+          <Route path="/san-xuat/phieu-kho" element={<ProductionModulePlaceholder moduleKey="phieu-kho" />} />
+          <Route
+            path="/san-xuat/bao-cao-kho"
+            element={<ProductionModulePlaceholder moduleKey="bao-cao-kho" />}
+          />
+          <Route
+            path="/san-xuat/danh-sach-kho"
+            element={<ProductionModulePlaceholder moduleKey="danh-sach-kho" />}
+          />
+          <Route path="/san-xuat/danh-muc-hang-hoa" element={<ProductCategoryPage />} />
+          <Route path="/san-xuat/danh-sach-hang-hoa" element={<ProductCatalogPage />} />
+          <Route path="/san-xuat/thuoc-tinh-hang-hoa" element={<ProductAttributePage />} />
+          <Route path="/san-xuat/thong-so-do" element={<MeasurementSpecPage />} />
+          <Route path="/san-xuat/danh-muc-nguyen-lieu" element={<MaterialCategoryPage />} />
+          <Route path="/san-xuat/danh-sach-nguyen-lieu" element={<MaterialCatalogPage />} />
+          <Route path="/san-xuat/bom" element={<ProductionModulePlaceholder moduleKey="bom" />} />
+          <Route path="/tai-chinh" element={<FinanceDashboard />} />
+          <Route path="/tai-chinh/so-thu-chi" element={<FinanceModulePlaceholder moduleKey="so-thu-chi" />} />
+          <Route path="/tai-chinh/tai-khoan" element={<FinanceAccountPage />} />
+          <Route path="/tai-chinh/danh-muc-tai-chinh" element={<FinanceCategoryPage />} />
+          <Route
+            path="/tai-chinh/tra-cuu-tai-khoan"
+            element={<FinanceModulePlaceholder moduleKey="tra-cuu-tai-khoan" />}
+          />
+          <Route
+            path="/tai-chinh/bao-cao-tai-chinh"
+            element={<FinanceModulePlaceholder moduleKey="bao-cao-tai-chinh" />}
+          />
           <Route path="/he-thong" element={<SystemDashboard />} />
+          <Route path="/kinh-doanh-san-xuat" element={<Navigate to="/kinh-doanh" replace />} />
           <Route path="/he-thong/nhan-vien" element={<EmployeePage />} />
           <Route path="/he-thong/phong-ban" element={<DepartmentPage />} />
           <Route path="/he-thong/chuc-vu" element={<PositionPage />} />
           <Route path="/he-thong/thong-tin-to-chuc" element={<ThongTinToChucPage />} />
+          <Route path="/he-thong/chi-nhanh" element={<BranchPage />} />
           <Route path="/he-thong/thong-tin-cong-ty" element={<Navigate to="/he-thong/thong-tin-to-chuc" replace />} />
           <Route path="/he-thong/phan-quyen" element={<SecurityPage />} />
 
           <Route path="/nhan-vien" element={<Navigate to="/he-thong/nhan-vien" replace />} />
           <Route path="/phong-ban" element={<Navigate to="/he-thong/phong-ban" replace />} />
           <Route path="/chuc-vu" element={<Navigate to="/he-thong/chuc-vu" replace />} />
+          <Route path="/chi-nhanh" element={<Navigate to="/he-thong/chi-nhanh" replace />} />
           <Route path="/thong-tin-cong-ty" element={<Navigate to="/he-thong/thong-tin-to-chuc" replace />} />
           <Route path="/phan-quyen" element={<Navigate to="/he-thong/phan-quyen" replace />} />
 

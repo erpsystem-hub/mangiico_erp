@@ -31,7 +31,6 @@ function pos(id: string, phong_ban_id: string | number, ten = 'CV'): Position {
     mo_ta: null,
     phong_ban_id: phong_ban_id as string,
     cap_bac: '4',
-    cap_quan_ly: 'Tỉnh',
     thu_tu: 1,
     trang_thai: 'Đang hoạt động',
     tg_tao: '',

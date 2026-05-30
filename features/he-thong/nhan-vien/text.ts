@@ -371,6 +371,7 @@ export const employee = {
     "positionRequired": "Vui lòng chọn chức vụ",
     "departmentRequired": "Vui lòng chọn phòng ban",
     "unitRequired": "Vui lòng chọn bộ phận",
+    "branchRequired": "Vui lòng chọn ít nhất một chi nhánh",
     "donViRequired": "Chức vụ cấp \"Xã phường\" bắt buộc chọn xã/phường (đơn vị)",
     "hireDateInvalid": "Ngày vào làm không hợp lệ",
     "ageMin": "Nhân viên phải đủ 16 tuổi trở lên",

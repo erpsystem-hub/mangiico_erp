@@ -11,6 +11,7 @@ CROSS JOIN (
     ('phong-ban', 'xem'),
     ('chuc-vu', 'xem'),
     ('thong-tin-to-chuc', 'xem'),
+    ('chi-nhanh', 'xem'),
     ('phan-quyen', 'xem')
 ) AS m(module_key, quyen)
 WHERE cv.id <> 1

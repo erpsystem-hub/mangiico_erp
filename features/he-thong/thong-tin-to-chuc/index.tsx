@@ -7,15 +7,17 @@ import { ArrowLeft } from 'lucide-react';
 import { useAuthStore, useUIStore } from '../../../store/useStore';
 import { toast } from 'sonner';
 import { useCan } from '@/hooks/use-can';
+import { useAppSessionReady } from '@/hooks/use-auth-session';
+import { SessionInitializingSpinner } from '@/components/auth/SessionInitializingSpinner';
 import ThongTinToChucForm from './components/thong-tin-to-chuc-form';
 import type { CompanyFormValues } from './core/types';
 import { saveThongTinToChuc } from './services/thong-tin-to-chuc-service';
-import { isSupabase } from '@/lib/data/config';
 import { queryKeys } from '@/lib/query-keys';
 
 const ThongTinToChucPage: React.FC = () => {
   const user = useAuthStore((s) => s.user);
   const canView = useCan('view', 'company');
+  const { isInitializing } = useAppSessionReady();
   const canEdit = useCan('edit', 'company');
   const navigate = useNavigate();
   const location = useLocation();
@@ -31,19 +33,21 @@ const ThongTinToChucPage: React.FC = () => {
   const { companyInfo, setCompanyInfo } = useUIStore();
   const queryClient = useQueryClient();
 
-  const handleSubmit = async (data: CompanyFormValues & { appLogo: string | null }) => {
+  const handleSubmit = async (data: CompanyFormValues) => {
     if (!canEdit) return;
     try {
       const saved = await saveThongTinToChuc(data);
       setCompanyInfo(saved);
-      if (isSupabase()) {
-        queryClient.setQueryData(queryKeys.thongTinToChuc.singleton, saved);
-      }
+      queryClient.setQueryData(queryKeys.thongTinToChuc.singleton, saved);
       toast.success(txt('company.saveSuccess'));
     } catch (e: unknown) {
       toast.error(e instanceof Error ? e.message : 'Lỗi lưu');
     }
   };
+
+  if (isInitializing) {
+    return <SessionInitializingSpinner />;
+  }
 
   if (!canView) {
     return (
@@ -82,6 +86,7 @@ const ThongTinToChucPage: React.FC = () => {
         initialValues={{
           ...companyInfo,
           appDescription: companyInfo.appDescription ?? '',
+          appLogo: companyInfo.appLogo ?? '',
           address: companyInfo.address ?? '',
           phone: companyInfo.phone ?? '',
           email: companyInfo.email ?? '',

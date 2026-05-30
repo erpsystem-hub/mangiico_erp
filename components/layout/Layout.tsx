@@ -12,7 +12,7 @@ import {
 } from 'lucide-react';
 import { NotificationBell } from '../notification';
 import { useAuthStore, useUIStore } from '../../store/useStore';
-import { getAuthService } from '../../lib/supabase/auth';
+import { signOutAndClear } from '../../lib/auth/session-manager';
 import { motion, AnimatePresence } from 'framer-motion';
 import Button from '../ui/Button';
 import { cn } from '../../lib/utils';
@@ -37,7 +37,7 @@ const SIDEBAR_WIDTH_EXPANDED = 240;
 const SIDEBAR_WIDTH_COLLAPSED = 64;
 
 const Layout: React.FC<{ children?: React.ReactNode }> = ({ children }) => {
-  const { user, logout } = useAuthStore();
+  const { user } = useAuthStore();
   const matrixActive = usePermissionGrantStore((s) => s.matrixActive);
   const grantsByModule = usePermissionGrantStore((s) => s.grantsByModule);
   const chucVuCapBac = usePermissionGrantStore((s) => s.chucVuCapBac);
@@ -101,8 +101,7 @@ const Layout: React.FC<{ children?: React.ReactNode }> = ({ children }) => {
   }, [location.pathname, isMobile, sidebarOpen, toggleSidebar]);
 
   const handleLogout = () => {
-    void getAuthService().signOut();
-    logout();
+    void signOutAndClear();
     setShowLogoutDialog(false);
     setIsUserMenuOpen(false);
     navigate('/dang-nhap');

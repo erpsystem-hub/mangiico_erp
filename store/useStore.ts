@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { persist, type PersistStorage, type StorageValue } from 'zustand/middleware';
+import { persist } from 'zustand/middleware';
 import {
   DEFAULT_BRANDING_APP_DESCRIPTION,
   DEFAULT_BRANDING_APP_NAME,
@@ -10,45 +10,6 @@ import { DEFAULT_FONT_FAMILY } from '../lib/theme/tokens';
 import { AuthState, User } from '../types';
 import { usePermissionGrantStore } from './usePermissionGrantStore';
 
-const AUTH_REMEMBER_KEY = 'auth-remember';
-
-/** Kiểm tra động xem người dùng có bật "Ghi nhớ đăng nhập" không. */
-function isRemembered(): boolean {
-  return typeof window !== 'undefined' && localStorage.getItem(AUTH_REMEMBER_KEY) !== 'false';
-}
-
-/**
- * Storage adapter động cho zustand persist.
- * Mỗi lần đọc/ghi đều kiểm tra auth-remember tại thời điểm đó,
- * đảm bảo lựa chọn "Ghi nhớ" có hiệu lực ngay trong cùng phiên đăng nhập.
- */
-type AuthPersistSlice = Pick<AuthState, 'user' | 'isAuthenticated'>;
-
-function createAuthPersistStorage(): PersistStorage<AuthPersistSlice> | undefined {
-  if (typeof window === 'undefined') return undefined;
-  return {
-    getItem: (name: string): StorageValue<AuthPersistSlice> | null => {
-      const storage = isRemembered() ? localStorage : sessionStorage;
-      const raw = storage.getItem(name);
-      return raw ? (JSON.parse(raw) as StorageValue<AuthPersistSlice>) : null;
-    },
-    setItem: (name: string, value: StorageValue<AuthPersistSlice>) => {
-      const serialized = JSON.stringify(value);
-      if (isRemembered()) {
-        sessionStorage.removeItem(name);
-        localStorage.setItem(name, serialized);
-      } else {
-        localStorage.removeItem(name);
-        sessionStorage.setItem(name, serialized);
-      }
-    },
-    removeItem: (name: string) => {
-      localStorage.removeItem(name);
-      sessionStorage.removeItem(name);
-    },
-  };
-}
-
 export const useAuthStore = create<AuthState>()(
   persist(
     (set) => ({
@@ -56,6 +17,12 @@ export const useAuthStore = create<AuthState>()(
       isAuthenticated: false,
       _hasHydrated: false,
       login: (user: User) => set({ user, isAuthenticated: true }),
+      /** Chỉ xóa state app — dùng `signOutAndClear()` cho đăng xuất đầy đủ. */
+      clearAuthState: () => {
+        usePermissionGrantStore.getState().clearMatrix();
+        set({ user: null, isAuthenticated: false });
+      },
+      /** @deprecated Dùng `signOutAndClear()` từ session-manager. */
       logout: () => {
         usePermissionGrantStore.getState().clearMatrix();
         set({ user: null, isAuthenticated: false });
@@ -63,8 +30,7 @@ export const useAuthStore = create<AuthState>()(
     }),
     {
       name: 'auth-storage',
-      version: 2,
-      storage: createAuthPersistStorage(),
+      version: 4,
       partialize: (state): Pick<AuthState, 'user' | 'isAuthenticated'> => ({
         user: state.user,
         isAuthenticated: state.isAuthenticated,
@@ -95,6 +61,24 @@ export const useAuthStore = create<AuthState>()(
             id_phong_ban: 'dep-7',
             role: 'admin',
           };
+        }
+        if (version < 3) {
+          const u = state.user;
+          if (
+            u &&
+            (u.id === 'emp-000' ||
+              u.email === 'demo@example.com' ||
+              u.role === 'admin' ||
+              u.id === '123')
+          ) {
+            return { user: null, isAuthenticated: false } as AuthState;
+          }
+        }
+        if (version < 4) {
+          // v4: auth-storage luôn localStorage (khớp JWT Supabase); dọn sessionStorage cũ.
+          if (typeof sessionStorage !== 'undefined') {
+            sessionStorage.removeItem('auth-storage');
+          }
         }
         return state;
       },
@@ -172,7 +156,7 @@ export const useUIStore = create<UIState>()(
         set((state) => ({ ...state, ...settings }));
       },
 
-      // Thông tin tổ chức + thương hiệu (persist; đồng bộ Supabase khi `isSupabase()` — có URL + anon key)
+      // Thông tin tổ chức + thương hiệu (persist; đồng bộ var_thong_tin_to_chuc từ Supabase)
       companyInfo: { ...DEFAULT_COMPANY_INFO },
       setCompanyInfo: (info) => set((state) => ({
         companyInfo: { ...state.companyInfo, ...info }

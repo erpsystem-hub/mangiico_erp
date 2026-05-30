@@ -51,6 +51,46 @@ export const queryKeys = {
   jobLevels: {
     all: ['job-levels'] as const,
   },
+  chiNhanh: {
+    all: ['chi-nhanh'] as const,
+    detail: (id: string) => ['chi-nhanh', id] as const,
+  },
+  financeCategories: {
+    all: ['finance-categories'] as const,
+    detail: (id: string) => ['finance-categories', id] as const,
+  },
+  financeAccounts: {
+    all: ['finance-accounts'] as const,
+    detail: (id: string) => ['finance-accounts', id] as const,
+  },
+  productAttributes: {
+    all: ['product-attributes'] as const,
+    detail: (id: string) => ['product-attributes', id] as const,
+  },
+  measurementSpecs: {
+    all: ['measurement-specs'] as const,
+    detail: (id: string) => ['measurement-specs', id] as const,
+  },
+  productCatalog: {
+    all: ['product-catalog'] as const,
+    detail: (id: string) => ['product-catalog', id] as const,
+    attributeValues: (id: string) => ['product-catalog', id, 'attribute-values'] as const,
+  },
+  productCategories: {
+    all: ['product-categories'] as const,
+    detail: (id: string) => ['product-categories', id] as const,
+    links: (id: string) => ['product-categories', id, 'links'] as const,
+    attributeLinkMatrix: ['product-categories', 'attribute-link-matrix'] as const,
+    measurementLinkMatrix: ['product-categories', 'measurement-link-matrix'] as const,
+  },
+  materialCategories: {
+    all: ['material-categories'] as const,
+    detail: (id: string) => ['material-categories', id] as const,
+  },
+  materialCatalog: {
+    all: ['material-catalog'] as const,
+    detail: (id: string) => ['material-catalog', id] as const,
+  },
   thongTinToChuc: {
     singleton: ['thong-tin-to-chuc', 'singleton'] as const,
   },
@@ -59,3 +99,13 @@ export const queryKeys = {
     signed: (objectPath: string) => ['avatars', 'signed', objectPath] as const,
   },
 } as const;
+
+/** Invalidate sau khi Supabase Auth có JWT — tránh cache RLS `[]` từ request anon. */
+export const MASTER_DATA_QUERY_KEYS = [
+  queryKeys.departments.all,
+  queryKeys.positions.all,
+  queryKeys.chiNhanh.all,
+  queryKeys.roles.all,
+  queryKeys.jobLevels.all,
+  queryKeys.employees.all,
+] as const;

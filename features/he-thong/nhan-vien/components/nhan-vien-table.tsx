@@ -1,6 +1,6 @@
 import React, { memo, useMemo, useCallback, useState } from 'react';
 import { txt } from '../../../../lib/text';
-import { Briefcase, Building2, Layers } from 'lucide-react';
+import { Briefcase, Building2, Layers, MapPinned } from 'lucide-react';
 import { Employee } from '../core/types';
 import { useEmployeeStore } from '../store/useEmployeeStore';
 import type { ColumnConfig } from '../../../../store/createGenericStore';
@@ -11,9 +11,9 @@ import { MobileListCard } from '../../../../components/shared/MobileListCard';
 import EnumBadge from '../../../../components/ui/EnumBadge';
 import type { Department } from '../../phong-ban/core/types';
 import type { Position } from '../../chuc-vu/core/types';
+import type { Branch } from '../../chi-nhanh/core/types';
 import { useFilterCounts } from '../hooks/use-filter-counts';
 import { STATUS_BADGE_CONFIG, STATUS_OPTIONS } from '../core/constants';
-import { capQuanLyBadgeConfig } from '../../chuc-vu/utils/cap-quan-ly';
 import {
   ColumnHeaderFilter,
   ColumnHeaderSortMenu,
@@ -28,6 +28,7 @@ interface Props {
   employeesForFilterCounts: Employee[];
   departments: Department[];
   positions: Position[];
+  branches: Branch[];
   serverSidePagination?: boolean;
   serverTotalRecords?: number;
   onEdit: (item: Employee) => void;
@@ -42,6 +43,7 @@ const EmployeeTable = memo(function EmployeeTable({
   employeesForFilterCounts,
   departments,
   positions,
+  branches,
   serverSidePagination = false,
   serverTotalRecords,
   onEdit,
@@ -57,7 +59,7 @@ const EmployeeTable = memo(function EmployeeTable({
     searchTerm, filters, setFilter,
   } = useEmployeeStore();
 
-  const { deptCounts, unitCounts, posCounts, statusCounts } = useFilterCounts(
+  const { deptCounts, unitCounts, posCounts, branchCounts, statusCounts } = useFilterCounts(
     employeesForFilterCounts,
     searchTerm,
     filters,
@@ -75,6 +77,10 @@ const EmployeeTable = memo(function EmployeeTable({
     () => positions.map((p) => ({ label: p.ten_chuc_vu, value: p.id, count: posCounts[p.id] || 0 })),
     [positions, posCounts],
   );
+  const branchOptions = useMemo(
+    () => branches.map((b) => ({ label: b.ten_chi_nhanh, value: b.id, count: branchCounts[b.id] || 0 })),
+    [branches, branchCounts],
+  );
   const statusOptions = useMemo(
     () => STATUS_OPTIONS.map((s) => ({
       label: s.label,
@@ -82,11 +88,6 @@ const EmployeeTable = memo(function EmployeeTable({
       count: statusCounts[String(s.value)] || 0,
     })),
     [statusCounts],
-  );
-
-  const capQuanLyBadge = useMemo(
-    () => capQuanLyBadgeConfig(txt('position.capQuanLyTinh'), txt('position.capQuanLyXaPhuong')),
-    [],
   );
 
   const renderColumnHeaderAccessory = useCallback(
@@ -143,6 +144,18 @@ const EmployeeTable = memo(function EmployeeTable({
               setSort={setSort}
             />
           );
+        case 'ten_chi_nhanh':
+          return (
+            <ColumnHeaderFilter
+              options={branchOptions}
+              value={filters.id_chi_nhanh}
+              onChange={(v) => setFilter('id_chi_nhanh', v)}
+              ariaLabel={txt('employee.form.branch')}
+              sortColumnId="ten_chi_nhanh"
+              sort={sort}
+              setSort={setSort}
+            />
+          );
         case 'trang_thai':
           return (
             <ColumnHeaderFilter
@@ -168,7 +181,7 @@ const EmployeeTable = memo(function EmployeeTable({
           );
       }
     },
-    [departmentOptions, positionOptions, statusOptions, filters, setFilter, sort, setSort],
+    [departmentOptions, positionOptions, branchOptions, statusOptions, filters, setFilter, sort, setSort],
   );
 
   void unitOptions;
@@ -218,11 +231,12 @@ const EmployeeTable = memo(function EmployeeTable({
             </span>
           </div>
         );
-      case 'cap_quan_ly':
-        return item.cap_quan_ly ? (
-          <EnumBadge value={item.cap_quan_ly} config={capQuanLyBadge} shape="rounded" truncate />
-        ) : (
-          <span className="text-xs text-muted-foreground italic">{txt('common.emptyCell')}</span>
+      case 'ten_chi_nhanh':
+        return (
+          <div className="flex items-center gap-1.5 text-body-sm text-foreground min-w-0">
+            <MapPinned size={12} className="text-primary/60 shrink-0" />
+            <span className="truncate">{item.ten_chi_nhanh || txt('common.emptyCell')}</span>
+          </div>
         );
       case 'trang_thai':
         return <EnumBadge value={item.trang_thai} config={STATUS_BADGE_CONFIG} truncate />;
@@ -240,7 +254,7 @@ const EmployeeTable = memo(function EmployeeTable({
       default:
         return null;
     }
-  }, [onEdit, onDelete, onStatusChange, rowMenuOpenId, capQuanLyBadge]);
+  }, [onEdit, onDelete, onStatusChange, rowMenuOpenId]);
 
   const renderMobileCard = useCallback((item: Employee, isSelected: boolean) => (
     <MobileListCard
@@ -281,7 +295,6 @@ const EmployeeTable = memo(function EmployeeTable({
         <p className="truncate text-xs text-muted-foreground">
           @{item.ten_tai_khoan}
           {item.ten_chuc_vu ? ` · ${item.ten_chuc_vu}` : ''}
-          {item.cap_quan_ly ? ` · ${item.cap_quan_ly}` : ''}
         </p>
       )}
       footerStart={(

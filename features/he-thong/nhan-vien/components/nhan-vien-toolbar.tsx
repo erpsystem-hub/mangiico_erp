@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
 import { txt } from '../../../../lib/text';
-import { Plus, Building2, Briefcase, Tag, Check, Power } from 'lucide-react';
+import { Plus, Building2, Briefcase, Tag, Check, Power, MapPinned } from 'lucide-react';
 import Button from '../../../../components/ui/Button';
 import { useResourcePermissions } from '@/hooks/use-resource-permissions';
 import { useEmployeeStore } from '../store/useEmployeeStore';
@@ -9,6 +9,7 @@ import FilterChipMultiSelect from '../../../../components/shared/FilterChipMulti
 import { BTN_ADD } from '../../../../lib/button-labels';
 import type { Department } from '../../phong-ban/core/types';
 import type { Position } from '../../chuc-vu/core/types';
+import type { Branch } from '../../chi-nhanh/core/types';
 import { STATUS_OPTIONS, type TrangThaiNhanVien } from '../core/constants';
 import { useFilterCounts } from '../hooks/use-filter-counts';
 import type { Employee } from '../core/types';
@@ -19,6 +20,7 @@ interface Props {
   employees: Employee[];
   departments: Department[];
   positions: Position[];
+  branches: Branch[];
   onAdd: () => void;
   onDeleteMany: (ids: string[]) => void;
   onStatusChangeMany: (ids: string[], status: TrangThaiNhanVien) => void;
@@ -28,6 +30,7 @@ const EmployeeToolbar: React.FC<Props> = ({
   employees,
   departments,
   positions,
+  branches,
   onAdd,
   onDeleteMany,
   onStatusChangeMany,
@@ -41,7 +44,7 @@ const EmployeeToolbar: React.FC<Props> = ({
     selectedIds, clearSelection,
   } = useEmployeeStore();
 
-  const { deptCounts, posCounts, statusCounts } = useFilterCounts(employees, searchTerm, filters);
+  const { deptCounts, posCounts, branchCounts, statusCounts } = useFilterCounts(employees, searchTerm, filters);
 
   const departmentOptions = useMemo(
     () => departments.map((d) => ({ label: d.ten_phong_ban, value: d.id, count: deptCounts[d.id] || 0 })),
@@ -50,6 +53,10 @@ const EmployeeToolbar: React.FC<Props> = ({
   const positionOptions = useMemo(
     () => positions.map((p) => ({ label: p.ten_chuc_vu, value: p.id, count: posCounts[p.id] || 0 })),
     [positions, posCounts],
+  );
+  const branchOptions = useMemo(
+    () => branches.map((b) => ({ label: b.ten_chi_nhanh, value: b.id, count: branchCounts[b.id] || 0 })),
+    [branches, branchCounts],
   );
   const statusOptions = useMemo(
     () =>
@@ -68,6 +75,7 @@ const EmployeeToolbar: React.FC<Props> = ({
       columnSearchN +
       (filters.id_phong_ban.length > 0 ? 1 : 0) +
       (filters.id_chuc_vu.length > 0 ? 1 : 0) +
+      (filters.id_chi_nhanh.length > 0 ? 1 : 0) +
       (filters.trang_thai.length > 0 ? 1 : 0)
     );
   }, [searchTerm, filters]);
@@ -77,6 +85,7 @@ const EmployeeToolbar: React.FC<Props> = ({
     setFilter('columnSearch', {});
     setFilter('id_phong_ban', []);
     setFilter('id_chuc_vu', []);
+    setFilter('id_chi_nhanh', []);
     setFilter('trang_thai', []);
   };
 
@@ -99,6 +108,14 @@ const EmployeeToolbar: React.FC<Props> = ({
         onChange: (val: string[]) => setFilter('id_chuc_vu', val),
       },
       {
+        key: 'id_chi_nhanh',
+        label: txt('employee.form.branch'),
+        icon: MapPinned,
+        options: branchOptions,
+        value: filters.id_chi_nhanh,
+        onChange: (val: string[]) => setFilter('id_chi_nhanh', val),
+      },
+      {
         key: 'trang_thai',
         label: txt('employee.toolbar.status'),
         icon: Tag,
@@ -107,7 +124,7 @@ const EmployeeToolbar: React.FC<Props> = ({
         onChange: (val: string[]) => setFilter('trang_thai', val),
       },
     ],
-    [departmentOptions, positionOptions, statusOptions, filters, setFilter],
+    [departmentOptions, positionOptions, branchOptions, statusOptions, filters, setFilter],
   );
 
   const filtersSlot = useMemo(
@@ -130,6 +147,14 @@ const EmployeeToolbar: React.FC<Props> = ({
           className="shrink-0 w-full min-w-0 sm:w-[min(200px,26vw)] sm:max-w-[260px]"
         />
         <FilterChipMultiSelect
+          options={branchOptions}
+          value={filters.id_chi_nhanh}
+          onChange={(val) => setFilter('id_chi_nhanh', val)}
+          placeholder={txt('employee.form.branch')}
+          icon={MapPinned}
+          className="shrink-0 w-full min-w-0 sm:w-[min(200px,26vw)] sm:max-w-[260px]"
+        />
+        <FilterChipMultiSelect
           options={statusOptions}
           value={filters.trang_thai}
           onChange={(val) => setFilter('trang_thai', val)}
@@ -139,7 +164,7 @@ const EmployeeToolbar: React.FC<Props> = ({
         />
       </div>
     ),
-    [departmentOptions, positionOptions, statusOptions, filters.id_phong_ban, filters.id_chuc_vu, filters.trang_thai, setFilter],
+    [departmentOptions, positionOptions, branchOptions, statusOptions, filters.id_phong_ban, filters.id_chuc_vu, filters.id_chi_nhanh, filters.trang_thai, setFilter],
   );
 
   const renderActions = (

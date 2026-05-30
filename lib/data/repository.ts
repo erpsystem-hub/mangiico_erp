@@ -19,7 +19,7 @@ export interface RepositoryGetByIdOptions {
 
 /** Tùy chọn PostgREST: thu hẹp payload trả về sau insert/update (giảm egress). */
 export interface RepositoryMutationOptions {
-  /** Chuỗi `.select()` sau insert/update; mock repository bỏ qua. */
+  /** Chuỗi `.select()` sau insert/update. */
   returningSelect?: string;
 }
 

@@ -32,8 +32,8 @@ const hinhAnhSchema = z
     return s === '' ? null : s;
   });
 
-/** Tra cứu `cap_quan_ly` theo `id_chuc_vu` (đồng bộ rule với `var_chuc_vu`). */
-export type EmployeePositionCapLookup = { id: string; cap_quan_ly?: string | null };
+/** Tra cứu chức vụ theo `id_chuc_vu`. */
+export type EmployeePositionCapLookup = { id: string; ten_chuc_vu?: string };
 
 const employeeBaseSchema = z.object({
   ten_tai_khoan: z
@@ -45,6 +45,9 @@ const employeeBaseSchema = z.object({
   id_phong_ban: requiredInt8Fk(txt('employee.validation.departmentRequired')),
   id_bo_phan: requiredInt8Fk(txt('employee.validation.unitRequired')),
   id_chuc_vu: requiredInt8Fk(txt('employee.validation.positionRequired')),
+  id_chi_nhanh: z
+    .array(z.string())
+    .min(1, { message: txt('employee.validation.branchRequired') }),
   trang_thai: z.enum(TRANG_THAI_NHAN_VIEN as unknown as [string, ...string[]]),
 });
 

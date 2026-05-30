@@ -5,6 +5,8 @@ import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../../../store/useStore';
 import { useCan } from '../../../hooks/use-can';
+import { useAppSessionReady } from '@/hooks/use-auth-session';
+import { SessionInitializingSpinner } from '@/components/auth/SessionInitializingSpinner';
 import { useResourcePermissions } from '@/hooks/use-resource-permissions';
 import PhongBanToolbar from './components/phong-ban-toolbar';
 import DepartmentList from './components/phong-ban-list';
@@ -44,6 +46,7 @@ const DrawerLazyFallback: React.FC = () => (
 const DepartmentPage = () => {
   const user = useAuthStore((s) => s.user);
   const canView = useCan('view', 'departments');
+  const { isInitializing } = useAppSessionReady();
   const { canCreate, canEdit, canDelete, canExport, canImport } = useResourcePermissions('departments');
   const navigate = useNavigate();
   const didRedirect = useRef(false);
@@ -348,6 +351,10 @@ const DepartmentPage = () => {
     }
     setShowExport(true);
   };
+
+  if (isInitializing) {
+    return <SessionInitializingSpinner />;
+  }
 
   if (!canView) {
     return (

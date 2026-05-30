@@ -18,6 +18,7 @@ import { toast } from 'sonner';
 import { txt } from '../../../../lib/text';
 import { queryKeys } from '@/lib/query-keys';
 import { transactionalCrudListQueryOptions } from '@/lib/supabase/query-config';
+import { useSupabaseReady } from '@/lib/supabase/use-supabase-list-enabled';
 import { getErrorMessage } from '@/lib/utils';
 import {
   invalidateEmployeesCount,
@@ -27,13 +28,15 @@ import {
 
 export { useEmployeesList } from './use-employees-list';
 
-export const useEmployee = (id: string | null) =>
-  useQuery({
+export const useEmployee = (id: string | null) => {
+  const enabled = useSupabaseReady(!!id);
+  return useQuery({
     queryKey: queryKeys.employees.detail(id ?? ''),
     queryFn: () => getEmployeeById(id!),
-    enabled: !!id,
+    enabled,
     ...transactionalCrudListQueryOptions,
   });
+};
 
 interface CreateMutationOptions {
   onSuccess?: () => void;

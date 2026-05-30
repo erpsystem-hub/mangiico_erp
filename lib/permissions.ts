@@ -2,7 +2,6 @@ import type { User } from '@/types';
 import type { ActionType } from '@/features/he-thong/phan-quyen/core/types';
 import { usePermissionGrantStore } from '@/store/usePermissionGrantStore';
 import { isPermissionMatrixEnabled } from '@/lib/permission-matrix-env';
-import { isSupabase } from '@/lib/data/config';
 
 /**
  * Hành động gắn với UI (nút, route) — mở rộng theo nghiệp vụ.
@@ -17,8 +16,26 @@ export type AppResource =
   | 'employees'
   | 'departments'
   | 'positions'
+  | 'branches'
   | 'company'
   | 'permissions'
+  | 'financeLedger'
+  | 'financeAccounts'
+  | 'financeCategories'
+  | 'financeAccountLookup'
+  | 'financeReports'
+  | 'productionOrders'
+  | 'productionReports'
+  | 'warehouseSlips'
+  | 'warehouseReports'
+  | 'productCategories'
+  | 'productCatalog'
+  | 'productAttributes'
+  | 'measurementSpecs'
+  | 'warehouseList'
+  | 'materialCategories'
+  | 'materialCatalog'
+  | 'bom'
   | 'profile'
   | 'notifications'
   | '*';
@@ -31,8 +48,26 @@ export const APP_RESOURCE_TO_MODULE: Partial<Record<AppResource, string>> = {
   employees: 'he-thong/nhan-vien',
   departments: 'he-thong/phong-ban',
   positions: 'he-thong/chuc-vu',
+  branches: 'he-thong/chi-nhanh',
   company: 'he-thong/thong-tin-to-chuc',
   permissions: 'he-thong/phan-quyen',
+  financeLedger: 'tai-chinh/so-thu-chi',
+  financeAccounts: 'tai-chinh/tai-khoan',
+  financeCategories: 'tai-chinh/danh-muc-tai-chinh',
+  financeAccountLookup: 'tai-chinh/tra-cuu-tai-khoan',
+  financeReports: 'tai-chinh/bao-cao-tai-chinh',
+  productionOrders: 'san-xuat/lenh-san-xuat',
+  productionReports: 'san-xuat/bao-cao-san-xuat',
+  warehouseSlips: 'san-xuat/phieu-kho',
+  warehouseReports: 'san-xuat/bao-cao-kho',
+  productCategories: 'san-xuat/danh-muc-hang-hoa',
+  productCatalog: 'san-xuat/danh-sach-hang-hoa',
+  productAttributes: 'san-xuat/thuoc-tinh-hang-hoa',
+  measurementSpecs: 'san-xuat/thong-so-do',
+  warehouseList: 'san-xuat/danh-sach-kho',
+  materialCategories: 'san-xuat/danh-muc-nguyen-lieu',
+  materialCatalog: 'san-xuat/danh-sach-nguyen-lieu',
+  bom: 'san-xuat/bom',
 };
 
 /** Module id cũ (Thông tin công ty) — vẫn tính quyền khi ma trận chưa cập nhật. */
@@ -141,8 +176,7 @@ function matrixCan(user: User, action: AppAction, resource: AppResource): boolea
 /**
  * Kiểm tra quyền phía client (UX: ẩn nút). Không thay thế RLS / API.
  *
- * - Mock mode admin (`user.role === 'admin'`): toàn quyền UI (trừ xóa profile).
- * - Supabase mode: mọi user đều `role='user'`, quyền hoàn toàn từ `var_chuc_vu.cap_bac` + `var_phan_quyen`.
+ * - Quyền từ `var_chuc_vu.cap_bac` + `var_phan_quyen`.
  * - Không có `id_chuc_vu` (matrix mode) → deny all.
  * - Khi `matrixActive === true`: đối chiếu `grantsByModule` theo `module_id` + `ActionType`.
  */
@@ -153,13 +187,6 @@ export function can(
 ): boolean {
   if (!user) return false;
 
-  // Mock mode: admin toàn quyền UI. Supabase mode luôn `role='user'` — không tin cache mock cũ.
-  if (user.role === 'admin' && !isSupabase()) {
-    if (resource === 'profile' && action === 'delete') return false;
-    return true;
-  }
-
-  // Matrix mode: không có chức vụ → không có quyền gì
   if (isPermissionMatrixEnabled() && !user.id_chuc_vu) {
     return false;
   }

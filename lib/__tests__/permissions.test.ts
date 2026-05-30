@@ -3,8 +3,8 @@ import { can } from '../permissions';
 import type { User } from '@/types';
 import { usePermissionGrantStore } from '@/store/usePermissionGrantStore';
 
-vi.mock('@/lib/data/config', () => ({
-  isSupabase: () => false,
+vi.mock('@/lib/permission-matrix-env', () => ({
+  isPermissionMatrixEnabled: () => true,
 }));
 
 const admin: User = {
@@ -19,7 +19,6 @@ const member: User = {
   email: 'u@test.com',
   role: 'user',
   created_at: '',
-  /** Ma trận bật (`VITE_USE_PERMISSION_MATRIX`) — không có chức vụ thì `can()` deny toàn bộ. */
   id_chuc_vu: '1',
 };
 
@@ -32,16 +31,18 @@ describe('can', () => {
     expect(can(null, 'view', 'employees')).toBe(false);
   });
 
-  it('admin can delete employees', () => {
-    expect(can(admin, 'delete', 'employees')).toBe(true);
+  it('user without id_chuc_vu cannot access when matrix enabled', () => {
+    expect(can(admin, 'delete', 'employees')).toBe(false);
   });
 
   it('member can view but not delete employees (legacy matrix off)', () => {
+    usePermissionGrantStore.getState().clearMatrix();
     expect(can(member, 'view', 'employees')).toBe(true);
     expect(can(member, 'delete', 'employees')).toBe(false);
   });
 
   it('member can edit profile', () => {
+    usePermissionGrantStore.getState().clearMatrix();
     expect(can(member, 'edit', 'profile')).toBe(true);
   });
 

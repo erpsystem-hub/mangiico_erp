@@ -1,11 +1,19 @@
 import { useAuthStore } from '@/store/useStore';
-import { isSupabase } from '@/lib/data/config';
+import { useSessionStatus } from '@/hooks/use-auth-session';
 
-/** Chỉ fetch list Supabase sau khi auth hydrate + có JWT (tránh cache RLS `[]`). */
-export function useSupabaseListEnabled(baseEnabled = true): boolean {
+/**
+ * Chỉ fetch sau khi auth hydrate + JWT Supabase sẵn sàng (tránh cache RLS `[]` từ request anon).
+ */
+export function useSupabaseReady(baseEnabled = true): boolean {
   const hasHydrated = useAuthStore((s) => s._hasHydrated);
-  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
+  const sessionStatus = useSessionStatus();
+
   if (!baseEnabled) return false;
-  if (!isSupabase()) return true;
-  return Boolean(hasHydrated && isAuthenticated);
+  if (!hasHydrated) return false;
+  return sessionStatus === 'authenticated';
+}
+
+/** @deprecated Dùng `useSupabaseReady`. */
+export function useSupabaseListEnabled(baseEnabled = true): boolean {
+  return useSupabaseReady(baseEnabled);
 }

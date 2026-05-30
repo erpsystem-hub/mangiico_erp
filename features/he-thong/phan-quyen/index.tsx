@@ -4,6 +4,8 @@ import { toast } from 'sonner';
 import { txt } from '../../../lib/text';
 import { useAuthStore } from '../../../store/useStore';
 import { useCan } from '@/hooks/use-can';
+import { useAppSessionReady } from '@/hooks/use-auth-session';
+import { SessionInitializingSpinner } from '@/components/auth/SessionInitializingSpinner';
 
 import PermissionMatrix from './components/permission-matrix';
 import { useRoles } from './hooks/use-phan-quyen';
@@ -11,6 +13,7 @@ import { useRoles } from './hooks/use-phan-quyen';
 const SecurityPage: React.FC = () => {
   const user = useAuthStore((s) => s.user);
   const canView = useCan('view', 'permissions');
+  const { isInitializing } = useAppSessionReady();
   const navigate = useNavigate();
   const didRedirect = useRef(false);
 
@@ -22,6 +25,10 @@ const SecurityPage: React.FC = () => {
   }, [user, canView, navigate]);
 
   const { data: roles = [], isLoading: isLoadingRoles } = useRoles({ enabled: canView });
+
+  if (isInitializing) {
+    return <SessionInitializingSpinner />;
+  }
 
   if (!canView) {
     return (

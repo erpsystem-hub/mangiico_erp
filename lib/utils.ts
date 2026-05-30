@@ -16,12 +16,23 @@ export function cn(...inputs: ClassValue[]) {
 
 /** Safe message for caught errors (TanStack Query, try/catch, …) */
 export function getErrorMessage(err: unknown): string {
-  if (err instanceof Error) return err.message;
-  if (typeof err === 'string') return err;
+  if (err == null) return 'Lỗi không xác định';
+  if (err instanceof Error) {
+    const msg = err.message?.trim();
+    if (!msg || msg === 'null' || msg === 'undefined') return 'Lỗi không xác định';
+    return err.message;
+  }
+  if (typeof err === 'string') {
+    const msg = err.trim();
+    if (!msg || msg === 'null' || msg === 'undefined') return 'Lỗi không xác định';
+    return err;
+  }
   try {
     return JSON.stringify(err);
   } catch {
-    return String(err);
+    const s = String(err).trim();
+    if (!s || s === 'null' || s === 'undefined') return 'Lỗi không xác định';
+    return s;
   }
 }
 

@@ -1,25 +1,14 @@
 import type { PublicTableName } from '@/lib/supabase/database.types';
-import { isSupabase } from './config';
 import type { IRepository } from './repository';
-import { MockRepository } from './mock-repository';
 import { SupabaseRepository } from './supabase-repository';
 
 export interface CreateRepositoryConfig<T extends { id: string | number }> {
   tableName: PublicTableName;
-  /** Chỉ dùng khi không cấu hình Supabase (MockRepository). Mặc định []. */
-  mockData?: T[];
   select?: string;
-  delay?: number;
 }
 
-/**
- * Factory: returns MockRepository or SupabaseRepository based on `isSupabase()` (URL + anon key, xem `lib/data/config.ts`).
- */
 export function createRepository<T extends { id: string | number }>(
   config: CreateRepositoryConfig<T>,
 ): IRepository<T> {
-  if (isSupabase()) {
-    return new SupabaseRepository<T>(config.tableName, { select: config.select });
-  }
-  return new MockRepository<T>(config.mockData ?? [], { delay: config.delay });
+  return new SupabaseRepository<T>(config.tableName, { select: config.select });
 }

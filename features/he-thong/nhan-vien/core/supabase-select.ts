@@ -38,9 +38,12 @@ export const EMPLOYEE_FULL_COLUMNS = FULL_COLS;
 /** @deprecated dùng `EMPLOYEE_SELECT_LIST` hoặc `EMPLOYEE_SELECT_FULL` thay thế. */
 export const VAR_NHAN_VIEN_ROW_COLUMNS = FULL_COLS;
 
-/** List: embed tên phòng ban / chức vụ — tránh fetch master data riêng. */
-export const EMPLOYEE_SELECT_LIST = `${LIST_COLS},pb:var_phong_ban!id_phong_ban(ten_phong_ban),bp:var_phong_ban!id_bo_phan(ten_phong_ban),cv:var_chuc_vu!id_chuc_vu(ten_chuc_vu,cap_quan_ly)`;
+const BRANCH_EMBED =
+  'nvcn:var_nhan_vien_chi_nhanh(chi_nhanh_id,cn:var_chi_nhanh!chi_nhanh_id(ten_chi_nhanh,thu_tu))';
 
-export const EMPLOYEE_SELECT_FULL = `${FULL_COLS},pb:var_phong_ban!id_phong_ban(ten_phong_ban),bp:var_phong_ban!id_bo_phan(ten_phong_ban),cv:var_chuc_vu!id_chuc_vu(ten_chuc_vu,cap_quan_ly)`;
+/** List: embed tên phòng ban / chức vụ / chi nhánh — tránh fetch master data riêng. */
+export const EMPLOYEE_SELECT_LIST = `${LIST_COLS},pb:var_phong_ban!id_phong_ban(ten_phong_ban),bp:var_phong_ban!id_bo_phan(ten_phong_ban),cv:var_chuc_vu!id_chuc_vu(ten_chuc_vu),${BRANCH_EMBED}`;
+
+export const EMPLOYEE_SELECT_FULL = `${FULL_COLS},pb:var_phong_ban!id_phong_ban(ten_phong_ban),bp:var_phong_ban!id_bo_phan(ten_phong_ban),cv:var_chuc_vu!id_chuc_vu(ten_chuc_vu),${BRANCH_EMBED}`;
 export const EMPLOYEE_RETURNING_FULL = EMPLOYEE_SELECT_FULL;
 export const EMPLOYEE_RETURNING_STATUS_ONLY = 'id,trang_thai,tg_cap_nhat';

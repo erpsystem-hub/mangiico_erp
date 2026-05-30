@@ -7,7 +7,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowRight, X, Eye, EyeOff } from 'lucide-react';
-import { useAuthStore, useUIStore } from '../store/useStore';
+import { useUIStore } from '../store/useStore';
 import Button from '../components/ui/Button';
 import Input from '../components/ui/Input';
 import { toast } from 'sonner';
@@ -15,6 +15,7 @@ import { DIALOG_SIZE } from '../lib/dialog-sizes';
 import { cn } from '../lib/utils';
 import { loginNameToSupabaseEmail } from '../lib/auth-email';
 import { getAuthService } from '../lib/supabase/auth';
+import { initSessionManager, waitUntilAuthenticated } from '../lib/auth/session-manager';
 
 const AUTH_REMEMBER_KEY = 'auth-remember';
 
@@ -25,7 +26,6 @@ type LoginValues = {
 
 const Login: React.FC = () => {
   const navigate = useNavigate();
-  const { login } = useAuthStore();
   const { companyInfo } = useUIStore();
   const [isLoading, setIsLoading] = useState(false);
 
@@ -53,13 +53,10 @@ const Login: React.FC = () => {
   const [forgotSubmitting, setForgotSubmitting] = useState(false);
   const forgotAccountInputRef = useRef<HTMLInputElement>(null);
   const [showPassword, setShowPassword] = useState(false);
-  const [rememberMe, setRememberMe] = useState(() => {
-    const v = localStorage.getItem(AUTH_REMEMBER_KEY);
-    return v === null || v === 'true';
-  });
+  const [rememberMe, setRememberMe] = useState(true);
 
   useEffect(() => {
-    if (typeof localStorage !== 'undefined' && localStorage.getItem(AUTH_REMEMBER_KEY) === null) {
+    if (typeof localStorage !== 'undefined') {
       localStorage.setItem(AUTH_REMEMBER_KEY, 'true');
     }
   }, []);
@@ -105,7 +102,16 @@ const Login: React.FC = () => {
       toast.error(result.error);
       return;
     }
-    login(result.user);
+
+    const ready = await (async () => {
+      await initSessionManager();
+      return waitUntilAuthenticated();
+    })();
+    if (!ready) {
+      toast.error('Không thể khởi tạo phiên đăng nhập. Vui lòng thử lại.');
+      return;
+    }
+
     toast.success(txt('page.login.loginSuccess'));
     navigate('/');
   };

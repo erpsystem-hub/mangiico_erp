@@ -2,10 +2,11 @@
 import React, { useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { AlertTriangle, Trash2, Info, X } from 'lucide-react';
+import { toast } from 'sonner';
 import Button from '../ui/Button';
 import { useConfirmStore } from '../../store/useConfirmStore';
 import { DIALOG_SIZE } from '../../lib/dialog-sizes';
-import { cn } from '../../lib/utils';
+import { cn, getErrorMessage } from '../../lib/utils';
 import { Z_INDEX_APP_MODAL_CLASS } from '../../lib/dialog-sizes';
 
 const ConfirmDialog: React.FC = () => {
@@ -19,7 +20,9 @@ const ConfirmDialog: React.FC = () => {
       await onConfirm();
       close();
     } catch (error) {
-      if (import.meta.env.DEV) console.error("Confirm action failed", error);
+      if (import.meta.env.DEV) console.error('Confirm action failed', error);
+      toast.error(`Lỗi: ${getErrorMessage(error)}`);
+    } finally {
       setLoading(false);
     }
   };
