@@ -10,7 +10,6 @@ import {
   Briefcase,
   Landmark,
   Shield,
-  MapPin,
   UserCircle,
   Bell,
   type LucideIcon,
@@ -28,7 +27,6 @@ const PATH_ICONS: Record<string, LucideIcon> = {
   '/he-thong/chuc-vu': Briefcase,
   '/he-thong/thong-tin-to-chuc': Landmark,
   '/he-thong/phan-quyen': Shield,
-  '/he-thong/danh-sach-tinh-thanh': MapPin,
   '/ho-so': UserCircle,
   '/thong-bao': Bell,
 };

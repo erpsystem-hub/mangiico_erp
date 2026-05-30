@@ -22,14 +22,6 @@ function requiredInt8Fk(message: string) {
     .refine((s) => s.length > 0, { message });
 }
 
-/** FK int8 tuỳ chọn (đơn vị / xã phường). */
-function optionalInt8Fk() {
-  return z
-    .union([z.literal(''), z.string(), z.number(), z.null()])
-    .optional()
-    .transform((v) => normInt8FkInput(v));
-}
-
 /** Cho phép URL tuyệt đối hoặc data URL (ảnh crop); rỗng → null. */
 const hinhAnhSchema = z
   .union([z.string(), z.null()])
@@ -53,27 +45,11 @@ const employeeBaseSchema = z.object({
   id_phong_ban: requiredInt8Fk(txt('employee.validation.departmentRequired')),
   id_bo_phan: requiredInt8Fk(txt('employee.validation.unitRequired')),
   id_chuc_vu: requiredInt8Fk(txt('employee.validation.positionRequired')),
-  don_vi_id: optionalInt8Fk(),
   trang_thai: z.enum(TRANG_THAI_NHAN_VIEN as unknown as [string, ...string[]]),
 });
 
-export function buildEmployeeSchema(positions: readonly EmployeePositionCapLookup[]) {
-  const capByChucVuId = new Map<string, string | null | undefined>(
-    positions.map((p) => [String(p.id), p.cap_quan_ly]),
-  );
-  return employeeBaseSchema.superRefine((data, ctx) => {
-    const cap = capByChucVuId.get(String(data.id_chuc_vu));
-    if (cap === 'Xã phường') {
-      const dv = data.don_vi_id ?? '';
-      if (!dv) {
-        ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          message: txt('employee.validation.donViRequired'),
-          path: ['don_vi_id'],
-        });
-      }
-    }
-  });
+export function buildEmployeeSchema(_positions: readonly EmployeePositionCapLookup[]) {
+  return employeeBaseSchema;
 }
 
 export type EmployeeFormValues = z.infer<typeof employeeBaseSchema>;

@@ -169,7 +169,7 @@ Toolbar là **một hàng điều khiển** phía trên list; bắt buộc đủ
 
 - [ ] Bảng hỗ trợ **`renderColumnHeaderAccessory`** trên `GenericTable` (và `hideSortOnColumnLabel` khi sort nằm trong menu header).
 - [ ] **Mỗi cột dữ liệu** (trừ `actions`): nút **sliders** (`ColumnHeaderSortMenu`) → **Sắp xếp A→Z / Z→A** + **ô tìm theo cột** (`ColumnHeaderSearch` trong dropdown). Tham chiếu: `features/he-thong/nhan-vien/components/nhan-vien-table.tsx` + `@/components/shared/column-header`.
-- [ ] Cột **enum / trạng thái** cần tick nhiều giá trị: **`ColumnHeaderFilter`** (sort + MultiSelect + tìm trong dropdown) — cùng `filters.<key>` với **FilterChip** trên toolbar nếu module vẫn dùng chip (vd. **Khen thưởng**: `mttq-khen-thuong-table.tsx` + `utils/column-search.ts`).
+- [ ] Cột **enum / trạng thái** cần tick nhiều giá trị: **`ColumnHeaderFilter`** (sort + MultiSelect + tìm trong dropdown) — cùng `filters.<key>` với **FilterChip** trên toolbar nếu module vẫn dùng chip (vd. **Khen thưởng**: `nhan-vien-table.tsx` + `utils/column-search.ts`).
 - [ ] **`columnSearch`**: util `*_matchesColumnSearch` + `count*ColumnSearchActive` — **không** áp text search trùng key với cột đã dùng `ColumnHeaderFilter` (khai báo danh sách skip trong util, xem `nhan-vien/utils/column-search.ts`).
 - [ ] **`filterFn`**: `columnSearch` **AND** chip/toolbar filters; **sort sau filter** trong `index` (hoặc server) — tránh sort full list rồi mới filter.
 - [ ] Toolbar: **`activeFilterCount`** gồm `columnSearch` (theo util đếm); **`onClearAllFilters`**: xóa `searchTerm`, `columnSearch`, các filter chip, và **reset sort** (`setSort(null, null)`) nếu sort client — đồng bộ **Export** với list đã lọc.
@@ -204,7 +204,7 @@ Toolbar là **một hàng điều khiển** phía trên list; bắt buộc đủ
 - [ ] Mọi trường có **`label`** hiển thị trong drawer form: truyền **`icon`** cho **`Input`**, **`Textarea`**, **`Combobox`** (và control tương đương nếu component hỗ trợ) — **không** để label “trần”.
 - [ ] **`Textarea`**: dùng cùng quy ước `icon` như `Input` (Lucide component hoặc `ReactNode`; `components/ui/Textarea.tsx` dùng `renderInputIcon`).
 - [ ] Gợi ý icon: tên / tiêu đề → `Type`; mô tả / ghi chú → `FileText`; URL → `Link2`; địa chỉ → `MapPin`; SĐT → `Phone`; email → `Mail`; thứ tự → `ListOrdered`; ngày giờ (chỉ ở detail) → `Calendar`; danh mục / nhóm → `FolderOpen` / `Package` tùy ngữ cảnh.
-- [ ] Tham chiếu: `features/he-thong/chuc-vu/components/chuc-vu-form.tsx`, `features/mat-tran-to-quoc/dot-cuu-tro/components/kho-dot-cuu-tro-form.tsx`.
+- [ ] Tham chiếu: `features/he-thong/chuc-vu/components/chuc-vu-form.tsx`, `features/he-thong/phong-ban/components/phong-ban-form.tsx`.
 
 ### 8.5 Sanitize trước khi gửi
 
@@ -216,7 +216,7 @@ Toolbar là **một hàng điều khiển** phía trên list; bắt buộc đủ
 
 ### 9.1 Thứ tự block (từ trên xuống)
 
-- [ ] **Summary card** (trên **DetailToolbar**): **bắt buộc** `DetailSummaryCard` (`components/shared/DetailSummaryCard.tsx`) — **không** copy tay class `bg-card p-4 rounded-xl border…`. **Hàng 1:** `leading` (avatar hoặc **`DetailSummaryIconTile`** + icon ~26px) + **title + badge** (nếu có) cùng hàng; **hàng 2:** `subtitle` (mã, @tài khoản, ngày `tabular-nums`, …); **`children`:** meta thêm nếu có. Tham chiếu trực tiếp trong repo: `nhan-vien-detail`, `chuc-vu-detail`, `phong-ban-detail`, `chuong-trinh-nam-detail`, `cong-viec-detail`, `bai-viet-detail`, địa bản, thiết lập bài viết / MTTQ (kỳ họp, nhiệm kỳ, ủy viên, khen thưởng, tập huấn, thiết lập, cán bộ), v.v.
+- [ ] **Summary card** (trên **DetailToolbar**): **bắt buộc** `DetailSummaryCard` (`components/shared/DetailSummaryCard.tsx`) — **không** copy tay class `bg-card p-4 rounded-xl border…`. **Hàng 1:** `leading` (avatar hoặc **`DetailSummaryIconTile`** + icon ~26px) + **title + badge** (nếu có) cùng hàng; **hàng 2:** `subtitle` (mã, @tài khoản, ngày `tabular-nums`, …); **`children`:** meta thêm nếu có. Tham chiếu trực tiếp trong repo: `nhan-vien-detail`, `chuc-vu-detail`, `phong-ban-detail`.
 - [ ] **DetailToolbar**: hành động “nổi bật” (đổi trạng thái, thêm bản ghi con, …) — chỉ hiện khi `canEdit` / đúng nghiệp vụ. **Đổi / chuyển trạng thái** → popup modal (`GenericDrawer` `variant="modal"`), không dùng drawer trượt — `docs/patterns-detail-status-change.md`.
 - [ ] **DetailSection** + **DetailField**: nhóm “Thông tin chung”, “Liên hệ”, … — mỗi field một label + value.
 

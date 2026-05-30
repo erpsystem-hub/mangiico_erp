@@ -12,25 +12,18 @@ description: Chuẩn hoá TanStack Query cho module CRUD (list + detail drawer +
 
 ## Checklist nhanh
 
-1. **`lib/query-keys.ts`**: thêm `moduleKey: { all, detail(id) }` (và `list`/`by*` nếu có tham số).
+1. **`lib/query-keys.ts`**: thêm `moduleKey: { all, detail(id) }`.
 2. **`hooks/use-*.ts`**
-   - `useQuery` list: `queryKey` = `all`, `queryFn`, `enabled` nếu có gate quyền, spread **`transactionalCrudListQueryOptions`** cho dữ liệu CRUD Supabase (không dùng cho master lookup).
-   - `useQuery` detail: cùng transactional options; `enabled: Boolean(id?.trim()) && …`.
-   - Mutations: **`setQueryData`** list; create/update **`setQueryData`** detail; delete **`removeQueries`** từng `detail(id)`; **`onError`** toast (hoặc dựa global mutation `onError`).
+   - `useQuery` list: spread **`transactionalCrudListQueryOptions`** cho CRUD Supabase.
+   - Mutations: **`setQueryData`** list/detail; delete **`removeQueries`** từng `detail(id)`.
 3. **`index.tsx`**
-   - **`onView`**: `queryClient.setQueryData(queryKeys.*.detail(item.id), item)` rồi `setViewingId` nếu row list đủ cho detail.
-   - List: `isError` + **`ErrorState`** + `refetch` khi `enabled && isError`; thêm **`listLoadErrorHint`** (hoặc tương đương) trong `text.ts`.
-   - **`handleCloseForm`**: không `invalidateQueries(detail)` khi Hủy nếu không cần refetch server (mutation đã patch cache).
-   - `useEffect`: đồng bộ `detail(viewingId)` từ `rows` khi list đổi (nếu id còn tồn tại).
-4. **Sửa từ list**: nếu `Detail === ListRow` → truyền row vào form; nếu thiếu field → **`queryClient.fetchQuery({ queryKey: detail(id), queryFn: () => getById(id), ...transactionalCrudListQueryOptions })`** rồi mở form (xem `kho-dot-cuu-tro`).
-5. **Egress / anti-pattern**: đọc [`.cursor/rules/egress-checklist.mdc`](mdc:.cursor/rules/egress-checklist.mdc) mục **C** (C2–C6).
-
-## Tài liệu dự án
-
-- Checklist module đầy đủ: [`docs/checklist-module.md`](mdc:docs/checklist-module.md) (mục 4, 5.1b, 14, 17).
-- Quy tắc Cursor: [`.cursor/rules/tanstack-query-list-detail-crud.mdc`](mdc:.cursor/rules/tanstack-query-list-detail-crud.mdc).
+   - **`onView`**: `queryClient.setQueryData(queryKeys.*.detail(item.id), item)` rồi `setViewingId`.
+   - List: `isError` + **`ErrorState`** + `refetch`.
+   - **`handleCloseForm`**: không `invalidateQueries(detail)` khi Hủy nếu cache đã khớp.
+4. **Egress**: đọc [`.cursor/rules/egress-checklist.mdc`](mdc:.cursor/rules/egress-checklist.mdc) mục **C**.
 
 ## Ví dụ tham chiếu trong repo
 
-- Đủ pattern (seed view, ErrorState, đóng form không invalidate thừa): `features/mat-tran-to-quoc/don-vi-cuu-tro/`.
-- `fetchQuery` khi mở sửa cần full row: `features/mat-tran-to-quoc/dot-cuu-tro/index.tsx` (`handleEditFromList`).
+- Nhân viên: `features/he-thong/nhan-vien/` (list + detail + form, avatar storage).
+- Phòng ban: `features/he-thong/phong-ban/` (tree, RPC path level).
+- Chức vụ: `features/he-thong/chuc-vu/`.

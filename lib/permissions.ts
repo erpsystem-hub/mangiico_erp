@@ -18,36 +18,6 @@ export type AppResource =
   | 'positions'
   | 'company'
   | 'permissions'
-  | 'provinces'
-  | 'articleSettings'
-  | 'articles'
-  | 'articleStats'
-  | 'articleCommission'
-  | 'matTranThietLapCaiDat'
-  | 'matTranOfficerList'
-  | 'matTranOfficerStats'
-  | 'matTranRewardList'
-  | 'matTranTrainingList'
-  | 'matTranTerm'
-  | 'matTranSession'
-  | 'matTranCommitteeMembers'
-  | 'matTranCommitteeMemberStats'
-  | 'matTranReliefCampaign'
-  | 'matTranReliefGoods'
-  | 'matTranReliefStockTransactions'
-  | 'matTranReliefInventory'
-  | 'matTranReliefWarehouseList'
-  | 'matTranReliefSupportUnits'
-  | 'matTranReliefSupportReport'
-  | 'matTranSalaryIncreaseList'
-  | 'matTranSalarySetup'
-  | 'annualPrograms'
-  | 'tasks'
-  | 'taskReports'
-  | 'otherInfoMttqNews'
-  | 'otherInfoZaloOa'
-  | 'otherInfoMatTranSo'
-  | 'otherInfoQuanLyVanBan'
   | 'profile'
   | 'notifications'
   | '*';
@@ -62,39 +32,6 @@ export const APP_RESOURCE_TO_MODULE: Partial<Record<AppResource, string>> = {
   positions: 'he-thong/chuc-vu',
   company: 'he-thong/thong-tin-to-chuc',
   permissions: 'he-thong/phan-quyen',
-  provinces: 'he-thong/danh-sach-tinh-thanh',
-  articleSettings: 'quan-ly-viet-bai/thiet-lap-bai-viet',
-  articles: 'quan-ly-viet-bai/bai-viet',
-  articleStats: 'quan-ly-viet-bai/bc-thong-ke-bai-viet',
-  articleCommission: 'quan-ly-viet-bai/nhuan-but-viet-bai',
-  matTranThietLapCaiDat: 'mat-tran-to-quoc/thiet-lap-khac/thiet-lap-cai-dat',
-  matTranOfficerList: 'mat-tran-to-quoc/thiet-lap-khac/danh-sach-can-bo',
-  matTranOfficerStats: 'mat-tran-to-quoc/thiet-lap-khac/bao-cao-can-bo',
-  matTranRewardList: 'mat-tran-to-quoc/tap-huan-khen-thuong/danh-sach-khen-thuong',
-  matTranTrainingList: 'mat-tran-to-quoc/tap-huan-khen-thuong/danh-sach-tap-huan',
-  matTranTerm: 'mat-tran-to-quoc/uy-vien-uy-ban/nhiem-ky',
-  matTranSession: 'mat-tran-to-quoc/uy-vien-uy-ban/ky-hop',
-  matTranCommitteeMembers: 'mat-tran-to-quoc/uy-vien-uy-ban/danh-sach-uy-vien',
-  matTranCommitteeMemberStats: 'mat-tran-to-quoc/uy-vien-uy-ban/bao-cao-uy-vien',
-  matTranReliefCampaign: 'mat-tran-to-quoc/kho-cuu-tro/dot-cuu-tro',
-  /** Hàng hóa cứu trợ — `module_key` DB: `hang-hoa`. Luật `can()`: `cap_bac===1` hoặc `quan_tri`→`admin`/`all` = toàn quyền UI; không thì từng hành động xem/thêm/sửa/xóa theo ma trận. */
-  matTranReliefGoods: 'mat-tran-to-quoc/kho-cuu-tro/hang-hoa',
-  matTranReliefStockTransactions: 'mat-tran-to-quoc/kho-cuu-tro/nhap-xuat-kho',
-  matTranReliefInventory: 'mat-tran-to-quoc/kho-cuu-tro/ton-kho',
-  matTranReliefWarehouseList: 'mat-tran-to-quoc/kho-cuu-tro/danh-sach-kho',
-  matTranReliefSupportUnits: 'mat-tran-to-quoc/kho-cuu-tro/don-vi-cuu-tro',
-  matTranReliefSupportReport: 'mat-tran-to-quoc/kho-cuu-tro/bao-cao-ho-tro',
-  /** Danh sách tăng lương — `can()`: `cap_bac===1` hoặc `quan_tri` (`admin`/`all`) hoặc token `xem`/`them`/`sua`/`xoa`. */
-  matTranSalaryIncreaseList: 'mat-tran-to-quoc/quan-ly-luong/danh-sach-tang-luong',
-  /** Thiết lập lương — cùng luật `can()` như danh sách tăng lương. */
-  matTranSalarySetup: 'mat-tran-to-quoc/quan-ly-luong/thiet-lap-luong',
-  annualPrograms: 'quan-ly-giao-viec/chuong-trinh-nam',
-  tasks: 'quan-ly-giao-viec/cong-viec',
-  taskReports: 'quan-ly-giao-viec/bao-cao-cong-viec',
-  otherInfoMttqNews: 'trang-thong-tin-khac/tin-tuc-mttq',
-  otherInfoZaloOa: 'trang-thong-tin-khac/zalo-oa',
-  otherInfoMatTranSo: 'trang-thong-tin-khac/mat-tran-so',
-  otherInfoQuanLyVanBan: 'trang-thong-tin-khac/quan-ly-van-ban',
 };
 
 /** Module id cũ (Thông tin công ty) — vẫn tính quyền khi ma trận chưa cập nhật. */

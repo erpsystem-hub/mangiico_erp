@@ -14,7 +14,7 @@ globs: features/**/**-form.tsx, features/**/**-detail.tsx, components/shared/Det
 ## Detail (drawer)
 
 - Mỗi **`DetailField`**: truyền **`icon={<IconName size={12} />}`** bên cạnh `label` và `value`.
-- Tham chiếu nhanh: `features/he-thong/chuc-vu/components/chuc-vu-detail.tsx`, `features/mat-tran-to-quoc/dot-cuu-tro/components/kho-dot-cuu-tro-detail.tsx`.
+- Tham chiếu nhanh: `features/he-thong/chuc-vu/components/chuc-vu-detail.tsx`, `features/he-thong/phong-ban/components/phong-ban-detail.tsx`, `features/he-thong/nhan-vien/components/nhan-vien-detail.tsx`.
 
 ## Checklist dự án
 

@@ -113,7 +113,7 @@ export interface CompanyInfo {
   website: string;
 }
 
-/** Mặc định MTTQVN — đồng bộ với index.html / PWA; chỉnh trong Hệ thống → Thông tin tổ chức. */
+/** Mặc định Mangiico ERP — đồng bộ với index.html / PWA; chỉnh trong Hệ thống → Thông tin tổ chức. */
 export const DEFAULT_COMPANY_INFO: CompanyInfo = {
   appName: DEFAULT_BRANDING_APP_NAME,
   appDescription: DEFAULT_BRANDING_APP_DESCRIPTION,
@@ -200,7 +200,7 @@ export const useUIStore = create<UIState>()(
         if (version < 2) {
           delete state.language;
         }
-        // v2 → v3: nâng branding mặc định từ template 5F lên MTTQVN (chỉ khi chưa đổi tên mẫu)
+        // v2 → v3: nâng branding mặc định từ template 5F lên Mangiico ERP (chỉ khi chưa đổi tên mẫu)
         if (version < 3) {
           const ci = state.companyInfo as CompanyInfo | undefined;
           if (ci?.appName === '5F template' && ci?.companyName === '5F template') {

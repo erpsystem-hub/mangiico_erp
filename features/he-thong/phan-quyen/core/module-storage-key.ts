@@ -1,13 +1,5 @@
 import { PERMISSION_FUNCTIONS } from './permission-modules-config';
 
-/** `module_key` cũ trước khi đổi route → `module_id` chuẩn hiện tại. */
-const LEGACY_MODULE_STORAGE_KEY_TO_ID: Record<string, string> = {
-  'hoa-hong-viet-bai': 'quan-ly-viet-bai/nhuan-but-viet-bai',
-  'quan-ly-viet-bai/hoa-hong-viet-bai': 'quan-ly-viet-bai/nhuan-but-viet-bai',
-  'don-vi-ho-tro': 'mat-tran-to-quoc/kho-cuu-tro/don-vi-cuu-tro',
-  'mat-tran-to-quoc/kho-cuu-tro/don-vi-ho-tro': 'mat-tran-to-quoc/kho-cuu-tro/don-vi-cuu-tro',
-};
-
 function lastPathSegment(moduleId: string): string {
   const parts = moduleId.split('/').filter(Boolean);
   return parts.length > 0 ? parts[parts.length - 1]! : moduleId;
@@ -33,9 +25,6 @@ export function resolveModuleIdFromStorageKey(raw: string): string | null {
   const key = raw.trim();
   if (!key) return null;
 
-  const legacyId = LEGACY_MODULE_STORAGE_KEY_TO_ID[key];
-  if (legacyId) return legacyId;
-
   for (const fn of PERMISSION_FUNCTIONS) {
     for (const gr of fn.groups) {
       for (const m of gr.modules) {
@@ -53,8 +42,5 @@ export function resolveModuleIdFromStorageKey(raw: string): string | null {
 export function moduleKeysForDbLookup(canonicalModuleId: string): string[] {
   const short = getModuleStorageKey(canonicalModuleId);
   const base = short === canonicalModuleId ? [short] : [...new Set([short, canonicalModuleId])];
-  const legacyKeys = Object.entries(LEGACY_MODULE_STORAGE_KEY_TO_ID)
-    .filter(([, id]) => id === canonicalModuleId)
-    .map(([k]) => k);
-  return [...new Set([...base, ...legacyKeys])];
+  return [...new Set(base)];
 }

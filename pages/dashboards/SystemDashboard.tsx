@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react';
 import { txt } from '../../lib/text';
 import { useNavigate } from 'react-router-dom';
-import { Users, Building, Shield, Briefcase, MapPin } from 'lucide-react';
+import { Users, Building, Shield, Briefcase } from 'lucide-react';
 import ModuleDashboardLayout from '../../components/dashboard/ModuleDashboardLayout';
 import type { ModuleGroup } from '../../components/dashboard/ModuleDashboardLayout';
 import type { ModuleItem } from '../../components/dashboard/SubModuleCard';
@@ -62,13 +62,6 @@ const SystemDashboard: React.FC = () => {
             description: txt('page.systemDashboard.permissionDesc'),
             icon: Shield,
             color: 'bg-rose-500',
-          },
-          {
-            path: '/he-thong/danh-sach-tinh-thanh',
-            title: txt('page.systemDashboard.provinceList'),
-            description: txt('page.systemDashboard.provinceListDesc'),
-            icon: MapPin,
-            color: 'bg-sky-500',
           },
         ],
       },

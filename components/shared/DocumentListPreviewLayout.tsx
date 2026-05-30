@@ -98,7 +98,7 @@ const DocumentListPreviewLayout: React.FC<DocumentListPreviewLayoutProps> = ({
                   aria-haspopup="menu"
                 >
                   <Download className="w-4 h-4 shrink-0" aria-hidden />
-                  {txt('matTranTapHuan.printPreview.download')}
+                  {txt('common.printPreview.download')}
                   <ChevronDown
                     className={cn('w-3.5 h-3.5 shrink-0 transition-transform', downloadOpen && 'rotate-180')}
                     aria-hidden
@@ -116,7 +116,7 @@ const DocumentListPreviewLayout: React.FC<DocumentListPreviewLayoutProps> = ({
                       className="w-full h-9 px-3 flex items-center gap-2 text-left text-sm text-foreground hover:bg-muted/60 transition-colors"
                     >
                       <FileText className="w-4 h-4 text-muted-foreground shrink-0" aria-hidden />
-                      {txt('matTranTapHuan.printPreview.downloadPdf')}
+                      {txt('common.printPreview.downloadPdf')}
                     </button>
                     <button
                       type="button"
@@ -125,7 +125,7 @@ const DocumentListPreviewLayout: React.FC<DocumentListPreviewLayoutProps> = ({
                       className="w-full h-9 px-3 flex items-center gap-2 text-left text-sm text-foreground hover:bg-muted/60 transition-colors"
                     >
                       <FileText className="w-4 h-4 text-muted-foreground shrink-0" aria-hidden />
-                      {txt('matTranTapHuan.printPreview.downloadDocx')}
+                      {txt('common.printPreview.downloadDocx')}
                     </button>
                     <button
                       type="button"
@@ -134,7 +134,7 @@ const DocumentListPreviewLayout: React.FC<DocumentListPreviewLayoutProps> = ({
                       className="w-full h-9 px-3 flex items-center gap-2 text-left text-sm text-foreground hover:bg-muted/60 transition-colors"
                     >
                       <Sheet className="w-4 h-4 text-muted-foreground shrink-0" aria-hidden />
-                      {txt('matTranTapHuan.printPreview.downloadXlsx')}
+                      {txt('common.printPreview.downloadXlsx')}
                     </button>
                   </div>
                 ) : null}
@@ -148,7 +148,7 @@ const DocumentListPreviewLayout: React.FC<DocumentListPreviewLayoutProps> = ({
               className="h-9 gap-1.5"
             >
               <Printer className="w-4 h-4 shrink-0" aria-hidden />
-              {txt('matTranTapHuan.printPreview.print')}
+              {txt('common.printPreview.print')}
             </Button>
           </div>
         </div>

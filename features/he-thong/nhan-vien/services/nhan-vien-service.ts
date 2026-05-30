@@ -23,8 +23,6 @@ import { getSupabase } from '@/lib/supabase/client';
 import { handleSupabaseError } from '@/lib/supabase/errors';
 import { SUPABASE_DEFAULT_MAX_ROWS } from '@/lib/data/supabase-repository';
 import { uploadEmployeeAvatarIfDataUrl } from './avatar-storage';
-import { getTinhThanhList, getXaPhuongAll } from '../../danh-sach-tinh-thanh/services/dia-ban-service';
-import type { XaPhuong } from '../../danh-sach-tinh-thanh/core/types';
 import { normalizeCapQuanLyInput } from '../../chuc-vu/utils/cap-quan-ly';
 
 /**
@@ -65,20 +63,7 @@ function normalizeEmployeeRow(raw: Employee): Employee {
     id_phong_ban: raw.id_phong_ban == null ? null : String(raw.id_phong_ban),
     id_bo_phan: raw.id_bo_phan == null ? null : String(raw.id_bo_phan),
     id_chuc_vu: raw.id_chuc_vu == null ? null : String(raw.id_chuc_vu),
-    don_vi_id: raw.don_vi_id == null || raw.don_vi_id === '' ? null : String(raw.don_vi_id),
   };
-}
-
-/** Bổ sung tên hiển thị từ master (khi FK int8 trùng `id` master sau này). */
-function tenDonViFromMaps(
-  donViId: string | null | undefined,
-  diaBan?: { xaById: Map<string, XaPhuong>; tinhById: Map<string, string> },
-): string | undefined {
-  if (!donViId || !diaBan) return undefined;
-  const xa = diaBan.xaById.get(String(donViId));
-  if (!xa) return undefined;
-  const tinhTen = diaBan.tinhById.get(String(xa.id_tinh_thanh ?? ''))?.trim() ?? '';
-  return tinhTen ? `${xa.ten} · ${tinhTen}` : xa.ten;
 }
 
 type PositionLookupRow = { id: string; ten_chuc_vu: string; cap_quan_ly?: string | null };
@@ -86,7 +71,6 @@ type PositionLookupRow = { id: string; ten_chuc_vu: string; cap_quan_ly?: string
 async function enrichEmployee(raw: Employee, lookups?: {
   depts?: { id: string; ten_phong_ban: string }[];
   positions?: PositionLookupRow[];
-  diaBan?: { xaById: Map<string, XaPhuong>; tinhById: Map<string, string> };
 }): Promise<Employee> {
   const row = normalizeEmployeeRow(raw);
   const depts = lookups?.depts ?? (await getDepartments()).map((d) => ({ id: d.id, ten_phong_ban: d.ten_phong_ban }));
@@ -99,7 +83,6 @@ async function enrichEmployee(raw: Employee, lookups?: {
     }));
   const cvId = row.id_chuc_vu == null ? '' : String(row.id_chuc_vu).trim();
   const pos = cvId ? positions.find((p) => String(p.id).trim() === cvId) : undefined;
-  const ten_don_vi = tenDonViFromMaps(row.don_vi_id, lookups?.diaBan);
   const cap_quan_ly = normalizeCapQuanLyInput(pos?.cap_quan_ly as string | null | undefined);
   return {
     ...row,
@@ -107,7 +90,6 @@ async function enrichEmployee(raw: Employee, lookups?: {
     ten_bo_phan: depts.find((d) => d.id === row.id_bo_phan)?.ten_phong_ban,
     ten_chuc_vu: pos?.ten_chuc_vu,
     cap_quan_ly: cap_quan_ly ?? null,
-    ...(ten_don_vi ? { ten_don_vi } : {}),
   };
 }
 
@@ -139,14 +121,7 @@ export const getEmployees = async (params: GetEmployeesParams = {}): Promise<Emp
     list = await repo.getAll({ limit, offset, orderBy, ascending });
   }
   if (list.length === 0) return list;
-  const [depts, positions, xaAll, tinhAll] = await Promise.all([
-    getDepartments(),
-    getPositions(),
-    getXaPhuongAll(),
-    getTinhThanhList(),
-  ]);
-  const xaById = new Map(xaAll.map((x) => [x.id, x]));
-  const tinhById = new Map(tinhAll.map((t) => [t.id, t.ten]));
+  const [depts, positions] = await Promise.all([getDepartments(), getPositions()]);
   const lookups = {
     depts: depts.map((d) => ({ id: d.id, ten_phong_ban: d.ten_phong_ban })),
     positions: positions.map((p) => ({
@@ -154,23 +129,18 @@ export const getEmployees = async (params: GetEmployeesParams = {}): Promise<Emp
       ten_chuc_vu: p.ten_chuc_vu,
       cap_quan_ly: p.cap_quan_ly ?? null,
     })),
-    diaBan: { xaById, tinhById },
   };
   return Promise.all(list.map((row) => enrichEmployee(row, lookups)));
 };
 
 /** `null` khi không có bản ghi — TanStack Query v5 cấm `queryFn` trả về `undefined`. */
 export const getEmployeeById = async (id: string): Promise<Employee | null> => {
-  const [row, depts, positions, xaAll, tinhAll] = await Promise.all([
+  const [row, depts, positions] = await Promise.all([
     repo.getById(id),
     getDepartments(),
     getPositions(),
-    getXaPhuongAll(),
-    getTinhThanhList(),
   ]);
   if (!row) return null;
-  const xaById = new Map(xaAll.map((x) => [x.id, x]));
-  const tinhById = new Map(tinhAll.map((t) => [t.id, t.ten]));
   const lookups = {
     depts: depts.map((d) => ({ id: d.id, ten_phong_ban: d.ten_phong_ban })),
     positions: positions.map((p) => ({
@@ -178,7 +148,6 @@ export const getEmployeeById = async (id: string): Promise<Employee | null> => {
       ten_chuc_vu: p.ten_chuc_vu,
       cap_quan_ly: p.cap_quan_ly ?? null,
     })),
-    diaBan: { xaById, tinhById },
   };
   return enrichEmployee(row, lookups);
 };
@@ -199,20 +168,12 @@ function toRowPayload(data: EmployeeFormValues) {
     id_phong_ban: normInt8Fk(data.id_phong_ban),
     id_bo_phan: normInt8Fk(data.id_bo_phan),
     id_chuc_vu: normInt8Fk(data.id_chuc_vu),
-    don_vi_id: normInt8Fk(data.don_vi_id),
     trang_thai: data.trang_thai as TrangThaiNhanVien,
   };
 }
 
 async function fetchLookups() {
-  const [depts, positions, xaAll, tinhAll] = await Promise.all([
-    getDepartments(),
-    getPositions(),
-    getXaPhuongAll(),
-    getTinhThanhList(),
-  ]);
-  const xaById = new Map(xaAll.map((x) => [x.id, x]));
-  const tinhById = new Map(tinhAll.map((t) => [t.id, t.ten]));
+  const [depts, positions] = await Promise.all([getDepartments(), getPositions()]);
   return {
     depts: depts.map((d) => ({ id: d.id, ten_phong_ban: d.ten_phong_ban })),
     positions: positions.map((p) => ({
@@ -220,14 +181,10 @@ async function fetchLookups() {
       ten_chuc_vu: p.ten_chuc_vu,
       cap_quan_ly: p.cap_quan_ly ?? null,
     })),
-    diaBan: { xaById, tinhById },
   };
 }
 
 async function insertEmployeeRow(data: EmployeeFormValues): Promise<Employee> {
-  // Bước 1: insert với hinh_anh = null để có id; bước 2: upload avatar (nếu có)
-  // và update lại column. Hai bước nhỏ gọn hơn là 1 bước upload trước rồi insert
-  // (sẽ phải tự sinh id-ngẫu-nhiên cho path), và đảm bảo path Storage khớp với id thực.
   const payload = toRowPayload(data);
   const hinhAnhRaw = payload.hinh_anh;
   const [inserted, lookups] = await Promise.all([
@@ -252,7 +209,6 @@ async function insertEmployeeRow(data: EmployeeFormValues): Promise<Employee> {
 
 async function updateEmployeeRow(id: string, data: EmployeeFormValues): Promise<Employee> {
   const payload = toRowPayload(data);
-  // Nếu là data URL → upload trước, lưu URL vào column.
   payload.hinh_anh = await uploadEmployeeAvatarIfDataUrl(payload.hinh_anh, id);
   const [updated, lookups] = await Promise.all([
     repo.update(

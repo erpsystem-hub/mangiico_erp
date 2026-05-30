@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react';
 import { txt } from '../../../../lib/text';
 import {
-  Edit, Trash2, User, AtSign, Building2, Briefcase, Layers, MapPin, MapPinned, Power, Calendar, Clock, RefreshCw,
+  Edit, Trash2, User, AtSign, Building2, Briefcase, Layers, MapPinned, Power, Calendar, Clock, RefreshCw,
 } from 'lucide-react';
 import Button from '../../../../components/ui/Button';
 import EnumBadge from '../../../../components/ui/EnumBadge';
@@ -154,16 +154,6 @@ const EmployeeDetail: React.FC<Props> = ({ data, onClose, onEdit, onDelete, onSt
               label={txt('position.store.managementLevelCol')}
               value={data.cap_quan_ly ? <EnumBadge value={data.cap_quan_ly} config={capQuanLyBadge} shape="rounded" /> : ''}
               icon={<MapPinned size={12} />}
-              emptyText={txt('common.emptyCell')}
-            />
-            <DetailField
-              label={txt('employee.form.donViXaPhuong')}
-              value={
-                data.cap_quan_ly === 'Tỉnh'
-                  ? '-'
-                  : (data.ten_don_vi ?? txt('common.emptyCell'))
-              }
-              icon={<MapPin size={12} />}
               emptyText={txt('common.emptyCell')}
             />
           </DetailFieldGrid>

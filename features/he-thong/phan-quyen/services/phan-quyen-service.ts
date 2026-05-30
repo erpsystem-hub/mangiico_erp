@@ -1,7 +1,7 @@
 import { PositionPermission, ModulePermission, ActionType } from '../core/types';
 import { RoleFormValues } from '../core/schema';
 import { txt } from '../../../../lib/text';
-import { createRepository } from '@/lib/data/create-repository';
+import { MockRepository } from '@/lib/data/mock-repository';
 import { ROLE_RETURNING_FULL, ROLE_SELECT_FULL } from '../core/supabase-select';
 import { isSupabase } from '@/lib/data/config';
 import { getSupabase } from '@/lib/supabase/client';
@@ -30,11 +30,7 @@ export function getModuleName(moduleId: string): string {
   return m?.nameKey ?? moduleId;
 }
 
-const roleRepo = createRepository<PositionPermission>({
-  tableName: 'he_thong_phan_quyen',
-  select: ROLE_SELECT_FULL,
-  delay: 500,
-});
+const roleRepo = new MockRepository<PositionPermission>([], { delay: 500 });
 
 type VarChucVuRow = {
   id: number | string;

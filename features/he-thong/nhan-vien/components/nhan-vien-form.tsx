@@ -2,8 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { txt } from '../../../../lib/text';
 import { useForm, Controller, SubmitHandler, useWatch, type Resolver } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useQuery } from '@tanstack/react-query';
-import { User, AtSign, Building2, Layers, Briefcase, MapPin } from 'lucide-react';
+import { User, AtSign, Building2, Layers, Briefcase } from 'lucide-react';
 import Input from '../../../../components/ui/Input';
 import Combobox from '../../../../components/ui/Combobox';
 import ToggleSwitch from '../../../../components/ui/ToggleSwitch';
@@ -23,10 +22,6 @@ import FormSection from '../../../../components/shared/FormSection';
 import FormGrid from '../../../../components/shared/FormGrid';
 import { useDepartments } from '../../phong-ban/hooks/use-phong-ban';
 import { usePositions } from '../../chuc-vu/hooks/use-chuc-vu';
-import { useTinhThanhList } from '../../danh-sach-tinh-thanh/hooks/use-dia-ban';
-import { getXaPhuongAll } from '../../danh-sach-tinh-thanh/services/dia-ban-service';
-import { queryKeys } from '@/lib/query-keys';
-import { geoDataQueryOptions } from '@/lib/supabase/query-config';
 import { getDefaultEmployeeFormValues, employeeToFormValues } from '../utils/employee-to-form';
 import AuthConflictDialog from './auth-conflict-dialog';
 import { useSignedEmployeeAvatarSrc } from '../hooks/use-signed-employee-avatar-src';
@@ -64,12 +59,6 @@ const EmployeeForm: React.FC<Props> = ({ initialData, onClose }) => {
 
   const { data: departments = [] } = useDepartments();
   const { data: positions = [] } = usePositions();
-  const { data: tinhList = [] } = useTinhThanhList();
-  const { data: xaPhuongList = [] } = useQuery({
-    queryKey: queryKeys.xaPhuong.listAll,
-    queryFn: getXaPhuongAll,
-    ...geoDataQueryOptions,
-  });
 
   const employeeResolver = useMemo(
     () => zodResolver(buildEmployeeSchema(positions)) as Resolver<EmployeeFormValues>,
@@ -98,7 +87,6 @@ const EmployeeForm: React.FC<Props> = ({ initialData, onClose }) => {
 
   const selectedDept = useWatch({ control, name: 'id_phong_ban' });
   const selectedUnit = useWatch({ control, name: 'id_bo_phan' });
-  const selectedChucVuId = useWatch({ control, name: 'id_chuc_vu' });
   const watchedUsername = (useWatch({ control, name: 'ten_tai_khoan' }) ?? '').trim().toLowerCase();
   const watchedHinhAnh = useWatch({ control, name: 'hinh_anh' });
   const avatarDisplaySrc = useSignedEmployeeAvatarSrc(watchedHinhAnh ?? null);
@@ -122,37 +110,11 @@ const EmployeeForm: React.FC<Props> = ({ initialData, onClose }) => {
     [departments, selectedDept],
   );
 
-  const needsDonViXaPhuong = useMemo(() => {
-    const id = selectedChucVuId ? String(selectedChucVuId) : '';
-    if (!id) return false;
-    const p = positions.find((x) => String(x.id) === id);
-    return p?.cap_quan_ly === 'Xã phường';
-  }, [positions, selectedChucVuId]);
-
-  const tinhById = useMemo(() => new Map(tinhList.map((t) => [t.id, t.ten])), [tinhList]);
-
-  const xaPhuongOptions = useMemo(() => {
-    const rows = [...xaPhuongList].sort((a, b) => {
-      const ta = (tinhById.get(a.id_tinh_thanh) ?? '').localeCompare(tinhById.get(b.id_tinh_thanh) ?? '', 'vi');
-      if (ta !== 0) return ta;
-      return a.ten.localeCompare(b.ten, 'vi');
-    });
-    return rows.map((x) => {
-      const tinhTen = tinhById.get(x.id_tinh_thanh) ?? '';
-      return {
-        label: tinhTen ? `${x.ten} (${tinhTen})` : x.ten,
-        value: String(x.id),
-      };
-    });
-  }, [xaPhuongList, tinhById]);
-
   const positionOptions = useMemo(() => {
     const active = positions.filter((p) => p.trang_thai === 'Đang hoạt động');
     const dept = selectedDept ? String(selectedDept) : '';
     const unit = selectedUnit ? String(selectedUnit) : '';
     if (!dept && !unit) return active.map((p) => ({ label: p.ten_chuc_vu, value: String(p.id) }));
-    // Chức vụ có thể gắn `phong_ban_id` = phòng ban cha hoặc bộ phận con — khi đã chọn bộ phận,
-    // vẫn hiện chức vụ thuộc phòng ban đang chọn (tránh list rỗng / không có dropdown).
     const allowedDeptIds = new Set<string>();
     if (dept) allowedDeptIds.add(dept);
     if (unit) allowedDeptIds.add(unit);
@@ -276,7 +238,6 @@ const EmployeeForm: React.FC<Props> = ({ initialData, onClose }) => {
                     if (next !== (field.value || '')) {
                       setValue('id_bo_phan', '');
                       setValue('id_chuc_vu', '');
-                      setValue('don_vi_id', '');
                     }
                     field.onChange(next);
                   }}
@@ -299,7 +260,6 @@ const EmployeeForm: React.FC<Props> = ({ initialData, onClose }) => {
                     const next = v || '';
                     if (next !== (field.value || '')) {
                       setValue('id_chuc_vu', '');
-                      setValue('don_vi_id', '');
                     }
                     field.onChange(next);
                   }}
@@ -319,10 +279,7 @@ const EmployeeForm: React.FC<Props> = ({ initialData, onClose }) => {
                   label={txt('employee.form.position')}
                   options={positionOptions}
                   value={field.value || ''}
-                  onChange={(v) => {
-                    field.onChange(v || '');
-                    setValue('don_vi_id', '');
-                  }}
+                  onChange={(v) => field.onChange(v || '')}
                   placeholder={txt('employee.form.positionPlaceholder')}
                   error={errors.id_chuc_vu?.message}
                   icon={<Briefcase size={12} />}
@@ -332,26 +289,6 @@ const EmployeeForm: React.FC<Props> = ({ initialData, onClose }) => {
                 />
               )}
             />
-            {needsDonViXaPhuong && (
-              <Controller
-                name="don_vi_id"
-                control={control}
-                render={({ field }) => (
-                  <Combobox
-                    label={txt('employee.form.donViXaPhuong')}
-                    options={xaPhuongOptions}
-                    value={field.value || ''}
-                    onChange={(v) => field.onChange(v || '')}
-                    placeholder={txt('employee.form.donViXaPhuongPlaceholder')}
-                    error={errors.don_vi_id?.message}
-                    icon={<MapPin size={12} />}
-                    required
-                    searchPlaceholder={txt('employee.form.donViXaPhuongSearch')}
-                    dropdownInPortal
-                  />
-                )}
-              />
-            )}
             <Controller
               name="trang_thai"
               control={control}

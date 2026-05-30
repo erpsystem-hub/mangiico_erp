@@ -18,42 +18,6 @@ export function getSidebarPathGateResources(path: string): AppResource[] | null 
   if (path === '/he-thong') {
     return getHeThongAppResources();
   }
-  if (path === '/mat-tran-to-quoc') {
-    return [
-      'matTranThietLapCaiDat',
-      'matTranOfficerList',
-      'matTranOfficerStats',
-      'matTranRewardList',
-      'matTranTrainingList',
-      'matTranTerm',
-      'matTranSession',
-      'matTranCommitteeMembers',
-      'matTranCommitteeMemberStats',
-      'matTranReliefCampaign',
-      'matTranReliefGoods',
-      'matTranReliefStockTransactions',
-      'matTranReliefInventory',
-      'matTranReliefWarehouseList',
-      'matTranReliefSupportUnits',
-      'matTranReliefSupportReport',
-      'matTranSalaryIncreaseList',
-      'matTranSalarySetup',
-    ];
-  }
-  if (path === '/quan-ly-viet-bai') {
-    return ['articleSettings', 'articles', 'articleStats', 'articleCommission'];
-  }
-  if (path === '/quan-ly-giao-viec') {
-    return ['annualPrograms', 'tasks', 'taskReports'];
-  }
-  if (path === '/trang-thong-tin-khac') {
-    return [
-      'otherInfoMttqNews',
-      'otherInfoZaloOa',
-      'otherInfoMatTranSo',
-      'otherInfoQuanLyVanBan',
-    ];
-  }
   return null; // `/`, `/thong-tin-ban-quyen` → luôn hiện
 }
 

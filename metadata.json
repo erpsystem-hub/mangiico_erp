@@ -1,6 +1,6 @@
 {
-  "name": "MTTQVN",
-  "description": "Hệ thống nền tảng số",
+  "name": "Mangiico ERP",
+  "description": "Hệ thống quản trị doanh nghiệp",
   "requestFramePermissions": [
     "microphone"
   ]

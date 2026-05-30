@@ -35,6 +35,15 @@ function toChildArray(node: React.ReactNode): React.ReactNode[] {
  * Walk `children` and split filter chips from other toolbar nodes.
  * Pure chip wrappers (motion.div, div, Fragment) are flattened; nodes like DateRangePicker stay in prefix.
  */
+type FilterChipProps = { children?: React.ReactNode; value?: string[] | string | null };
+
+function chipProps(props: unknown): FilterChipProps {
+  if (typeof props === 'object' && props !== null) {
+    return props as FilterChipProps;
+  }
+  return {};
+}
+
 export function collectFilterChipChildren(node: React.ReactNode): CollectedFilterChipChildren {
   const prefixNodes: React.ReactNode[] = [];
   const chips: React.ReactElement[] = [];
@@ -54,11 +63,11 @@ export function collectFilterChipChildren(node: React.ReactNode): CollectedFilte
       }
 
       if (child.type === React.Fragment) {
-        walk(child.props.children);
+        walk(chipProps(child.props).children);
         return;
       }
 
-      const nested = collectFilterChipChildren(child.props.children);
+      const nested = collectFilterChipChildren(chipProps(child.props).children);
 
       if (nested.chips.length > 0 && nested.prefixNodes.length === 0) {
         chips.push(...nested.chips);
@@ -71,7 +80,12 @@ export function collectFilterChipChildren(node: React.ReactNode): CollectedFilte
       }
 
       prefixNodes.push(
-        React.cloneElement(child, child.props, ...nested.prefixNodes, ...nested.chips),
+        React.cloneElement(
+          child as React.ReactElement<Record<string, unknown>>,
+          child.props as Record<string, unknown>,
+          ...nested.prefixNodes,
+          ...nested.chips,
+        ),
       );
     });
   };

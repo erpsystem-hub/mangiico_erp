@@ -18,14 +18,14 @@ export interface RepositoryMutationOptions {
 }
 
 export interface IRepository<
-  T extends { id: string },
+  T extends { id: string | number },
   TCreate = Omit<T, 'id'>,
   TUpdate = Partial<T>,
 > {
   getAll(options?: RepositoryQueryOptions): Promise<T[]>;
-  getById(id: string): Promise<T | null>;
+  getById(id: string | number): Promise<T | null>;
   insert(data: TCreate, options?: RepositoryMutationOptions): Promise<T>;
-  update(id: string, data: TUpdate, options?: RepositoryMutationOptions): Promise<T>;
-  remove(ids: string[]): Promise<void>;
+  update(id: string | number, data: TUpdate, options?: RepositoryMutationOptions): Promise<T>;
+  remove(ids: (string | number)[]): Promise<void>;
   upsert?(data: TCreate | TCreate[]): Promise<T[]>;
 }

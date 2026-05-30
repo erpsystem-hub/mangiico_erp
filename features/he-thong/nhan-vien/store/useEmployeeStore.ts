@@ -21,8 +21,7 @@ const DEFAULT_COLUMNS: ColumnConfig[] = [
     ...P.enumBadgeShort,
     order: 5,
   },
-  { id: 'ten_don_vi', label: txt('employee.store.donViCol'), visible: true, ...P.branch, order: 6 },
-  { id: 'trang_thai', label: txt('employee.store.statusCol'), visible: true, ...P.enumBadge, order: 7 },
+  { id: 'trang_thai', label: txt('employee.store.statusCol'), visible: true, ...P.enumBadge, order: 6 },
 ];
 
 const initialFilters: EmployeeFilters = {

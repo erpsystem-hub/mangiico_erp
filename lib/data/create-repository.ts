@@ -4,7 +4,7 @@ import type { IRepository } from './repository';
 import { MockRepository } from './mock-repository';
 import { SupabaseRepository } from './supabase-repository';
 
-export interface CreateRepositoryConfig<T extends { id: string }> {
+export interface CreateRepositoryConfig<T extends { id: string | number }> {
   tableName: PublicTableName;
   /** Chỉ dùng khi không cấu hình Supabase (MockRepository). Mặc định []. */
   mockData?: T[];
@@ -15,7 +15,7 @@ export interface CreateRepositoryConfig<T extends { id: string }> {
 /**
  * Factory: returns MockRepository or SupabaseRepository based on `isSupabase()` (URL + anon key, xem `lib/data/config.ts`).
  */
-export function createRepository<T extends { id: string }>(
+export function createRepository<T extends { id: string | number }>(
   config: CreateRepositoryConfig<T>,
 ): IRepository<T> {
   if (isSupabase()) {

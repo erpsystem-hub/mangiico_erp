@@ -14,7 +14,7 @@
 
 | Ví dụ | File |
 |--------|------|
-| Đổi trạng thái + ghi chú (MTTQ khen thưởng) | `features/mat-tran-to-quoc/danh-sach-khen-thuong/components/mttq-khen-thuong-chuyen-trang-thai-dialog.tsx` |
+| Đổi trạng thái nhân viên | `features/he-thong/nhan-vien/components/nhan-vien-status-change-dialog.tsx` |
 | Picker dạng modal (cùng primitive) | `components/shared/PositionPermissionPicker.tsx` (`variant="modal"`) |
 
 ## Vị trí nút (nghiệp vụ)

@@ -12,42 +12,12 @@ interface RouteConfig {
 const getRouteConfig = (t: TFunction): Record<string, RouteConfig> => ({
   '/': { label: t('breadcrumb.home') },
   '/thong-tin-ban-quyen': { label: t('breadcrumb.licenseInfo'), parentPath: '/' },
-  '/mat-tran-to-quoc': { label: t('breadcrumb.matTranToQuoc'), parentPath: '/' },
-  '/mat-tran-to-quoc/tap-huan-khen-thuong/danh-sach-tap-huan': { label: t('breadcrumb.matTranTrainingList'), parentPath: '/mat-tran-to-quoc' },
-  '/mat-tran-to-quoc/tap-huan-khen-thuong/danh-sach-khen-thuong': { label: t('breadcrumb.matTranRewardList'), parentPath: '/mat-tran-to-quoc' },
-  '/mat-tran-to-quoc/uy-vien-uy-ban/nhiem-ky': { label: t('breadcrumb.matTranTerm'), parentPath: '/mat-tran-to-quoc' },
-  '/mat-tran-to-quoc/uy-vien-uy-ban/ky-hop': { label: t('breadcrumb.matTranSession'), parentPath: '/mat-tran-to-quoc' },
-  '/mat-tran-to-quoc/uy-vien-uy-ban/danh-sach-uy-vien': { label: t('breadcrumb.matTranCommitteeMembers'), parentPath: '/mat-tran-to-quoc' },
-  '/mat-tran-to-quoc/uy-vien-uy-ban/bao-cao-uy-vien': { label: t('breadcrumb.matTranCommitteeMemberStats'), parentPath: '/mat-tran-to-quoc' },
-  '/mat-tran-to-quoc/kho-cuu-tro/dot-cuu-tro': { label: t('breadcrumb.matTranReliefCampaign'), parentPath: '/mat-tran-to-quoc' },
-  '/mat-tran-to-quoc/kho-cuu-tro/hang-hoa': { label: t('breadcrumb.matTranReliefGoods'), parentPath: '/mat-tran-to-quoc' },
-  '/mat-tran-to-quoc/kho-cuu-tro/nhap-xuat-kho': { label: t('breadcrumb.matTranReliefStockTransactions'), parentPath: '/mat-tran-to-quoc' },
-  '/mat-tran-to-quoc/kho-cuu-tro/ton-kho': { label: t('breadcrumb.matTranReliefInventory'), parentPath: '/mat-tran-to-quoc' },
-  '/mat-tran-to-quoc/kho-cuu-tro/danh-sach-kho': { label: t('breadcrumb.matTranReliefWarehouseList'), parentPath: '/mat-tran-to-quoc' },
-  '/mat-tran-to-quoc/kho-cuu-tro/don-vi-cuu-tro': { label: t('breadcrumb.matTranReliefSupportUnits'), parentPath: '/mat-tran-to-quoc' },
-  '/mat-tran-to-quoc/kho-cuu-tro/bao-cao-ho-tro': { label: t('breadcrumb.matTranReliefSupportReport'), parentPath: '/mat-tran-to-quoc' },
-  '/mat-tran-to-quoc/thiet-lap-khac/danh-sach-can-bo': { label: t('breadcrumb.matTranOfficerList'), parentPath: '/mat-tran-to-quoc' },
-  '/mat-tran-to-quoc/thiet-lap-khac/bao-cao-can-bo': { label: t('breadcrumb.matTranOfficerStats'), parentPath: '/mat-tran-to-quoc' },
-  '/mat-tran-to-quoc/thiet-lap-khac/thiet-lap-cai-dat': { label: t('breadcrumb.matTranSetupSettings'), parentPath: '/mat-tran-to-quoc' },
-  '/mat-tran-to-quoc/quan-ly-luong/danh-sach-tang-luong': { label: t('breadcrumb.matTranSalaryIncreaseList'), parentPath: '/mat-tran-to-quoc' },
-  '/mat-tran-to-quoc/quan-ly-luong/thiet-lap-luong': { label: t('breadcrumb.matTranSalarySetup'), parentPath: '/mat-tran-to-quoc' },
-  '/quan-ly-viet-bai': { label: t('breadcrumb.quanLyVietBai'), parentPath: '/' },
-  '/quan-ly-viet-bai/bai-viet': { label: t('breadcrumb.articleArticles'), parentPath: '/quan-ly-viet-bai' },
-  '/quan-ly-viet-bai/nhuan-but-viet-bai': { label: t('breadcrumb.articleCommission'), parentPath: '/quan-ly-viet-bai' },
-  '/quan-ly-viet-bai/bc-thong-ke-bai-viet': { label: t('breadcrumb.articleStats'), parentPath: '/quan-ly-viet-bai' },
-  '/quan-ly-viet-bai/thiet-lap-bai-viet': { label: t('breadcrumb.articleSettings'), parentPath: '/quan-ly-viet-bai' },
-  '/quan-ly-giao-viec': { label: t('breadcrumb.quanLyGiaoViec'), parentPath: '/' },
-  '/quan-ly-giao-viec/chuong-trinh-nam': { label: t('breadcrumb.taskChuongTrinhNam'), parentPath: '/quan-ly-giao-viec' },
-  '/quan-ly-giao-viec/cong-viec': { label: t('breadcrumb.taskCongViec'), parentPath: '/quan-ly-giao-viec' },
-  '/quan-ly-giao-viec/bao-cao-cong-viec': { label: t('breadcrumb.taskBaoCaoCongViec'), parentPath: '/quan-ly-giao-viec' },
-  '/trang-thong-tin-khac': { label: t('breadcrumb.trangThongTinKhac'), parentPath: '/' },
   '/he-thong': { label: t('breadcrumb.systemAdmin'), parentPath: '/' },
   '/he-thong/nhan-vien': { label: t('breadcrumb.employee'), parentPath: '/he-thong' },
   '/he-thong/phong-ban': { label: t('breadcrumb.department'), parentPath: '/he-thong' },
   '/he-thong/chuc-vu': { label: t('breadcrumb.position'), parentPath: '/he-thong' },
   '/he-thong/thong-tin-to-chuc': { label: t('breadcrumb.companyInfo'), parentPath: '/he-thong' },
   '/he-thong/phan-quyen': { label: t('breadcrumb.permission'), parentPath: '/he-thong' },
-  '/he-thong/danh-sach-tinh-thanh': { label: t('breadcrumb.provinceList'), parentPath: '/he-thong' },
   '/ho-so': { label: t('breadcrumb.profile'), parentPath: '/' },
   '/thong-bao': { label: t('notification.title'), parentPath: '/' },
 });
@@ -55,9 +25,6 @@ const getRouteConfig = (t: TFunction): Record<string, RouteConfig> => ({
 /** Cấp cha theo breadcrumb/router (không dùng lịch sử trình duyệt). Dùng cho nút Back / bottom nav. */
 export function getParentPath(pathname: string, t: TFunction): string | undefined {
   if (pathname === '/') return undefined;
-  if (pathname.startsWith('/mat-tran-to-quoc/uy-vien-uy-ban/nhiem-ky/diem-danh/')) {
-    return '/mat-tran-to-quoc/uy-vien-uy-ban/nhiem-ky';
-  }
   if (pathname.startsWith('/ho-so-nhan-vien/')) {
     return '/he-thong/nhan-vien';
   }
@@ -80,26 +47,6 @@ const Breadcrumbs: React.FC = () => {
   const breadcrumbs = useMemo<BreadcrumbItem[]>(() => {
     const currentPath = location.pathname;
     const items: BreadcrumbItem[] = [];
-
-    if (currentPath.startsWith('/mat-tran-to-quoc/uy-vien-uy-ban/nhiem-ky/diem-danh/')) {
-      return [
-        {
-          label: ROUTE_CONFIG['/mat-tran-to-quoc'].label,
-          to: '/mat-tran-to-quoc',
-          isLast: false,
-        },
-        {
-          label: ROUTE_CONFIG['/mat-tran-to-quoc/uy-vien-uy-ban/nhiem-ky'].label,
-          to: '/mat-tran-to-quoc/uy-vien-uy-ban/nhiem-ky',
-          isLast: false,
-        },
-        {
-          label: txt('breadcrumb.matTranNhiemKyDiemDanhMatrix'),
-          to: currentPath,
-          isLast: true,
-        },
-      ];
-    }
 
     const currentConfig = ROUTE_CONFIG[currentPath];
 

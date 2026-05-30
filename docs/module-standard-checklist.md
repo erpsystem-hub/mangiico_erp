@@ -164,11 +164,10 @@ Dùng khi tạo mới hoặc rà soát một module CRUD trong app.
 ## Gợi ý tham chiếu trong repo
 
 - **Lọc header cột + sort + tìm cột**: `features/he-thong/nhan-vien/components/nhan-vien-table.tsx` (`ColumnHeaderFilter`, `ColumnHeaderSortMenu`, `ColumnHeaderSearch` từ `@/components/shared/column-header`).
-- **Đếm filter chéo (exclude-self)**: `features/he-thong/nhan-vien/hooks/use-filter-counts.ts`; module MTTQ cán bộ: `features/mat-tran-to-quoc/danh-sach-can-bo/hooks/use-mttq-can-bo-filter-counts.ts`.
+- **Đếm filter chéo (exclude-self)**: `features/he-thong/nhan-vien/hooks/use-filter-counts.ts`; module nhân viên: `features/he-thong/nhan-vien/hooks/use-filter-counts.ts`.
 - **Toolbar + mobile filter**: `components/shared/GenericToolbar.tsx` + `MobileFilterSheet`.
 - **Mobile list card**: `components/shared/MobileListCard.tsx`.
-- **`GenericTable` breakpoint list / card**: prop `listBreakpoint` (`sm` \| `md`) trong `components/shared/GenericTable.tsx` — ví dụ dùng `sm` tại `features/mat-tran-to-quoc/danh-sach-can-bo/components/mttq-can-bo-table.tsx`.
-- **Bảng con trong detail**: `components/shared/EmbeddedChildDataGrid.tsx`; ví dụ khen thưởng theo cán bộ: `getMttqKhenThuongLinesForCanBoId` + `useMttqKhenThuongLinesForCanBo` + `mttq-can-bo-khen-thuong-section.tsx`; mở quyết định: `?open=<id>` trên `danh-sach-khen-thuong/index.tsx`.
+- **`GenericTable` breakpoint list / card**: prop `listBreakpoint` (`sm` \| `md`) trong `components/shared/GenericTable.tsx` — ví dụ dùng `sm` tại `features/he-thong/nhan-vien/components/nhan-vien-table.tsx`.
 - **Khung trang CRUD**: `lib/createFeatureModule.tsx` (module dùng factory).
 
 ---
@@ -180,7 +179,7 @@ Dùng khi tạo mới hoặc rà soát một module CRUD trong app.
 | Route + permission gate | Có |
 | List: toolbar, export, column manager, mobile filters | Có |
 | List: header cột (lọc trạng thái / giới tính + sort + tìm theo cột) | Có (đồng bộ store với toolbar) |
-| List: counts chip / header theo filter chéo | Có (`useMttqCanBoFilterCounts`) |
+| List: counts chip / header theo filter chéo | Có (`use-filter-counts` nhân viên) |
 | Detail drawer + footer actions | Có |
 | Form + validation | Có |
 | Bảng con trên detail (khen thưởng gắn cán bộ) | Có (`EmbeddedChildDataGrid` + deep link `?open=`) |

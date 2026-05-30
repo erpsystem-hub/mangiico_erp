@@ -34,19 +34,19 @@ export const FOO_SELECT_FULL = `${FULL_COLS},${EMBED_FULL}`;
 
 Đồng thời `SEARCHABLE_KEYS` (nếu có) phải subset của LIST_COLS.
 
-### A2. `mttq_*_ct(id)` để đếm
+### A2. Embed relation chỉ để đếm
 
 ❌ Sai — kéo array of ids chỉ để `.length`:
 
 ```ts
-const SELECT = `id,ten,mttq_khen_thuong_ct(id)`;
+const SELECT = `id,ten,child_table(id)`;
 // service: lines.length
 ```
 
 ✅ Đúng — PostgREST aggregate `(count)`:
 
 ```ts
-const SELECT = `id,ten,mttq_khen_thuong_ct(count)`;
+const SELECT = `id,ten,child_table(count)`;
 // service: (lines[0]?.count ?? lines.length) ?? 0
 ```
 
@@ -243,7 +243,6 @@ Khi user thay đổi service/hook/select, kiểm tra:
 3. Có `'*'` trong select / `returningSelect` không?
 4. Có `getById` trước `update` không?
 5. Mutation onSuccess có invalidate list lớn khi chỉ thay đổi 1 row?
-6. Có dùng cache cho data tĩnh (`getXaPhuongAll`, `lookups`) không?
-7. List đang mount mà mutation invalidate liên tục không? → `refetchType: 'none'`.
-8. Mở detail từ list đã seed `setQueryData(detail, row)` trước `setViewingId` (C5)?
-9. Đóng form Hủy có `invalidateQueries(detail)` thừa không (C6)?
+6. List đang mount mà mutation invalidate liên tục không? → `refetchType: 'none'`.
+7. Mở detail từ list đã seed `setQueryData(detail, row)` trước `setViewingId` (C5)?
+8. Đóng form Hủy có `invalidateQueries(detail)` thừa không (C6)?

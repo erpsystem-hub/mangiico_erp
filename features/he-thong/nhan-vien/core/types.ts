@@ -10,8 +10,6 @@ export interface Employee {
   id_phong_ban: string | null;
   id_bo_phan: string | null;
   id_chuc_vu: string | null;
-  /** FK `var_ssn_xa_phuong.id` — bắt buộc khi chức vụ có `cap_quan_ly` = "Xã phường". */
-  don_vi_id?: string | null;
   trang_thai: TrangThaiNhanVien;
   tg_tao?: string;
   tg_cap_nhat?: string;
@@ -20,8 +18,6 @@ export interface Employee {
   ten_chuc_vu?: string;
   /** `cap_quan_ly` của chức vụ đang gán (enrich từ `var_chuc_vu`). */
   cap_quan_ly?: string | null;
-  /** Hiển thị: tên xã/phường · tỉnh (enrich từ danh mục địa bàn). */
-  ten_don_vi?: string;
 }
 
 export interface EmployeeFilters {

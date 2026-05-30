@@ -10,7 +10,7 @@ function delay(ms: number): Promise<void> {
  * In-memory repository implementing IRepository.
  * Deep-clones mock data so mutations don't affect the original seed.
  */
-export class MockRepository<T extends { id: string }> implements IRepository<T> {
+export class MockRepository<T extends { id: string | number }> implements IRepository<T> {
   private data: T[];
   private readonly delayMs: number;
 
@@ -50,13 +50,13 @@ export class MockRepository<T extends { id: string }> implements IRepository<T> 
     return list;
   }
 
-  async getById(id: string): Promise<T | null> {
+  async getById(id: string | number): Promise<T | null> {
     await delay(this.delayMs);
     const item = this.data.find((d) => d.id === id);
     return item ? ({ ...item } as T) : null;
   }
 
-  async insert(data: Omit<T, 'id'> & { id?: string }, _options?: RepositoryMutationOptions): Promise<T> {
+  async insert(data: Omit<T, 'id'> & { id?: string | number }, _options?: RepositoryMutationOptions): Promise<T> {
     await delay(this.delayMs);
     const id = data.id ?? `mock-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
     const newItem = { ...data, id } as T;
@@ -64,7 +64,7 @@ export class MockRepository<T extends { id: string }> implements IRepository<T> 
     return { ...newItem } as T;
   }
 
-  async update(id: string, data: Partial<T>, _options?: RepositoryMutationOptions): Promise<T> {
+  async update(id: string | number, data: Partial<T>, _options?: RepositoryMutationOptions): Promise<T> {
     await delay(this.delayMs);
     const index = this.data.findIndex((d) => d.id === id);
     if (index === -1) throw new Error('Not found');
@@ -73,13 +73,13 @@ export class MockRepository<T extends { id: string }> implements IRepository<T> 
     return { ...updated } as T;
   }
 
-  async remove(ids: string[]): Promise<void> {
+  async remove(ids: (string | number)[]): Promise<void> {
     await delay(this.delayMs);
     const set = new Set(ids);
     this.data = this.data.filter((d) => !set.has(d.id));
   }
 
-  async upsert(rows: (Omit<T, 'id'> & { id?: string }) | ((Omit<T, 'id'> & { id?: string })[])): Promise<T[]> {
+  async upsert(rows: (Omit<T, 'id'> & { id?: string | number }) | ((Omit<T, 'id'> & { id?: string | number })[])): Promise<T[]> {
     await delay(this.delayMs);
     const arr = Array.isArray(rows) ? rows : [rows];
     const result: T[] = [];

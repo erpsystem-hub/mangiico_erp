@@ -11,42 +11,14 @@ const SOURCE_KEY = process.env.SOURCE_SUPABASE_KEY ?? '';
 const SOURCE_JWT = process.env.SOURCE_ACCESS_TOKEN ?? '';
 
 const PAGE_SIZE = 1000;
-const OUT_SQL = process.env.OUT_SQL ?? '/tmp/mttqvn_data.sql';
+const OUT_SQL = process.env.OUT_SQL ?? '/tmp/erp_data.sql';
 
 const TABLES = [
-  'var_ssn_tinh_thanh',
-  'var_ssn_xa_phuong',
   'var_thong_tin_to_chuc',
   'var_phong_ban',
   'var_chuc_vu',
   'var_nhan_vien',
   'var_phan_quyen',
-  'bai_viet_thiet_lap_the_loai',
-  'bai_viet_thiet_lap_khac',
-  'bai_viet_danh_sach',
-  'chuong_trinh_nam',
-  'cong_viec_danh_sach',
-  'mttq_thiet_lap',
-  'mttq_can_bo',
-  'mttq_nhiem_ky',
-  'mttq_ky_hop',
-  'mttq_uy_vien_uy_ban',
-  'mttq_diem_danh_uy_vien',
-  'mttq_khen_thuong',
-  'mttq_khen_thuong_ct',
-  'mttq_lop_tap_huan',
-  'mttq_lop_tap_huan_ct',
-  'kho_danh_sach_kho',
-  'kho_danh_muc_hang_hoa',
-  'kho_danh_sach_hang_hoa',
-  'kho_don_vi_cuu_tro',
-  'kho_dot_cuu_tro',
-  'luong_thiet_lap_cau_hinh',
-  'luong_thiet_lap_ngach_luong',
-  'luong_thiet_lap_bac_luong',
-  'kho_nhap_xuat_kho',
-  'kho_nhap_xuat_kho_ct',
-  'mttq_tang_luong',
 ];
 
 function sqlLiteral(v) {
@@ -109,9 +81,7 @@ function prepareRows(table, rows) {
   return rows;
 }
 
-const GENERATED_COLUMNS = {
-  kho_nhap_xuat_kho_ct: ['thanh_tien'],
-};
+const GENERATED_COLUMNS = {};
 
 function rowsToSql(table, rows) {
   if (!rows.length) return '';

@@ -132,6 +132,7 @@ export const updateDepartment = async (id: string, data: DepartmentFormValues): 
     if (!supabase) throw new Error('Supabase client is not configured.');
 
     const idNum = normInt8Fk(id);
+    if (idNum == null) throw new Error(txt('department.service.notFound'));
     const chaNum = normInt8Fk(chaId ?? undefined);
 
     // Lấy current row để biết cha_id cũ (nếu giữ nguyên cha thì không thay path).

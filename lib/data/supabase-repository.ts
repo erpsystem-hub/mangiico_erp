@@ -16,7 +16,7 @@ function ensureClient() {
  * Supabase-backed repository implementing IRepository.
  * Supports optional select string for relation queries (e.g. '*, phong_ban(ten_phong_ban)').
  */
-export class SupabaseRepository<T extends { id: string }> implements IRepository<T> {
+export class SupabaseRepository<T extends { id: string | number }> implements IRepository<T> {
   constructor(
     private readonly tableName: PublicTableName,
     private readonly options?: { select?: string },
@@ -45,12 +45,12 @@ export class SupabaseRepository<T extends { id: string }> implements IRepository
     return (data ?? []) as unknown as T[];
   }
 
-  async getById(id: string): Promise<T | null> {
+  async getById(id: string | number): Promise<T | null> {
     const supabase = ensureClient();
     const { data, error } = await supabase
       .from(this.tableName)
       .select(this.select)
-      .eq('id', id)
+      .eq('id', id as never)
       .maybeSingle();
     if (error) handleSupabaseError(error);
     return data as unknown as T | null;
@@ -62,31 +62,31 @@ export class SupabaseRepository<T extends { id: string }> implements IRepository
     if (payload.id === undefined) delete payload.id;
     const { data, error } = await supabase
       .from(this.tableName)
-      .insert(payload)
+      .insert(payload as never)
       .select(this.mutationSelect(opts))
       .single();
     if (error) handleSupabaseError(error);
     return data as unknown as T;
   }
 
-  async update(id: string, partial: Partial<T>, opts?: RepositoryMutationOptions): Promise<T> {
+  async update(id: string | number, partial: Partial<T>, opts?: RepositoryMutationOptions): Promise<T> {
     const supabase = ensureClient();
     const payload = { ...partial } as Record<string, Json>;
     delete payload.id;
     const { data, error } = await supabase
       .from(this.tableName)
       .update(payload)
-      .eq('id', id)
+      .eq('id', id as never)
       .select(this.mutationSelect(opts))
       .single();
     if (error) handleSupabaseError(error);
     return data as unknown as T;
   }
 
-  async remove(ids: string[]): Promise<void> {
+  async remove(ids: (string | number)[]): Promise<void> {
     if (ids.length === 0) return;
     const supabase = ensureClient();
-    const { error } = await supabase.from(this.tableName).delete().in('id', ids);
+    const { error } = await supabase.from(this.tableName).delete().in('id', ids as never);
     if (error) handleSupabaseError(error);
   }
 
@@ -96,7 +96,7 @@ export class SupabaseRepository<T extends { id: string }> implements IRepository
     const payload = arr.map((r) => ({ ...r } as Record<string, Json>));
     const { data, error } = await supabase
       .from(this.tableName)
-      .upsert(payload, { onConflict: 'id' })
+      .upsert(payload as never, { onConflict: 'id' })
       .select(this.select);
     if (error) handleSupabaseError(error);
     return (data ?? []) as unknown as T[];

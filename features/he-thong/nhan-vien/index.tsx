@@ -37,6 +37,8 @@ import { useListWithFilter } from '../../../lib/hooks';
 import { matchesSearchTerm } from '../../../lib/searchUtils';
 import { employeeMatchesColumnSearch } from './utils/column-search';
 import { mergeEmployeeChucVuFromPositions } from './utils/merge-employee-chuc-vu-from-positions';
+import ToggleSwitch from '../../../components/ui/ToggleSwitch';
+import EmployeeStatusChangeDialog from './components/nhan-vien-status-change-dialog';
 
 const EmployeeForm = lazy(() => import('./components/nhan-vien-form'));
 const EmployeeDetail = lazy(() => import('./components/nhan-vien-detail'));
@@ -93,7 +95,6 @@ const NHAN_VIEN_SEARCHABLE_KEYS: string[] = [
   'ten_bo_phan',
   'ten_chuc_vu',
   'cap_quan_ly',
-  'ten_don_vi',
   'trang_thai',
 ];
 

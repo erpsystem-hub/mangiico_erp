@@ -17,13 +17,13 @@ Mọi module dùng `core/supabase-select.ts` phải:
 - Bỏ khỏi `SELECT_LIST` các cột long-text (`thong_tin`, `ghi_chu`, `tai_lieu_*`,
   `noi_dung_*`) và base64 (`hinh_anh`).
 - Bỏ khỏi `SELECT_LIST` các join chỉ dùng trong detail/form (vd `dan_toc`,
-  `trinh_do`, `ly_luan_chinh_tri` trong `mttq_can_bo`).
+  `trinh_do`, `ly_luan_chinh_tri` trong `var_nhan_vien`).
 - Giữ tất cả ở `SELECT_FULL` cho `getById` / `handleEdit` / `detail page`.
 - Đảm bảo `SEARCHABLE_KEYS` (utils/search-keys.ts) **chỉ chứa cột có trong
   `SELECT_LIST`** (nếu không, search client-side sẽ luôn lệch).
 
 Module đã áp dụng: `uy-vien-uy-ban`, `ky-hop`, `nhiem-ky`, `nhan-vien`.
-Module không tách (giải thích trong file): `mttq_can_bo` — nhiều join phụ
+Module không tách (giải thích trong file): `var_nhan_vien` — nhiều join phụ
 thuộc cho search; chấp nhận chi phí cao đổi lấy ổn định.
 
 ### 2. Đếm con: dùng `(count)` thay vì `(id)`
@@ -53,9 +53,7 @@ return await repo.update(id, payload);
 return await repo.update(id, payload);
 ```
 
-Áp dụng: `mttq-can-bo`, `mttq-ky-hop`, `mttq-nhiem-ky`, `mttq-uy-vien-uy-ban`,
-`mttq-khen-thuong`, `mttq-tap-huan`, `bai-viet-danh-sach`,
-`cong-viec-danh-sach`, `mttq-thiet-lap`, `the-loai`, `thiet-lap-khac`.
+Áp dụng: `nhan-vien`, `phong-ban`, `chuc-vu`, `thong-tin-to-chuc`, `phan-quyen`.
 
 ### 4. KHÔNG `select('*')` trong `returningSelect` rộng
 
@@ -89,7 +87,7 @@ Migration: `supabase/migrations/<timestamp>_egress_optimizations.sql`.
 - Mutation 1 row → `setQueryData(detailKey, updated)` + patch list cache thủ
   công. Tránh `invalidateQueries(listKey)` nếu list đang mounted.
 - Mutation tick nhanh (vd điểm danh): tính delta → patch summary counters
-  trên ủy viên list cache, KHÔNG invalidate `mttqUyVienUyBan.all`.
+  
 - Khi phải invalidate query đắt nhưng không cần refetch ngay (vd
   `byCanBoPrefix` trong khen-thưởng; ma trận điểm danh nhiệm kỳ): dùng
   `refetchType: 'none'` để mark stale; query tự refetch khi user mở lại.
@@ -115,7 +113,7 @@ data master ít thay đổi: dùng `masterDataQueryOptions` (stale 30 phút).
 
 ### 10. Batch CRUD con (form parent/child)
 
-Bảng con (vd `mttq_khen_thuong_ct`, `mttq_lop_tap_huan_ct`) phải:
+Bảng con (nếu có) phải:
 
 - 1× `delete().in('id', toDelete)` — KHÔNG loop `.eq('id', x).delete()`.
 - 1× `upsert(rowsExisting, { onConflict: 'id' })` — KHÔNG loop `.update()`.
