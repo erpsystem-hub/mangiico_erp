@@ -168,7 +168,7 @@ Dùng khi tạo mới hoặc rà soát một module CRUD trong app.
 - **Toolbar + mobile filter**: `components/shared/GenericToolbar.tsx` + `MobileFilterSheet`.
 - **Mobile list card**: `components/shared/MobileListCard.tsx`.
 - **`GenericTable` breakpoint list / card**: prop `listBreakpoint` (`sm` \| `md`) trong `components/shared/GenericTable.tsx` — ví dụ dùng `sm` tại `features/he-thong/nhan-vien/components/nhan-vien-table.tsx`.
-- **Khung trang CRUD**: `lib/createFeatureModule.tsx` (module dùng factory).
+- **Khung trang CRUD**: `features/he-thong/*/index.tsx` (pattern toolbar + table + drawer form/detail).
 
 ---
 

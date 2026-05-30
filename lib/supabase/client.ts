@@ -1,8 +1,6 @@
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from './database.types';
-
-const url = import.meta.env.VITE_SUPABASE_URL as string | undefined;
-const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY as string | undefined;
+import { getSupabaseEnv } from './env';
 
 let supabaseInstance: SupabaseClient<Database> | null = null;
 
@@ -12,8 +10,9 @@ let supabaseInstance: SupabaseClient<Database> | null = null;
  */
 export function getSupabase(): SupabaseClient<Database> | null {
   if (supabaseInstance !== null) return supabaseInstance;
-  if (!url || !anonKey) return null;
-  supabaseInstance = createClient<Database>(url, anonKey, {
+  const env = getSupabaseEnv();
+  if (!env) return null;
+  supabaseInstance = createClient<Database>(env.url, env.anonKey, {
     auth: {
       flowType: 'pkce',
       persistSession: true,
@@ -26,7 +25,3 @@ export function getSupabase(): SupabaseClient<Database> | null {
   });
   return supabaseInstance;
 }
-
-/**
- * Use getSupabase() in repositories; returns null when env is not set (mock mode).
- */

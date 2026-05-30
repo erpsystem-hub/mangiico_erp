@@ -13,17 +13,20 @@ import type { Position } from '../core/types';
 import { toast } from "sonner";
 import { txt } from '../../../../lib/text';
 import { queryKeys } from '@/lib/query-keys';
-import { masterDataQueryOptions } from '@/lib/supabase/query-config';
+import { masterDataQueryOptions, supabaseListQueryRetryOptions } from '@/lib/supabase/query-config';
+import { useSupabaseListEnabled } from '@/lib/supabase/use-supabase-list-enabled';
 import { getErrorMessage } from '@/lib/utils';
 
 const positionsQueryKey = queryKeys.positions.all;
 
 export const usePositions = (options?: { enabled?: boolean }) => {
+  const enabled = useSupabaseListEnabled(options?.enabled !== false);
   return useQuery({
     queryKey: positionsQueryKey,
     queryFn: getPositions,
-    enabled: options?.enabled !== false,
+    enabled,
     ...masterDataQueryOptions,
+    ...supabaseListQueryRetryOptions,
   });
 };
 
@@ -91,8 +94,13 @@ export const useImportPositions = (onSuccess?: () => void) => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: importPositions,
-    onSuccess: (result) => {
-      void queryClient.invalidateQueries({ queryKey: positionsQueryKey });
+    onSuccess: async (result) => {
+      const fresh = await getPositions();
+      queryClient.setQueryData(positionsQueryKey, fresh);
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.employees.all,
+        refetchType: 'none',
+      });
       if (result.created > 0) {
         toast.success(txt('position.toast.importSuccess', { count: result.created }));
       }

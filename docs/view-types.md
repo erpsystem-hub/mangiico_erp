@@ -42,7 +42,7 @@ const planned = listViewTypesByStatus('planned');
 
 | ViewTypeId | Mô tả ngắn | Trạng thái |
 |------------|-----------|------------|
-| `table` | CRUD list: `GenericTable`, `createFeatureModule` | ready |
+| `table` | CRUD list: `GenericTable`, module `index.tsx` pattern | ready |
 | `detail` | Drawer chi tiết: `DetailSection`, `DetailField` | ready |
 | `form` | Form drawer, `FormGrid`, `RhfDataField`, `FormStepper` | ready |
 | `dashboard` | `ModuleDashboardLayout`, `SubModuleCard` | ready |
@@ -73,7 +73,7 @@ import { GenericTable, GenericDrawer, RhfDataField } from '@/components/views';
 ## Pattern khuyến nghị
 
 1. **Module feature** (`features/...`): hooks, schema, service, `*-field-meta.ts` (field → `DataTypeId`).
-2. **Trang**: chọn `createFeatureModule` (table + stats) hoặc tự ghép drawer form/detail.
+2. **Trang**: theo pattern `features/he-thong/*/index.tsx` (toolbar + table + drawer form/detail) hoặc tab stats nếu cần.
 3. **Master–detail**: parent id → query bảng con → `GenericSubTableSection` + API CRUD con.
 4. **View type mới** (vd. calendar): thêm id vào `VIEW_TYPE_IDS` + entry trong `VIEW_TYPE_REGISTRY` + doc; triển khai shell rồi đổi `implementationStatus`.
 
@@ -91,4 +91,5 @@ import { GenericTable, GenericDrawer, RhfDataField } from '@/components/views';
 ## Liên quan
 
 - [`lib/table-column-presets.ts`](../lib/table-column-presets.ts) — độ rộng cột bảng (gắn `DataTypeId`).
-- [`lib/createFeatureModule.tsx`](../lib/createFeatureModule.tsx) — factory CRUD list/tab stats.
+- [`docs/checklist-module.md`](checklist-module.md) — checklist module CRUD chuẩn.
+- [`docs/design-system.md`](design-system.md) — token màu, font, typography.

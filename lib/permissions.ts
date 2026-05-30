@@ -2,6 +2,7 @@ import type { User } from '@/types';
 import type { ActionType } from '@/features/he-thong/phan-quyen/core/types';
 import { usePermissionGrantStore } from '@/store/usePermissionGrantStore';
 import { isPermissionMatrixEnabled } from '@/lib/permission-matrix-env';
+import { isSupabase } from '@/lib/data/config';
 
 /**
  * Hành động gắn với UI (nút, route) — mở rộng theo nghiệp vụ.
@@ -37,6 +38,9 @@ export const APP_RESOURCE_TO_MODULE: Partial<Record<AppResource, string>> = {
 /** Module id cũ (Thông tin công ty) — vẫn tính quyền khi ma trận chưa cập nhật. */
 const COMPANY_MODULE_ID_LEGACY = 'he-thong/thong-tin-cong-ty';
 
+/** Các action UI được bypass khi `cap_bac=1` trên mọi module trong map. */
+const MODULE_UI_ACTIONS: AppAction[] = ['view', 'create', 'edit', 'delete', 'export', 'import'];
+
 /** UI dùng `edit`; ma trận phân quyền dùng `update`. */
 export function mapAppActionToActionType(action: AppAction): ActionType {
   if (action === 'edit') return 'update';
@@ -69,26 +73,48 @@ export function isChucVuCapBacOne(cap: number | null | undefined): boolean {
   return Number.isFinite(n) && n === 1;
 }
 
-/** Luật OR Phòng ban: `cap_bac === 1` (chức vụ hydrate) hoặc ma trận `admin`/`all` hoặc đúng token matrix. */
-function canDepartmentsWithCapBac(
-  user: User,
+/**
+ * Giám đốc (`cap_bac=1`): bypass view/create/edit/delete/export/import trên mọi module Hệ thống.
+ */
+export function isGlobalCapBacBypass(
   action: AppAction,
-  grantsByModule: Record<string, ActionType[]>,
-  chucVuCapBac: number | null
+  resource: AppResource,
+  capBac: number | null | undefined
 ): boolean {
-  void user;
-  const moduleId = APP_RESOURCE_TO_MODULE.departments;
-  if (!moduleId) return false;
-  const capBypassActions: AppAction[] = ['view', 'create', 'edit', 'delete', 'export', 'import'];
-  if (isChucVuCapBacOne(chucVuCapBac) && capBypassActions.includes(action)) {
-    return true;
-  }
+  return (
+    isChucVuCapBacOne(capBac) &&
+    APP_RESOURCE_TO_MODULE[resource] !== undefined &&
+    MODULE_UI_ACTIONS.includes(action)
+  );
+}
+
+/**
+ * Đối chiếu token ma trận cho một `module_id`.
+ * `quan_tri` (admin) / `all` → mọi action; có `view` → thêm export/import.
+ */
+export function moduleGrantsAllow(
+  action: AppAction,
+  moduleId: string,
+  grantsByModule: Record<string, ActionType[]>
+): boolean {
   const need = mapAppActionToActionType(action);
   const allowed = grantsByModule[moduleId] ?? [];
   if ((action === 'export' || action === 'import') && grantsAllow(allowed, 'view')) {
     return true;
   }
   return grantsAllow(allowed, need);
+}
+
+/** Phòng ban: ma trận `admin`/`all`/token — cap_bac=1 xử lý ở bypass toàn cục trước. */
+function canDepartmentsWithCapBac(
+  user: User,
+  action: AppAction,
+  grantsByModule: Record<string, ActionType[]>
+): boolean {
+  void user;
+  const moduleId = APP_RESOURCE_TO_MODULE.departments;
+  if (!moduleId) return false;
+  return moduleGrantsAllow(action, moduleId, grantsByModule);
 }
 
 function matrixCan(user: User, action: AppAction, resource: AppResource): boolean {
@@ -109,8 +135,7 @@ function matrixCan(user: User, action: AppAction, resource: AppResource): boolea
     return false;
   }
 
-  const allowed = grantsByModule[moduleId] ?? [];
-  return grantsAllow(allowed, need);
+  return moduleGrantsAllow(action, moduleId, grantsByModule);
 }
 
 /**
@@ -128,7 +153,8 @@ export function can(
 ): boolean {
   if (!user) return false;
 
-  if (user.role === 'admin') {
+  // Mock mode: admin toàn quyền UI. Supabase mode luôn `role='user'` — không tin cache mock cũ.
+  if (user.role === 'admin' && !isSupabase()) {
     if (resource === 'profile' && action === 'delete') return false;
     return true;
   }
@@ -140,18 +166,12 @@ export function can(
 
   const { matrixActive, grantsByModule, chucVuCapBac } = usePermissionGrantStore.getState();
   if (matrixActive) {
-    // cap_bac=1: bypass đủ thao tác UI (kể cả xuất/nhập) cho mọi module có trong APP_RESOURCE_TO_MODULE
-    const capBypassActions: AppAction[] = ['view', 'create', 'edit', 'delete', 'export', 'import'];
-    if (
-      isChucVuCapBacOne(chucVuCapBac) &&
-      APP_RESOURCE_TO_MODULE[resource] !== undefined &&
-      capBypassActions.includes(action)
-    ) {
+    if (isGlobalCapBacBypass(action, resource, chucVuCapBac)) {
       return true;
     }
 
     if (resource === 'departments') {
-      return canDepartmentsWithCapBac(user, action, grantsByModule, chucVuCapBac);
+      return canDepartmentsWithCapBac(user, action, grantsByModule);
     }
     // Có quyền xem module ⇒ được xuất/nhập (client-side; RLS/API vẫn là chuẩn bảo vệ dữ liệu).
     if (

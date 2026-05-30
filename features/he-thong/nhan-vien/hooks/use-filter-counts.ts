@@ -2,15 +2,7 @@ import { useMemo } from 'react';
 import type { Employee, EmployeeFilters } from '../core/types';
 import { matchesSearchTerm } from '@/lib/searchUtils';
 import { employeeMatchesColumnSearch } from '../utils/column-search';
-
-const SEARCHABLE_KEYS = [
-  'ten_tai_khoan',
-  'ho_va_ten',
-  'ten_phong_ban',
-  'ten_bo_phan',
-  'ten_chuc_vu',
-  'trang_thai',
-];
+import { NHAN_VIEN_SEARCHABLE_KEYS } from '../utils/search-keys';
 
 export interface FilterCounts {
   /** Số lượng nhân viên thuộc mỗi phòng ban (sau khi bỏ chính filter phòng ban hiện tại). */
@@ -35,7 +27,7 @@ export function useFilterCounts(
 ): FilterCounts {
   return useMemo(() => {
     const passesText = (e: Employee) => {
-      if (!matchesSearchTerm(e as unknown as Record<string, unknown>, searchTerm, SEARCHABLE_KEYS)) return false;
+      if (!matchesSearchTerm(e as unknown as Record<string, unknown>, searchTerm, NHAN_VIEN_SEARCHABLE_KEYS)) return false;
       if (!employeeMatchesColumnSearch(e, filters.columnSearch)) return false;
       return true;
     };

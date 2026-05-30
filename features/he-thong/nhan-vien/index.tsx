@@ -15,17 +15,25 @@ import { useNavigate } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
 import { useAuthStore } from '../../../store/useStore';
 import { useCan } from '../../../hooks/use-can';
+import { useResourcePermissions } from '@/hooks/use-resource-permissions';
+import { useTabSearchParam } from '@/hooks/use-tab-search-param';
+import { List, BarChart3 } from 'lucide-react';
+import TabGroup from '@/components/ui/TabGroup';
 
-import { EMPLOYEES_LIST_QUERY_PARAMS, queryKeys } from '@/lib/query-keys';
-import { defaultServerQueryOptions } from '@/lib/supabase/query-config';
-import { getDepartments } from '../phong-ban/services/phong-ban-service';
-import { getPositions } from '../chuc-vu/services/chuc-vu-service';
+import { queryKeys } from '@/lib/query-keys';
+import { defaultServerQueryOptions, masterDataQueryOptions, SERVER_GC_TIME_MS } from '@/lib/supabase/query-config';
+import { useDepartments } from '../phong-ban/hooks/use-phong-ban';
 import { usePositions } from '../chuc-vu/hooks/use-chuc-vu';
 import { DRAWER_Z_CONTENT_BASE } from '@/lib/dialog-sizes';
 import EmployeeToolbar from './components/nhan-vien-toolbar';
 import EmployeeTable from './components/nhan-vien-table';
+import { patchEmployeesListCaches } from './utils/patch-employees-cache';
 
-import { useEmployees, useDeleteWithUndo, useUpdateStatusEmployee } from './hooks/use-nhan-vien';
+import {
+  useEmployeesList,
+  useDeleteWithUndo,
+  useUpdateStatusEmployee,
+} from './hooks/use-nhan-vien';
 import { getEmployeeById } from './services/nhan-vien-service';
 import { useEmployeeStore } from './store/useEmployeeStore';
 import { Employee } from './core/types';
@@ -36,12 +44,14 @@ import { getLanguage } from '../../../lib/utils';
 import { useListWithFilter } from '../../../lib/hooks';
 import { matchesSearchTerm } from '../../../lib/searchUtils';
 import { employeeMatchesColumnSearch } from './utils/column-search';
-import { mergeEmployeeChucVuFromPositions } from './utils/merge-employee-chuc-vu-from-positions';
+import { NHAN_VIEN_SEARCHABLE_KEYS } from './utils/search-keys';
 import ToggleSwitch from '../../../components/ui/ToggleSwitch';
 import EmployeeStatusChangeDialog from './components/nhan-vien-status-change-dialog';
+import ErrorState from '../../../components/shared/ErrorState';
 
 const EmployeeForm = lazy(() => import('./components/nhan-vien-form'));
 const EmployeeDetail = lazy(() => import('./components/nhan-vien-detail'));
+const EmployeeStats = lazy(() => import('./components/nhan-vien-stats'));
 
 /** Chọn trạng thái Hoạt động / Khóa trong dialog xác nhận (có state để switch hiển thị đúng). */
 const EmployeeStatusSwitchPicker: React.FC<{
@@ -81,26 +91,10 @@ const DrawerLazyFallback: React.FC = () => (
 
 type FormOrigin = 'list' | 'detail';
 
-const employeesListQueryKey = queryKeys.employees.list({
-  limit: EMPLOYEES_LIST_QUERY_PARAMS.limit,
-  offset: EMPLOYEES_LIST_QUERY_PARAMS.offset,
-  orderBy: EMPLOYEES_LIST_QUERY_PARAMS.orderBy,
-  ascending: EMPLOYEES_LIST_QUERY_PARAMS.ascending,
-});
-
-const NHAN_VIEN_SEARCHABLE_KEYS: string[] = [
-  'ten_tai_khoan',
-  'ho_va_ten',
-  'ten_phong_ban',
-  'ten_bo_phan',
-  'ten_chuc_vu',
-  'cap_quan_ly',
-  'trang_thai',
-];
-
 const EmployeePage: React.FC = () => {
   const user = useAuthStore((s) => s.user);
   const canView = useCan('view', 'employees');
+  const { canCreate, canEdit, canDelete } = useResourcePermissions('employees');
   const navigate = useNavigate();
   const didRedirect = useRef(false);
 
@@ -110,6 +104,8 @@ const EmployeePage: React.FC = () => {
     toast.error(txt('employee.noViewPermission'));
     navigate('/he-thong', { replace: true });
   }, [user, canView, navigate]);
+
+  const [activeTab, setActiveTab] = useTabSearchParam(['list', 'stats'] as const, 'list');
 
   const [showForm, setShowForm] = useState(false);
   const [editingEmp, setEditingEmp] = useState<Employee | null>(null);
@@ -123,38 +119,77 @@ const EmployeePage: React.FC = () => {
   const employeesRef = useRef<Employee[]>([]);
 
   const {
-    searchTerm, filters, sort,
-    resetState, clearSelection,
+    searchTerm, filters, sort, pagination, setPage,
+    resetState, clearSelection, setFilter,
   } = useEmployeeStore();
 
   const queryClient = useQueryClient();
-  const { data: employees = [], isLoading } = useEmployees({ enabled: canView });
+  const { data: departments = [] } = useDepartments({ enabled: canView });
   const { data: positions = [] } = usePositions({ enabled: canView });
 
-  const employeesDisplay = useMemo(
-    () => employees.map((e) => mergeEmployeeChucVuFromPositions(e, positions)),
-    [employees, positions],
-  );
+  const {
+    employees: employeesDisplay,
+    total: listTotal,
+    isLoading,
+    isServerPaginated,
+    mode: listMode,
+    isError: listIsError,
+    refetch: refetchList,
+  } = useEmployeesList({
+    page: pagination.page,
+    pageSize: pagination.pageSize,
+    sort,
+    enabled: canView && activeTab === 'list',
+  });
+
+  const prevListMode = useRef(listMode);
+  useEffect(() => {
+    if (prevListMode.current !== listMode && listMode === 'server') {
+      setPage(1);
+    }
+    prevListMode.current = listMode;
+  }, [listMode, setPage]);
+
+  useEffect(() => {
+    if (!isServerPaginated) return;
+    setPage(1);
+  }, [sort.column, sort.direction, isServerPaginated, setPage]);
 
   useEffect(() => { viewingEmpRef.current = viewingEmp; }, [viewingEmp]);
   useEffect(() => { editingEmpRef.current = editingEmp; }, [editingEmp]);
   useEffect(() => { formOriginRef.current = formOrigin; }, [formOrigin]);
   useEffect(() => { employeesRef.current = employeesDisplay; }, [employeesDisplay]);
 
-  /** Prefetch master data cho form. */
+  /** Warm master data cache khi idle — TanStack dedupe hooks con. */
   useEffect(() => {
     if (!canView) return;
-    const opts = defaultServerQueryOptions;
-    void queryClient.prefetchQuery({
-      queryKey: queryKeys.departments.all,
-      queryFn: getDepartments,
-      ...opts,
-    });
-    void queryClient.prefetchQuery({
-      queryKey: queryKeys.positions.all,
-      queryFn: getPositions,
-      ...opts,
-    });
+    const prefetchMaster = () => {
+      void queryClient.prefetchQuery({
+        queryKey: queryKeys.departments.all,
+        queryFn: () => import('../phong-ban/services/phong-ban-service').then((m) => m.getDepartments()),
+        ...masterDataQueryOptions,
+        staleTime: Infinity,
+        gcTime: SERVER_GC_TIME_MS,
+      });
+      void queryClient.prefetchQuery({
+        queryKey: queryKeys.positions.all,
+        queryFn: () => import('../chuc-vu/services/chuc-vu-service').then((m) => m.getPositions()),
+        ...masterDataQueryOptions,
+        staleTime: Infinity,
+        gcTime: SERVER_GC_TIME_MS,
+      });
+    };
+    const idleId =
+      typeof requestIdleCallback !== 'undefined'
+        ? requestIdleCallback(prefetchMaster, { timeout: 3000 })
+        : window.setTimeout(prefetchMaster, 500);
+    return () => {
+      if (typeof cancelIdleCallback !== 'undefined' && typeof idleId === 'number') {
+        cancelIdleCallback(idleId);
+      } else {
+        clearTimeout(idleId as number);
+      }
+    };
   }, [queryClient, canView]);
 
   const { deleteWithUndo } = useDeleteWithUndo();
@@ -168,14 +203,13 @@ const EmployeePage: React.FC = () => {
   // Đồng bộ viewing với dữ liệu server (full list); đóng drawer nếu bản ghi không còn (vd. đã xóa ngoài app).
   useEffect(() => {
     if (!viewingEmp) return;
-    const row = employees.find((e) => e.id === viewingEmp.id);
+    const row = employeesDisplay.find((e) => e.id === viewingEmp.id);
     if (!row) {
       queueMicrotask(() => setViewingEmp(null));
       return;
     }
-    const merged = mergeEmployeeChucVuFromPositions(row, positions);
-    if (merged !== viewingEmp) queueMicrotask(() => setViewingEmp(merged));
-  }, [employees, positions, viewingEmp]);
+    if (row !== viewingEmp) queueMicrotask(() => setViewingEmp(row));
+  }, [employeesDisplay, viewingEmp]);
 
   const filterFn = useCallback(
     (emp: Employee, term: string, f: typeof filters) => {
@@ -200,6 +234,7 @@ const EmployeePage: React.FC = () => {
   const filteredEmployees = useListWithFilter(employeesDisplay, searchTerm, filters, filterFn);
 
   const sortedEmployees = useMemo(() => {
+    if (isServerPaginated) return filteredEmployees;
     if (!sort.column || !sort.direction) return filteredEmployees;
     const sorted = [...filteredEmployees];
     sorted.sort((a, b) => {
@@ -213,7 +248,7 @@ const EmployeePage: React.FC = () => {
       return sort.direction === 'desc' ? -cmp : cmp;
     });
     return sorted;
-  }, [filteredEmployees, sort]);
+  }, [filteredEmployees, sort, isServerPaginated]);
 
   /**
    * Mở form sửa: list không còn ship `hinh_anh` (P1.1) nên cần fetch full row qua
@@ -221,6 +256,7 @@ const EmployeePage: React.FC = () => {
    */
   const handleEdit = useCallback(
     (item: Employee) => {
+      if (!canEdit) return;
       const origin: FormOrigin = viewingEmpRef.current ? 'detail' : 'list';
       void (async () => {
         try {
@@ -231,27 +267,25 @@ const EmployeePage: React.FC = () => {
           });
           if (full == null) {
             queryClient.removeQueries({ queryKey: queryKeys.employees.detail(item.id) });
-            queryClient.setQueryData<Employee[]>(employeesListQueryKey, (old) =>
-              old?.filter((e) => e.id !== item.id),
-            );
+            patchEmployeesListCaches(queryClient, (old) => old.filter((e) => e.id !== item.id), -1);
             toast.error(txt('employee.service.notFound'));
             return;
           }
           startTransition(() => {
             setFormOrigin(origin);
-            setEditingEmp(mergeEmployeeChucVuFromPositions(full, positions));
+            setEditingEmp(full);
             setShowForm(true);
           });
         } catch {
           startTransition(() => {
             setFormOrigin(origin);
-            setEditingEmp(mergeEmployeeChucVuFromPositions(item, positions));
+            setEditingEmp(item);
             setShowForm(true);
           });
         }
       })();
     },
-    [queryClient, positions],
+    [queryClient, canEdit],
   );
 
   /** Detail drawer: luôn refetch full row (có `hinh_anh`) khi mở — invalidate trước để không dùng cache còn “fresh” nhưng đã lệch DB. */
@@ -271,21 +305,17 @@ const EmployeePage: React.FC = () => {
           });
           if (full == null) {
             queryClient.removeQueries({ queryKey: queryKeys.employees.detail(item.id) });
-            queryClient.setQueryData<Employee[]>(employeesListQueryKey, (old) =>
-              old?.filter((e) => e.id !== item.id),
-            );
+            patchEmployeesListCaches(queryClient, (old) => old.filter((e) => e.id !== item.id), -1);
             toast.error(txt('employee.service.notFound'));
             return;
           }
-          startTransition(() =>
-            setViewingEmp(mergeEmployeeChucVuFromPositions(full, positions)),
-          );
+          startTransition(() => setViewingEmp(full));
         } catch {
-          startTransition(() => setViewingEmp(mergeEmployeeChucVuFromPositions(item, positions)));
+          startTransition(() => setViewingEmp(item));
         }
       })();
     },
-    [queryClient, positions],
+    [queryClient],
   );
 
   const closeDetail = useCallback(() => setViewingEmp(null), []);
@@ -302,6 +332,7 @@ const EmployeePage: React.FC = () => {
 
   const handleDelete = useCallback(
     (id: string) => {
+      if (!canDelete) return;
       const emp = employeesRef.current.find((e) => e.id === id);
       if (!emp) return;
       confirm({
@@ -319,25 +350,27 @@ const EmployeePage: React.FC = () => {
         },
       });
     },
-    [confirm, deleteWithUndo],
+    [confirm, deleteWithUndo, canDelete],
   );
 
   const handleStatusChange = useCallback((item: Employee) => {
+    if (!canEdit) return;
     setStatusChangeTarget(item);
-  }, []);
+  }, [canEdit]);
 
   const handleStatusSave = useCallback(
     async (status: TrangThaiNhanVien) => {
-      if (!statusChangeTarget) return;
+      if (!canEdit || !statusChangeTarget) return;
       const targetId = statusChangeTarget.id;
       await statusMutation.mutateAsync({ ids: [targetId], status });
       setViewingEmp((prev) => (prev?.id === targetId ? { ...prev, trang_thai: status } : prev));
       setStatusChangeTarget(null);
     },
-    [statusChangeTarget, statusMutation],
+    [statusChangeTarget, statusMutation, canEdit],
   );
 
   const handleDeleteMany = (ids: string[]) => {
+    if (!canDelete) return;
     const emps = employeesDisplay.filter((e) => ids.includes(e.id));
     confirm({
       title: txt('employee.bulkDeleteTitle'),
@@ -351,6 +384,7 @@ const EmployeePage: React.FC = () => {
   };
 
   const handleStatusChangeMany = (ids: string[], status: TrangThaiNhanVien) => {
+    if (!canEdit) return;
     const label = STATUS_OPTIONS.find((s) => s.value === status)?.label ?? status;
     confirm({
       title: txt('employee.bulkStatusTitle'),
@@ -378,31 +412,84 @@ const EmployeePage: React.FC = () => {
 
   return (
     <div className="flex flex-col h-page relative">
-      <div className="flex-1 min-h-0 flex flex-col mt-1.5 rounded-xl border border-border bg-card shadow-sm overflow-hidden relative z-0">
-        <EmployeeToolbar
-          employees={employeesDisplay}
-          onAdd={() => {
-            startTransition(() => {
-              setFormOrigin('list');
-              setShowForm(true);
-            });
-          }}
-          onDeleteMany={handleDeleteMany}
-          onStatusChangeMany={handleStatusChangeMany}
+      <div className="shrink-0 relative z-0">
+        <TabGroup
+          tabs={[
+            { id: 'list', label: txt('employee.tabList'), icon: List },
+            { id: 'stats', label: txt('employee.tabStats'), icon: BarChart3 },
+          ]}
+          activeTab={activeTab}
+          onChange={setActiveTab}
         />
-
-        <div className="flex-1 min-h-0">
-          <EmployeeTable
-            data={sortedEmployees}
-            isLoading={isLoading}
-            employeesForFilterCounts={employeesDisplay}
-            onEdit={handleEdit}
-            onView={handleView}
-            onDelete={handleDelete}
-            onStatusChange={handleStatusChange}
-          />
-        </div>
       </div>
+
+      {activeTab === 'list' ? (
+        <div className="flex-1 min-h-0 flex flex-col mt-1.5 rounded-xl border border-border bg-card shadow-sm overflow-hidden relative z-0">
+          <EmployeeToolbar
+            employees={employeesDisplay}
+            departments={departments}
+            positions={positions}
+            onAdd={() => {
+              if (!canCreate) return;
+              startTransition(() => {
+                setFormOrigin('list');
+                setShowForm(true);
+              });
+            }}
+            onDeleteMany={handleDeleteMany}
+            onStatusChangeMany={handleStatusChangeMany}
+          />
+
+          <div className="flex-1 min-h-0">
+            {listIsError ? (
+              <ErrorState
+                title={txt('employee.listLoadErrorTitle')}
+                message={txt('employee.listLoadErrorHint')}
+                onRetry={() => refetchList()}
+                primaryButtons
+                className="m-4 border-0 shadow-none"
+              />
+            ) : (
+            <EmployeeTable
+              data={sortedEmployees}
+              isLoading={isLoading}
+              employeesForFilterCounts={employeesDisplay}
+              departments={departments}
+              positions={positions}
+              serverSidePagination={isServerPaginated}
+              serverTotalRecords={listTotal}
+              onEdit={handleEdit}
+              onView={handleView}
+              onDelete={handleDelete}
+              onStatusChange={handleStatusChange}
+            />
+            )}
+          </div>
+        </div>
+      ) : (
+        <div className="flex-1 min-h-0 flex flex-col mt-1.5 rounded-xl border border-border bg-card shadow-sm overflow-hidden">
+          <div className="flex-1 min-h-0 min-w-0 flex flex-col overflow-hidden">
+            <Suspense
+              fallback={
+                <div className="flex flex-1 items-center justify-center min-h-[320px]">
+                  <div className="h-9 w-9 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+                </div>
+              }
+            >
+              <EmployeeStats
+                onDrillDownDept={(deptId) => {
+                  setFilter('id_phong_ban', [deptId]);
+                  setActiveTab('list');
+                }}
+                onDrillDownStatus={(status) => {
+                  setFilter('trang_thai', [status]);
+                  setActiveTab('list');
+                }}
+              />
+            </Suspense>
+          </div>
+        </div>
+      )}
 
       <AnimatePresence mode="sync">
         {showForm && (
@@ -410,6 +497,8 @@ const EmployeePage: React.FC = () => {
             <EmployeeForm
               key={editingEmp?.id ?? 'new'}
               initialData={editingEmp}
+              departments={departments}
+              positions={positions}
               onClose={closeForm}
             />
           </Suspense>

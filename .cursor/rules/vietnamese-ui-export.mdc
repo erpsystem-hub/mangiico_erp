@@ -1,0 +1,20 @@
+---
+description: UI chỉ tiếng Việt; xuất PDF/XLSX qua lib/export với font Noto Sans
+globs: "features/**/*.tsx,components/**/*.tsx,lib/export/**,lib/text/**"
+alwaysApply: false
+---
+
+# Tiếng Việt + Export chuẩn
+
+## Chuỗi UI
+
+- Label người dùng thấy → `txt('...')` từ `lib/text/ui.ts` hoặc `features/**/text.ts`.
+- Không thêm `locales/` JSON hay đa ngôn ngữ.
+- Tránh hardcode tiếng Anh trong JSX (vd. `"Export"`, `"Save"`).
+
+## Xuất dữ liệu
+
+- Dùng [`lib/export`](mdc:lib/export/index.ts): `exportTable('xlsx'|'csv'|'pdf', options)`.
+- Không gọi jsPDF/xlsx trực tiếp trong component (trừ `lib/export/*`).
+- PDF: font Noto Sans tại `public/fonts/NotoSans-Regular.ttf`.
+- Tham chiếu: [`docs/conventions-vi-export.md`](mdc:docs/conventions-vi-export.md).

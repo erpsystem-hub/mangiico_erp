@@ -1,6 +1,9 @@
 /**
  * Utilities chuẩn hóa tìm kiếm trên list view.
  * Dùng chung cho mọi module: tìm trên tất cả cột hiển thị + trường liên kết (enriched).
+ *
+ * Quy ước `keys`: gồm key cột trực tiếp và tên hiển thị FK (vd. `ten_phong_ban` thay vì
+ * chỉ `id_phong_ban`) để người dùng tìm theo họ tên / tên phòng ban dù cột DB là id.
  */
 
 /**

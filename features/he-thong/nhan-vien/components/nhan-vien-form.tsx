@@ -20,18 +20,20 @@ import GenericDrawer, { DRAWER_WIDTH_FORM } from '../../../../components/shared/
 import FormDrawerFooter from '../../../../components/shared/FormDrawerFooter';
 import FormSection from '../../../../components/shared/FormSection';
 import FormGrid from '../../../../components/shared/FormGrid';
-import { useDepartments } from '../../phong-ban/hooks/use-phong-ban';
-import { usePositions } from '../../chuc-vu/hooks/use-chuc-vu';
+import type { Department } from '../../phong-ban/core/types';
+import type { Position } from '../../chuc-vu/core/types';
 import { getDefaultEmployeeFormValues, employeeToFormValues } from '../utils/employee-to-form';
 import AuthConflictDialog from './auth-conflict-dialog';
 import { useSignedEmployeeAvatarSrc } from '../hooks/use-signed-employee-avatar-src';
 
 interface Props {
   initialData?: Employee | null;
+  departments: Department[];
+  positions: Position[];
   onClose: () => void;
 }
 
-const EmployeeForm: React.FC<Props> = ({ initialData, onClose }) => {
+const EmployeeForm: React.FC<Props> = ({ initialData, departments, positions, onClose }) => {
   const isEdit = !!initialData;
 
   const [conflictUsername, setConflictUsername] = useState<string | null>(null);
@@ -56,9 +58,6 @@ const EmployeeForm: React.FC<Props> = ({ initialData, onClose }) => {
     closeConflict();
     onClose();
   });
-
-  const { data: departments = [] } = useDepartments();
-  const { data: positions = [] } = usePositions();
 
   const employeeResolver = useMemo(
     () => zodResolver(buildEmployeeSchema(positions)) as Resolver<EmployeeFormValues>,

@@ -15,6 +15,7 @@ import { useNavigate } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
 import { useAuthStore } from '../../../store/useStore';
 import { useCan } from '../../../hooks/use-can';
+import { useResourcePermissions } from '@/hooks/use-resource-permissions';
 import { matchesSearchTerm } from '../../../lib/searchUtils';
 import type { TrangThaiHoatDong } from '@/lib/constants/trang-thai';
 import { DRAWER_Z_CONTENT_BASE } from '@/lib/dialog-sizes';
@@ -34,6 +35,7 @@ import {
   useUpdateStatusPosition,
   useImportPositions,
 } from './hooks/use-chuc-vu';
+import ErrorState from '../../../components/shared/ErrorState';
 import { usePositionFilterCounts } from './hooks/use-position-filter-counts';
 import { usePositionStore } from './store/usePositionStore';
 import { useConfirmStore } from '../../../store/useConfirmStore';
@@ -43,6 +45,7 @@ import { useExportData } from '../../../lib/useExportData';
 import type { Position } from './core/types';
 import { POSITION_SEARCHABLE_KEYS } from './utils/search-keys';
 import { positionMatchesColumnSearch } from './utils/column-search';
+import { fkMatchesFilter } from './utils/group-positions-by-department';
 
 const PositionForm = lazy(() => import('./components/chuc-vu-form'));
 const PositionDetail = lazy(() => import('./components/chuc-vu-detail'));
@@ -64,6 +67,7 @@ type FormOrigin = 'list' | 'detail';
 const PositionPage: React.FC = () => {
   const user = useAuthStore((s) => s.user);
   const canView = useCan('view', 'positions');
+  const { canCreate, canEdit, canDelete, canExport, canImport } = useResourcePermissions('positions');
   const navigate = useNavigate();
   const didRedirect = useRef(false);
 
@@ -94,7 +98,7 @@ const PositionPage: React.FC = () => {
     columns,
   } = usePositionStore();
 
-  const { data: positions = [], isLoading } = usePositions({ enabled: canView });
+  const { data: positions = [], isLoading, isError, refetch } = usePositions({ enabled: canView });
   const deleteMutation = useDeletePosition();
   const statusMutation = useUpdateStatusPosition();
   const importMutation = useImportPositions(() => setShowImport(false));
@@ -133,9 +137,10 @@ const PositionPage: React.FC = () => {
 
   const handleImportData = useCallback(
     async (data: Record<string, unknown>[]) => {
+      if (!canImport) return;
       await importMutation.mutateAsync(data);
     },
-    [importMutation]
+    [importMutation, canImport]
   );
 
   useEffect(() => {
@@ -157,9 +162,7 @@ const PositionPage: React.FC = () => {
       );
       const statusKey = item.trang_thai === 'Đang hoạt động' ? 'Active' : 'Inactive';
       const matchesStatus = f.status.length === 0 || f.status.includes(statusKey);
-      const matchesDept =
-        f.phong_ban_id.length === 0 ||
-        (item.phong_ban_id != null && f.phong_ban_id.includes(item.phong_ban_id));
+      const matchesDept = fkMatchesFilter(item.phong_ban_id, f.phong_ban_id);
       const matchesCol = positionMatchesColumnSearch(item, f.columnSearch);
       return matchesSearch && matchesStatus && matchesDept && matchesCol;
     },
@@ -204,6 +207,7 @@ const PositionPage: React.FC = () => {
   );
 
   const handleEdit = (item: Position) => {
+    if (!canEdit) return;
     startTransition(() => {
       setFormOrigin(viewingPos ? 'detail' : 'list');
       setEditingPos(item);
@@ -212,6 +216,7 @@ const PositionPage: React.FC = () => {
   };
 
   const handleDelete = (id: string) => {
+    if (!canDelete) return;
     confirm({
       title: txt('position.deleteTitle'),
       message: txt('position.deleteMessage'),
@@ -228,6 +233,7 @@ const PositionPage: React.FC = () => {
   };
 
   const handleStatusChange = (item: Position) => {
+    if (!canEdit) return;
     const newStatus = item.trang_thai === 'Đang hoạt động' ? 'Ngừng hoạt động' : 'Đang hoạt động';
     confirm({
       title: txt('position.statusChangeTitle'),
@@ -248,6 +254,7 @@ const PositionPage: React.FC = () => {
   };
 
   const handleDeleteMany = (ids: string[]) => {
+    if (!canDelete) return;
     confirm({
       title: txt('position.bulkDeleteTitle'),
       message: txt('position.bulkDeleteMessage', { count: ids.length }),
@@ -265,6 +272,7 @@ const PositionPage: React.FC = () => {
   };
 
   const handleStatusChangeMany = (ids: string[], status: TrangThaiHoatDong) => {
+    if (!canEdit) return;
     confirm({
       title: txt('position.statusChangeTitle'),
       message: `${txt('position.statusChangeMessage', { count: ids.length })} ${status}?`,
@@ -277,6 +285,7 @@ const PositionPage: React.FC = () => {
   };
 
   const handleExport = () => {
+    if (!canExport) return;
     if (filteredPositions.length === 0) {
       toast.warning(txt('position.noExportData'));
       return;
@@ -315,6 +324,7 @@ const PositionPage: React.FC = () => {
           deptCounts={deptCounts}
           statusCounts={statusCounts}
           onAdd={() => {
+            if (!canCreate) return;
             startTransition(() => {
               setFormOrigin('list');
               setEditingPos(null);
@@ -322,22 +332,35 @@ const PositionPage: React.FC = () => {
             });
           }}
           onExport={handleExport}
-          onImport={() => setShowImport(true)}
+          onImport={() => {
+            if (!canImport) return;
+            setShowImport(true);
+          }}
           onDeleteMany={handleDeleteMany}
           onStatusChangeMany={handleStatusChangeMany}
         />
 
         <div className="flex-1 min-h-0">
-          <PositionTable
-            data={filteredPositions}
-            isLoading={isLoading}
-            deptCounts={deptCounts}
-            statusCounts={statusCounts}
-            onEdit={handleEdit}
-            onDelete={handleDelete}
-            onStatusChange={handleStatusChange}
-            onView={setViewingPos}
-          />
+          {isError ? (
+            <ErrorState
+              title={txt('position.listLoadErrorTitle')}
+              message={txt('position.listLoadErrorHint')}
+              onRetry={() => refetch()}
+              primaryButtons
+              className="m-4 border-0 shadow-none"
+            />
+          ) : (
+            <PositionTable
+              data={filteredPositions}
+              isLoading={isLoading}
+              deptCounts={deptCounts}
+              statusCounts={statusCounts}
+              onEdit={handleEdit}
+              onDelete={handleDelete}
+              onStatusChange={handleStatusChange}
+              onView={setViewingPos}
+            />
+          )}
         </div>
       </div>
 

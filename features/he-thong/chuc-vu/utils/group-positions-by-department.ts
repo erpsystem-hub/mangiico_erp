@@ -3,6 +3,23 @@ import type { SortState } from '../../../../store/createGenericStore';
 import type { Position } from '../core/types';
 import { comparePositions } from './compare-positions';
 
+/** Chuẩn hoá FK int8 (number | string) → string id hoặc null. */
+export function normFkId(v: string | number | null | undefined): string | null {
+  if (v == null || String(v).trim() === '') return null;
+  return String(v).trim();
+}
+
+/** So khớp FK với danh sách filter (string[]). */
+export function fkMatchesFilter(
+  fk: string | number | null | undefined,
+  filterIds: string[],
+): boolean {
+  if (filterIds.length === 0) return true;
+  const id = normFkId(fk);
+  if (id == null) return false;
+  return filterIds.some((f) => normFkId(f) === id);
+}
+
 /** Chức vụ không có `phong_ban_id`. */
 export const UNASSIGNED_DEPT_ID = '__unassigned__';
 /** `phong_ban_id` không khớp phòng nào trong danh sách hiện tại. */
@@ -40,6 +57,14 @@ function sortBucket(list: Position[], sort: SortState): Position[] {
   return next;
 }
 
+/** Fallback khi group miss: chỉ hàng chức vụ, đã sort. */
+export function buildFlatUngroupedPositionRows(
+  positions: Position[],
+  sort: SortState,
+): GroupedPositionRow[] {
+  return sortBucket(positions, sort).map((position) => ({ kind: 'position', position }));
+}
+
 /**
  * Danh sách phẳng: tiêu đề phòng (theo `duong_dan`) + chức vụ trong phòng;
  * cuối cùng là nhóm phòng không tồn tại (nếu có), rồi chưa gán phòng (nếu có).
@@ -50,14 +75,14 @@ export function buildFlatGroupedRows(
   sort: SortState,
   labels: DeptGroupLabels
 ): GroupedPositionRow[] {
-  const deptIds = new Set(departments.map((d) => d.id));
+  const deptIds = new Set(departments.map((d) => normFkId(d.id)).filter((id): id is string => id != null));
   const byDept = new Map<string, Position[]>();
   const unknown: Position[] = [];
   const unassigned: Position[] = [];
 
   for (const p of positions) {
-    const pid = p.phong_ban_id;
-    if (pid == null || String(pid).trim() === '') {
+    const pid = normFkId(p.phong_ban_id);
+    if (pid == null) {
       unassigned.push(p);
       continue;
     }
@@ -74,7 +99,9 @@ export function buildFlatGroupedRows(
 
   const out: GroupedPositionRow[] = [];
   for (const d of sortedDepts) {
-    const bucket = byDept.get(d.id);
+    const deptKey = normFkId(d.id);
+    if (deptKey == null) continue;
+    const bucket = byDept.get(deptKey);
     if (!bucket?.length) continue;
     out.push({ kind: 'dept', department: d });
     for (const pos of sortBucket(bucket, sort)) {

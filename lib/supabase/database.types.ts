@@ -113,7 +113,29 @@ export type Database = {
           tg_tao?: string
           trang_thai?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "var_nhan_vien_id_bo_phan_fkey"
+            columns: ["id_bo_phan"]
+            isOneToOne: false
+            referencedRelation: "var_phong_ban"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "var_nhan_vien_id_chuc_vu_fkey"
+            columns: ["id_chuc_vu"]
+            isOneToOne: false
+            referencedRelation: "var_chuc_vu"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "var_nhan_vien_id_phong_ban_fkey"
+            columns: ["id_phong_ban"]
+            isOneToOne: false
+            referencedRelation: "var_phong_ban"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       var_phan_quyen: {
         Row: {
@@ -246,6 +268,59 @@ export type Database = {
           id_chuc_vu: number
           so_nhan_vien: number
         }[]
+      }
+      get_nhan_vien_count_by_phong_ban: {
+        Args: never
+        Returns: {
+          id_phong_ban: number
+          so_nhan_vien: number
+        }[]
+      }
+      get_nhan_vien_summary: {
+        Args: never
+        Returns: {
+          tong: number
+          hoat_dong: number
+          khoa: number
+        }[]
+      }
+      get_nhan_vien_page: {
+        Args: {
+          p_search?: string | null
+          p_limit?: number
+          p_offset?: number
+          p_trang_thai?: string[] | null
+          p_id_phong_ban?: number[] | null
+          p_id_chuc_vu?: number[] | null
+          p_order_by?: string
+          p_ascending?: boolean
+        }
+        Returns: {
+          id: number
+          ten_tai_khoan: string
+          ho_va_ten: string
+          id_phong_ban: number | null
+          id_bo_phan: number | null
+          id_chuc_vu: number | null
+          trang_thai: string
+          tg_tao: string
+          tg_cap_nhat: string
+          ten_phong_ban: string | null
+          ten_bo_phan: string | null
+          ten_chuc_vu: string | null
+          cap_quan_ly: string | null
+          total_count: number
+        }[]
+      }
+      get_nhan_vien_stats: {
+        Args: {
+          p_as_at: string
+          p_range_start: string
+          p_range_end: string
+          p_id_phong_ban?: number[] | null
+          p_trang_thai?: string[] | null
+        }
+        Returns: Json
       }
       get_phong_ban_path_level: {
         Args: { p_cha_id: number | null; p_id: number }

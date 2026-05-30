@@ -1,6 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
-  getEmployees,
   getEmployeeById,
   createEmployee,
   createEmployeeWithAuthDecision,
@@ -17,34 +16,23 @@ import { Employee } from '../core/types';
 import type { TrangThaiNhanVien } from '../core/constants';
 import { toast } from 'sonner';
 import { txt } from '../../../../lib/text';
-import { EMPLOYEES_LIST_QUERY_PARAMS, queryKeys } from '@/lib/query-keys';
-import { listQueryOptions } from '@/lib/supabase/query-config';
+import { queryKeys } from '@/lib/query-keys';
+import { transactionalCrudListQueryOptions } from '@/lib/supabase/query-config';
 import { getErrorMessage } from '@/lib/utils';
+import {
+  invalidateEmployeesCount,
+  invalidateEmployeesStats,
+  patchEmployeesListCaches,
+} from '../utils/patch-employees-cache';
 
-const employeesListQueryKey = queryKeys.employees.list({
-  limit: EMPLOYEES_LIST_QUERY_PARAMS.limit,
-  offset: EMPLOYEES_LIST_QUERY_PARAMS.offset,
-  orderBy: EMPLOYEES_LIST_QUERY_PARAMS.orderBy,
-  ascending: EMPLOYEES_LIST_QUERY_PARAMS.ascending,
-});
-
-export const useEmployees = (options?: { enabled?: boolean }) =>
-  useQuery({
-    queryKey: employeesListQueryKey,
-    queryFn: () => getEmployees(),
-    enabled: options?.enabled !== false,
-    // Danh sách nhân viên có thể xóa ngoài phiên này — stale ngắn + refetch khi vào lại trang.
-    // Mutations vẫn patch cache qua setQueryData.
-    ...listQueryOptions,
-    refetchOnMount: true,
-  });
+export { useEmployeesList } from './use-employees-list';
 
 export const useEmployee = (id: string | null) =>
   useQuery({
     queryKey: queryKeys.employees.detail(id ?? ''),
     queryFn: () => getEmployeeById(id!),
     enabled: !!id,
-    ...listQueryOptions,
+    ...transactionalCrudListQueryOptions,
   });
 
 interface CreateMutationOptions {
@@ -59,9 +47,9 @@ export const useCreateEmployee = (options?: (() => void) | CreateMutationOptions
   return useMutation({
     mutationFn: createEmployee,
     onSuccess: (created) => {
-      queryClient.setQueryData<Employee[]>(employeesListQueryKey, (old) =>
-        old ? [...old, created] : [created],
-      );
+      patchEmployeesListCaches(queryClient, (old) => [...old, created], 1);
+      invalidateEmployeesCount(queryClient);
+      invalidateEmployeesStats(queryClient);
       toast.success(txt('employee.toast.createSuccess'));
       opts.onSuccess?.();
     },
@@ -81,9 +69,9 @@ export const useCreateEmployeeWithAuthDecision = (onSuccess?: () => void) => {
     mutationFn: ({ data, decision }: { data: EmployeeFormValues; decision: AuthConflictDecision }) =>
       createEmployeeWithAuthDecision(data, decision),
     onSuccess: (created, variables) => {
-      queryClient.setQueryData<Employee[]>(employeesListQueryKey, (old) =>
-        old ? [...old, created] : [created],
-      );
+      patchEmployeesListCaches(queryClient, (old) => [...old, created], 1);
+      invalidateEmployeesCount(queryClient);
+      invalidateEmployeesStats(queryClient);
       toast.success(
         variables.decision === 'reset'
           ? txt('employee.toast.authPasswordReset')
@@ -101,8 +89,8 @@ export const useUpdateEmployee = (options?: (() => void) | CreateMutationOptions
   return useMutation({
     mutationFn: ({ id, data }: { id: string; data: EmployeeFormValues }) => updateEmployee(id, data),
     onSuccess: (updated, variables) => {
-      queryClient.setQueryData<Employee[]>(employeesListQueryKey, (old) =>
-        old?.map((e) => (e.id === variables.id ? updated : e)),
+      patchEmployeesListCaches(queryClient, (old) =>
+        old.map((e) => (e.id === variables.id ? updated : e)),
       );
       queryClient.setQueryData(queryKeys.employees.detail(variables.id), updated);
       toast.success(txt('employee.toast.updateSuccess'));
@@ -131,8 +119,8 @@ export const useUpdateEmployeeWithAuthDecision = (onSuccess?: () => void) => {
       decision: AuthConflictDecision;
     }) => updateEmployeeWithAuthDecision(id, data, decision),
     onSuccess: (updated, variables) => {
-      queryClient.setQueryData<Employee[]>(employeesListQueryKey, (old) =>
-        old?.map((e) => (e.id === variables.id ? updated : e)),
+      patchEmployeesListCaches(queryClient, (old) =>
+        old.map((e) => (e.id === variables.id ? updated : e)),
       );
       queryClient.setQueryData(queryKeys.employees.detail(variables.id), updated);
       toast.success(
@@ -152,8 +140,8 @@ export const useUpdateStatusEmployee = () => {
     mutationFn: ({ ids, status }: { ids: string[]; status: TrangThaiNhanVien }) =>
       updateEmployeeStatus(ids, status),
     onSuccess: (_, variables) => {
-      queryClient.setQueryData<Employee[]>(employeesListQueryKey, (old) =>
-        old?.map((e) =>
+      patchEmployeesListCaches(queryClient, (old) =>
+        old.map((e) =>
           variables.ids.includes(e.id) ? { ...e, trang_thai: variables.status } : e,
         ),
       );
@@ -173,9 +161,13 @@ export const useDeleteEmployees = () => {
   return useMutation({
     mutationFn: (ids: string[]) => deleteEmployees(ids),
     onSuccess: (_, ids) => {
-      queryClient.setQueryData<Employee[]>(employeesListQueryKey, (old) =>
-        old?.filter((e) => !ids.includes(e.id)),
+      patchEmployeesListCaches(
+        queryClient,
+        (old) => old.filter((e) => !ids.includes(e.id)),
+        -ids.length,
       );
+      invalidateEmployeesCount(queryClient);
+      invalidateEmployeesStats(queryClient);
       ids.forEach((id) => queryClient.removeQueries({ queryKey: queryKeys.employees.detail(id) }));
       toast.success(txt('employee.toast.deleteSuccess', { count: ids.length }));
     },
@@ -193,9 +185,13 @@ export const useDeleteWithUndo = () => {
   const deleteMut = useMutation({
     mutationFn: (ids: string[]) => deleteEmployees(ids),
     onSuccess: (_, ids) => {
-      queryClient.setQueryData<Employee[]>(employeesListQueryKey, (old) =>
-        old?.filter((e) => !ids.includes(e.id)),
+      patchEmployeesListCaches(
+        queryClient,
+        (old) => old.filter((e) => !ids.includes(e.id)),
+        -ids.length,
       );
+      invalidateEmployeesCount(queryClient);
+      invalidateEmployeesStats(queryClient);
       ids.forEach((id) => queryClient.removeQueries({ queryKey: queryKeys.employees.detail(id) }));
     },
     onError: (err: unknown) => toast.error(getErrorMessage(err)),
@@ -205,7 +201,8 @@ export const useDeleteWithUndo = () => {
     mutationFn: (employees: Employee[]) => restoreEmployees(employees),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.employees.all });
-      queryClient.invalidateQueries({ queryKey: queryKeys.employees.anyDetail });
+      invalidateEmployeesCount(queryClient);
+      invalidateEmployeesStats(queryClient);
       toast.success(txt('employee.toast.undoSuccess'));
     },
   });

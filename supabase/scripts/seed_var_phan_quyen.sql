@@ -1,4 +1,5 @@
--- Seed tùy chọn: một dòng phân quyền mẫu cho chức vụ đầu tiên (chạy sau khi có var_chuc_vu).
+-- Seed tùy chọn: một dòng phân quyền mẫu cho chức vụ đầu tiên.
+-- Chạy sau khi có var_chuc_vu (vd. sau `npm run seed:demo`).
 -- Idempotent: bỏ qua nếu cặp (chuc_vu_id, module_key) đã tồn tại.
 
 INSERT INTO public.var_phan_quyen (module_key, chuc_vu_id, quyen)

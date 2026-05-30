@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { getRoles, createRole, deleteRoles, updateModulePermissions } from '../services/phan-quyen-service';
+import { getRoles, createRole, deleteRoles, updateModulePermissions, getModuleName } from '../services/phan-quyen-service';
 import { RoleFormValues } from '../core/schema';
 import { ModulePermission, PositionPermission, type ActionType } from '../core/types';
 import { toast } from 'sonner';
@@ -63,9 +63,28 @@ export const useUpdateModulePermissions = () => {
       moduleId: string;
       updates: { roleId: string; actions: ActionType[] }[];
     }) => updateModulePermissions(moduleId, updates),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: rolesQueryKey });
-      queryClient.invalidateQueries({ queryKey: ['permission-grants'] });
+    onSuccess: (_, { moduleId, updates }) => {
+      const moduleName = getModuleName(moduleId);
+      queryClient.setQueryData<PositionPermission[]>(rolesQueryKey, (old) =>
+        old?.map((role) => {
+          const upd = updates.find((u) => u.roleId === role.id);
+          if (!upd) return role;
+          const other = role.quyen_han.filter((p) => p.module_id !== moduleId);
+          return {
+            ...role,
+            quyen_han: [
+              ...other,
+              { module_id: moduleId, module_name: moduleName, actions: upd.actions },
+            ],
+          };
+        }),
+      );
+      updates.forEach(({ roleId }) => {
+        queryClient.invalidateQueries({
+          queryKey: ['permission-grants', roleId],
+          refetchType: 'none',
+        });
+      });
       toast.success(txt('permission.toast.updateSuccess'));
     },
     onError: (err: unknown) => toast.error(getErrorMessage(err)),

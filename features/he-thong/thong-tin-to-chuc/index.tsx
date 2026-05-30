@@ -16,6 +16,7 @@ import { queryKeys } from '@/lib/query-keys';
 const ThongTinToChucPage: React.FC = () => {
   const user = useAuthStore((s) => s.user);
   const canView = useCan('view', 'company');
+  const canEdit = useCan('edit', 'company');
   const navigate = useNavigate();
   const location = useLocation();
   const didRedirect = useRef(false);
@@ -31,6 +32,7 @@ const ThongTinToChucPage: React.FC = () => {
   const queryClient = useQueryClient();
 
   const handleSubmit = async (data: CompanyFormValues & { appLogo: string | null }) => {
+    if (!canEdit) return;
     try {
       const saved = await saveThongTinToChuc(data);
       setCompanyInfo(saved);

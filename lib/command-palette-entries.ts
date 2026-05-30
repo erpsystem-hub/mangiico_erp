@@ -19,5 +19,6 @@ export const COMMAND_PALETTE_ENTRIES: readonly CommandPaletteEntry[] = [
   { path: '/he-thong/thong-tin-to-chuc', nameKey: 'page.systemDashboard.companyInfo', groupKey: 'nav.commandPalette.groupSystem' },
   { path: '/he-thong/phan-quyen', nameKey: 'page.systemDashboard.permission', groupKey: 'nav.commandPalette.groupSystem' },
   { path: '/ho-so', nameKey: 'nav.profile', groupKey: 'nav.commandPalette.groupAccount' },
+  { path: '/cai-dat', nameKey: 'nav.settings', groupKey: 'nav.commandPalette.groupAccount' },
   { path: '/thong-bao', nameKey: 'nav.notification', groupKey: 'nav.commandPalette.groupAccount' },
 ] as const;

@@ -76,6 +76,7 @@ KHÔNG lưu base64 `data:image/...` trong cột `var_nhan_vien.hinh_anh`. Dùng:
 | Vấn đề                                              | Giải pháp                                           |
 | --------------------------------------------------- | --------------------------------------------------- |
 | Đếm nhân viên theo chức vụ                          | RPC `get_nhan_vien_count_by_chuc_vu`                |
+| Tab Thống kê nhân viên (filter + dataset lớn)     | RPC **`get_nhan_vien_stats`** → JSONB aggregate     |
 | Tính path/level cho phòng ban khi update            | RPC `get_phong_ban_path_level(id, parent_id)`        |
 | Pagination + filter server-side cho list lớn        | RPC `get_bai_viet_page` / `get_cong_viec_page`      |
 | Lookup xã/phường nhẹ                                | View `v_xa_phuong_min`                              |
@@ -166,6 +167,54 @@ defaultOptions: {
   scan, gián tiếp giảm retry/refetch phía client).
 - **Storage → Bandwidth**: avatar private — egress chủ yếu qua signed URL
   theo phiên user; không cache Service Worker cho URL có token.
+
+## Tổng kết kiểm tra (2026-05 → cập nhật 2026-07)
+
+### Đã tối ưu
+
+| Hạng mục | Chi tiết |
+|----------|----------|
+| TanStack Query global | `refetchOnWindowFocus/reconnect/mount: false` (`index.tsx`); persist loại trừ cache nhân viên |
+| Select tường minh | `EMPLOYEE_SELECT_LIST` không có `hinh_anh`; embed `var_phong_ban` / `var_chuc_vu` trên list |
+| RPC / aggregate | `get_nhan_vien_count_by_chuc_vu`, `get_phong_ban_path_level`, **`get_nhan_vien_stats`** (tab Thống kê có filter, scale >500), `get_nhan_vien_summary` / `get_nhan_vien_count_by_phong_ban` (legacy KPI đơn giản) |
+| Master data | `masterDataQueryOptions` (30 phút stale); page-level `useDepartments`/`usePositions` + props (không fetch trùng trong service list) |
+| Avatar | Bucket private; list không kéo ảnh; signed URL cache TanStack Query ~11h |
+| Vercel / PWA | `vercel.json` cache assets; SW không cache signed URL; Vite compression + manualChunks |
+| Edge function | `admin-user` — `listUsers({ filter: email })` O(1); create không pre-check scan |
+| Phân trang server | Hybrid ngưỡng **500** NV (`useEmployeesList` + `GenericTable` `serverSidePagination`) |
+| Batch status | `updateEmployeeStatus` → `repo.updateMany` (1 PostgREST call) |
+| Cache mutations | `patchEmployeesListCaches`; phòng ban delete/import, chức vụ import, phân quyền matrix → `setQueryData` |
+| transactionalCrudListQueryOptions | Wire vào `useEmployeesList`, `useEmployee`, mutations nhân viên |
+| Profile | `useEmployee(nhan_vien_id)` thay load full list |
+| Tab Thống kê | **`useEmployeeStatsQuery`** → 1 RPC `get_nhan_vien_stats`; không `loadFullForStats` / sample 500 |
+
+### Mẫu tab Thống kê (module lớn)
+
+1. **Không** `SELECT *` full table cho stats — dùng RPC `GROUP BY` / `COUNT` → JSONB (~KB).
+2. Index cột filter/date (`tg_tao`, FK dimension).
+3. TanStack Query key gồm toàn bộ filter (`queryKeys.employees.stats({...})`).
+4. Tab list riêng: RPC page (`get_*_page`) — xem [`lib/stats/server-aggregate.ts`](../lib/stats/server-aggregate.ts).
+
+### Gap còn lại (ưu tiên sau)
+
+| Gap | Ghi chú |
+|-----|---------|
+| Filter server-side | RPC `get_nhan_vien_page` đã wire cho list; filter chip vẫn client trên trang hiện tại |
+| Filter counts server mode | Toolbar `useFilterCounts` cần RPC đếm khi `isServerPaginated` |
+| LIST/FULL split | `phong-ban`, `chuc-vu` chưa tách cột `mo_ta` khỏi list |
+| Export server mode | Xuất Excel cần fetch dedicated (không slice trang hiện tại) |
+
+## Setup Hệ thống (Supabase)
+
+1. Copy `.env.example` → `.env.local`, điền `VITE_SUPABASE_URL` + `VITE_SUPABASE_ANON_KEY`.
+2. `npx supabase link` → `npx supabase db push` (migrations trong `supabase/migrations/`).
+3. `npm run seed:demo` — dữ liệu mẫu phòng ban / chức vụ / nhân viên.
+4. Supabase Dashboard → Authentication → Users: tạo user email `<ten_tai_khoan>@gmail.com` (Auto Confirm).
+5. `npm run verify:supabase` — kiểm tra env + số dòng DB.
+
+**RLS:** bảng `var_phong_ban`, `var_chuc_vu`, `var_nhan_vien` chỉ `SELECT` khi đã đăng nhập (`authenticated`). App trống khi chưa Auth hoặc DB chưa seed.
+
+**List nhân viên:** Supabase mode ưu tiên RPC `get_nhan_vien_page` (1 round-trip, join sẵn tên PB/CV); fallback PostgREST embed/plain nếu RPC chưa apply.
 
 ## Khi mở rộng
 

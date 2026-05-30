@@ -3,15 +3,15 @@ import { txt } from '../../lib/text';
 import { motion } from 'framer-motion';
 import { Download, X, FileSpreadsheet, FileText, Check } from 'lucide-react';
 import Button from '../ui/Button';
-import { cn, getTodayISODate } from '../../lib/utils';
+import { cn } from '../../lib/utils';
 import { DIALOG_SIZE } from '../../lib/dialog-sizes';
+import { exportTable, type ExportFormat } from '@/lib/export';
 
 export interface ExportColumn {
   key: string;
   label: string;
 }
 
-type ExportFormat = 'xlsx' | 'csv' | 'pdf';
 type ExportScope = 'all' | 'page' | 'selected';
 
 interface ExportDialogProps {
@@ -38,7 +38,7 @@ const ExportDialog: React.FC<ExportDialogProps> = ({
   const toggleCol = (key: string) => {
     const next = new Set(selectedCols);
     if (next.has(key)) {
-      if (next.size > 1) next.delete(key); // keep at least 1
+      if (next.size > 1) next.delete(key);
     } else {
       next.add(key);
     }
@@ -68,59 +68,14 @@ const ExportDialog: React.FC<ExportDialogProps> = ({
   const handleExport = async () => {
     setExporting(true);
     const rows = getExportData();
-    const dateStr = getTodayISODate();
-    const fullName = `${fileName}_${dateStr}`;
 
     try {
-      if (format === 'xlsx' || format === 'csv') {
-        const mod = await import('xlsx');
-        const XLSX = mod.default ?? mod;
-        const wsData = [
-          exportCols.map(c => c.label),
-          ...rows.map(row => exportCols.map(c => row[c.key] ?? ''))
-        ];
-        const ws = XLSX.utils.aoa_to_sheet(wsData);
-
-        // Auto column widths
-        ws['!cols'] = exportCols.map(col => ({
-          wch: Math.max(col.label.length, ...rows.slice(0, 50).map(r => String(r[col.key] ?? '').length)) + 2
-        }));
-
-        const wb = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(wb, ws, 'Data');
-
-        if (format === 'xlsx') {
-          XLSX.writeFile(wb, `${fullName}.xlsx`);
-        } else {
-          XLSX.writeFile(wb, `${fullName}.csv`, { bookType: 'csv' });
-        }
-      } else if (format === 'pdf') {
-        const [jspdfMod, autoTableMod] = await Promise.all([
-          import('jspdf'),
-          import('jspdf-autotable'),
-        ]);
-        const { jsPDF } = jspdfMod;
-        const autoTable = (autoTableMod as { default: typeof import('jspdf-autotable').default }).default;
-        const doc = new jsPDF({ orientation: exportCols.length > 5 ? 'l' : 'p', unit: 'mm', format: 'a4' });
-
-        // Title
-        doc.setFontSize(12);
-        doc.text(fileName.replace(/_/g, ' '), 14, 15);
-        doc.setFontSize(8);
-        doc.setTextColor(128);
-        doc.text(txt('shared.export.pdfHeader', { date: dateStr, count: rows.length }), 14, 21);
-
-        autoTable(doc, {
-          head: [exportCols.map(c => c.label)],
-          body: rows.map(row => exportCols.map(c => String(row[c.key] ?? ''))),
-          startY: 26,
-          styles: { fontSize: 7, cellPadding: 2 },
-          headStyles: { fillColor: [59, 130, 246], fontSize: 7, fontStyle: 'bold' },
-          alternateRowStyles: { fillColor: [248, 250, 252] },
-        });
-
-        doc.save(`${fullName}.pdf`);
-      }
+      await exportTable(format, {
+        columns: exportCols,
+        rows,
+        fileName,
+        title: fileName.replace(/_/g, ' '),
+      });
     } catch (e) {
       if (import.meta.env.DEV) console.error('Export error:', e);
     }
@@ -131,9 +86,9 @@ const ExportDialog: React.FC<ExportDialogProps> = ({
   if (!open) return null;
 
   const formats: { id: ExportFormat; label: string; icon: React.ElementType; desc: string }[] = [
-    { id: 'xlsx', label: 'Excel', icon: FileSpreadsheet, desc: '.xlsx' },
-    { id: 'csv', label: 'CSV', icon: FileText, desc: '.csv' },
-    { id: 'pdf', label: 'PDF', icon: FileText, desc: '.pdf' },
+    { id: 'xlsx', label: txt('shared.export.formatXlsx'), icon: FileSpreadsheet, desc: '.xlsx' },
+    { id: 'csv', label: txt('shared.export.formatCsv'), icon: FileText, desc: '.csv' },
+    { id: 'pdf', label: txt('shared.export.formatPdf'), icon: FileText, desc: '.pdf' },
   ];
 
   const scopes: { id: ExportScope; label: string; count: number }[] = [
@@ -156,7 +111,6 @@ const ExportDialog: React.FC<ExportDialogProps> = ({
           exit={{ opacity: 0, scale: 0.9, y: 30 }}
           className={cn("w-full bg-card rounded-2xl shadow-2xl border border-border pointer-events-auto flex flex-col max-h-[85vh]", DIALOG_SIZE.LARGE)}
         >
-          {/* Header */}
           <div className="flex items-center justify-between px-5 py-3 border-b border-border shrink-0">
             <div className="flex items-center gap-2.5">
               <div className="p-1.5 rounded-lg bg-primary/10 text-primary"><Download size={16} /></div>
@@ -167,10 +121,7 @@ const ExportDialog: React.FC<ExportDialogProps> = ({
             </button>
           </div>
 
-          {/* Body */}
           <div className="flex-1 overflow-y-auto p-4 space-y-4 custom-scrollbar">
-
-            {/* Format */}
             <div>
               <p className="text-xs font-medium text-muted-foreground mb-2">{txt('shared.export.format')}</p>
               <div className="flex gap-2">
@@ -193,7 +144,6 @@ const ExportDialog: React.FC<ExportDialogProps> = ({
               </div>
             </div>
 
-            {/* Scope */}
             <div>
               <p className="text-xs font-medium text-muted-foreground mb-2">{txt('shared.export.scope')}</p>
               <div className="flex gap-2">
@@ -217,7 +167,6 @@ const ExportDialog: React.FC<ExportDialogProps> = ({
               </div>
             </div>
 
-            {/* Column selection */}
             <div>
               <div className="flex items-center justify-between mb-2">
                 <p className="text-xs font-medium text-muted-foreground">{txt('shared.export.selectColumns')}</p>
@@ -249,7 +198,6 @@ const ExportDialog: React.FC<ExportDialogProps> = ({
             </div>
           </div>
 
-          {/* Footer */}
           <div className="px-5 py-3 border-t border-border flex items-center justify-between shrink-0">
             <Button variant="outline" onClick={onClose} className="text-xs h-8">{txt('common.cancel')}</Button>
             <Button

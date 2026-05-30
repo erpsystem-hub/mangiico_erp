@@ -9,7 +9,9 @@ import {
   POSITION_RETURNING_FULL,
   POSITION_RETURNING_STATUS_ONLY,
   POSITION_SELECT_FULL,
+  VAR_CHUC_VU_ROW_COLUMNS,
 } from '../core/supabase-select';
+import { isPostgrestRelationshipError } from '@/lib/supabase/postgrest-errors';
 import { txt } from '../../../../lib/text';
 import { normalizeCapQuanLyInput } from '../utils/cap-quan-ly';
 
@@ -71,34 +73,79 @@ function normInt16Fk(v: string | null | undefined): number | null {
   return n;
 }
 
-async function enrichPosition(raw: Position): Promise<Position> {
-  const base = normalizePositionRow(raw);
-  const levels = await getJobLevels();
-  const capKey = base.cap_bac != null && String(base.cap_bac).trim() !== '' ? String(base.cap_bac).trim() : '';
-  const ten_cap =
-    capKey !== ''
-      ? levels.find((l) => String(l.id).trim() === capKey)?.ten_cap_bac
-      : undefined;
-  if (!isSupabase()) {
-    const depts = await getDepartments();
+export type PositionLookupRow = {
+  id: string;
+  ten_chuc_vu: string;
+  cap_quan_ly?: string | null;
+};
+
+function mapRawPositions(list: Position[]): Position[] {
+  if (!isSupabase()) return list.map((r) => normalizePositionRow(r));
+  return (list as unknown as Record<string, unknown>[]).map((r) =>
+    'var_phong_ban' in r
+      ? normalizePositionRow(flattenSupabaseRow(r))
+      : normalizePositionRow(r as unknown as Position),
+  );
+}
+
+async function enrichPositionsBatch(list: Position[]): Promise<Position[]> {
+  if (list.length === 0) return list;
+  const [levels, depts] = await Promise.all([getJobLevels(), getDepartments()]);
+  const deptById = new Map(depts.map((d) => [d.id, d]));
+  return list.map((raw) => {
+    const base = normalizePositionRow(raw);
+    const capKey =
+      base.cap_bac != null && String(base.cap_bac).trim() !== '' ? String(base.cap_bac).trim() : '';
+    const ten_cap =
+      capKey !== '' ? levels.find((l) => String(l.id).trim() === capKey)?.ten_cap_bac : undefined;
+    let ten_phong_ban = base.ten_phong_ban;
+    if (!ten_phong_ban && base.phong_ban_id) {
+      ten_phong_ban = deptById.get(base.phong_ban_id)?.ten_phong_ban ?? base.ten_phong_ban;
+    }
     return {
       ...base,
       ten_cap_bac: ten_cap ?? base.ten_cap_bac,
-      ten_phong_ban: depts.find((d) => d.id === base.phong_ban_id)?.ten_phong_ban ?? base.ten_phong_ban,
+      ten_phong_ban,
     };
+  });
+}
+
+async function enrichPosition(raw: Position): Promise<Position> {
+  const [enriched] = await enrichPositionsBatch([raw]);
+  return enriched;
+}
+
+/** Lookup nhẹ cho enrich nhân viên — không gọi getDepartments / cap_bac. */
+export async function getPositionLookupMap(): Promise<Map<string, PositionLookupRow>> {
+  const list = await getPositionRepositoryAll();
+  const map = new Map<string, PositionLookupRow>();
+  for (const raw of list) {
+    const row = normalizePositionRow(raw as Position);
+    map.set(row.id, {
+      id: row.id,
+      ten_chuc_vu: row.ten_chuc_vu,
+      cap_quan_ly: row.cap_quan_ly ?? null,
+    });
   }
-  return {
-    ...base,
-    ten_cap_bac: ten_cap ?? base.ten_cap_bac,
-  };
+  return map;
+}
+
+async function getPositionRepositoryAll(): Promise<Position[]> {
+  try {
+    return await repo.getAll({ orderBy: 'thu_tu', ascending: true });
+  } catch (err) {
+    if (!isPostgrestRelationshipError(err)) throw err;
+    return repo.getAll({
+      orderBy: 'thu_tu',
+      ascending: true,
+      select: VAR_CHUC_VU_ROW_COLUMNS,
+    });
+  }
 }
 
 export const getPositions = async (): Promise<Position[]> => {
-  const list = await repo.getAll({ orderBy: 'thu_tu', ascending: true });
-  const flattened = isSupabase()
-    ? (list as unknown as Record<string, unknown>[]).map((r) => flattenSupabaseRow(r))
-    : list;
-  return Promise.all((flattened as Position[]).map(enrichPosition));
+  const list = await getPositionRepositoryAll();
+  return enrichPositionsBatch(mapRawPositions(list as Position[]));
 };
 
 export const createPosition = async (data: PositionFormValues): Promise<Position> => {

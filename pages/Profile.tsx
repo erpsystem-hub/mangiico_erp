@@ -19,8 +19,7 @@ import {
 } from 'lucide-react';
 import { getAvatarUrl } from '../lib/utils';
 import { canEditProfile } from '../lib/profile-permissions';
-import { supabaseEmailToLoginName } from '../lib/auth-email';
-import { useEmployees, useUpdateEmployee } from '../features/he-thong/nhan-vien/hooks/use-nhan-vien';
+import { useEmployee, useUpdateEmployee } from '../features/he-thong/nhan-vien/hooks/use-nhan-vien';
 import { employeeToFormValues } from '../features/he-thong/nhan-vien/utils/employee-to-form';
 import { STATUS_BADGE_CONFIG } from '../features/he-thong/nhan-vien/core/constants';
 import {
@@ -31,20 +30,8 @@ import {
 
 const Profile: React.FC = () => {
   const { user, login } = useAuthStore();
-  const { data: employees = [] } = useEmployees();
+  const { data: currentEmployee = null } = useEmployee(user?.nhan_vien_id ?? null);
   const updateEmployeeMutation = useUpdateEmployee();
-
-  const currentEmployee = useMemo(() => {
-    if (!user) return null;
-    return (
-      employees.find((e) => {
-        const u = user.username?.trim().toLowerCase();
-        if (u && e.ten_tai_khoan.trim().toLowerCase() === u) return true;
-        const fromEmail = supabaseEmailToLoginName(user.email ?? '');
-        return Boolean(fromEmail && e.ten_tai_khoan.trim().toLowerCase() === fromEmail);
-      }) ?? null
-    );
-  }, [employees, user]);
 
   const [avatarModalOpen, setAvatarModalOpen] = useState(false);
   const [passwordModalOpen, setPasswordModalOpen] = useState(false);

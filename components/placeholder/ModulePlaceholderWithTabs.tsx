@@ -19,7 +19,7 @@ interface ModulePlaceholderWithTabsProps {
 
 /**
  * Trang module placeholder có nhiều tab (mỗi tab là một block "Sắp ra mắt").
- * Dùng cho module chưa triển khai nhưng cần cấu trúc tab rõ ràng.
+ * TabGroup trong DashboardToolbar.leadingContent — đồng bộ 5f_template_erp_app.
  */
 const ModulePlaceholderWithTabs: React.FC<ModulePlaceholderWithTabsProps> = ({
   submenuPath,

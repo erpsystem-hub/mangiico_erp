@@ -9,8 +9,8 @@ import { EmployeeAvatarImg } from './employee-avatar-img';
 import GenericTable from '../../../../components/shared/GenericTable';
 import { MobileListCard } from '../../../../components/shared/MobileListCard';
 import EnumBadge from '../../../../components/ui/EnumBadge';
-import { useDepartments } from '../../phong-ban/hooks/use-phong-ban';
-import { usePositions } from '../../chuc-vu/hooks/use-chuc-vu';
+import type { Department } from '../../phong-ban/core/types';
+import type { Position } from '../../chuc-vu/core/types';
 import { useFilterCounts } from '../hooks/use-filter-counts';
 import { STATUS_BADGE_CONFIG, STATUS_OPTIONS } from '../core/constants';
 import { capQuanLyBadgeConfig } from '../../chuc-vu/utils/cap-quan-ly';
@@ -26,6 +26,10 @@ interface Props {
   isLoading: boolean;
   /** Danh sách gốc (sau phân quyền) để đếm filter — giống toolbar. */
   employeesForFilterCounts: Employee[];
+  departments: Department[];
+  positions: Position[];
+  serverSidePagination?: boolean;
+  serverTotalRecords?: number;
   onEdit: (item: Employee) => void;
   onDelete: (id: string) => void;
   onStatusChange: (item: Employee) => void;
@@ -36,6 +40,10 @@ const EmployeeTable = memo(function EmployeeTable({
   data,
   isLoading,
   employeesForFilterCounts,
+  departments,
+  positions,
+  serverSidePagination = false,
+  serverTotalRecords,
   onEdit,
   onDelete,
   onStatusChange,
@@ -49,8 +57,6 @@ const EmployeeTable = memo(function EmployeeTable({
     searchTerm, filters, setFilter,
   } = useEmployeeStore();
 
-  const { data: departments = [] } = useDepartments();
-  const { data: positions = [] } = usePositions();
   const { deptCounts, unitCounts, posCounts, statusCounts } = useFilterCounts(
     employeesForFilterCounts,
     searchTerm,
@@ -317,6 +323,8 @@ const EmployeeTable = memo(function EmployeeTable({
       pageSize={pagination.pageSize}
       onPageChange={setPage}
       onPageSizeChange={setPageSize}
+      serverSidePagination={serverSidePagination}
+      serverTotalRecords={serverTotalRecords}
       sort={sort}
       onSort={setSort}
       renderCell={renderCell}

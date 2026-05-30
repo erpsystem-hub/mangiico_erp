@@ -7,8 +7,8 @@ import { useEmployeeStore } from '../store/useEmployeeStore';
 import GenericToolbar from '../../../../components/shared/GenericToolbar';
 import FilterChipMultiSelect from '../../../../components/shared/FilterChipMultiSelect';
 import { BTN_ADD } from '../../../../lib/button-labels';
-import { useDepartments } from '../../phong-ban/hooks/use-phong-ban';
-import { usePositions } from '../../chuc-vu/hooks/use-chuc-vu';
+import type { Department } from '../../phong-ban/core/types';
+import type { Position } from '../../chuc-vu/core/types';
 import { STATUS_OPTIONS, type TrangThaiNhanVien } from '../core/constants';
 import { useFilterCounts } from '../hooks/use-filter-counts';
 import type { Employee } from '../core/types';
@@ -17,12 +17,21 @@ import { countColumnSearchActive } from '../utils/column-search';
 interface Props {
   /** Danh sách nhân viên người dùng được phép xem (sau phân quyền). */
   employees: Employee[];
+  departments: Department[];
+  positions: Position[];
   onAdd: () => void;
   onDeleteMany: (ids: string[]) => void;
   onStatusChangeMany: (ids: string[], status: TrangThaiNhanVien) => void;
 }
 
-const EmployeeToolbar: React.FC<Props> = ({ employees, onAdd, onDeleteMany, onStatusChangeMany }) => {
+const EmployeeToolbar: React.FC<Props> = ({
+  employees,
+  departments,
+  positions,
+  onAdd,
+  onDeleteMany,
+  onStatusChangeMany,
+}) => {
   const { canCreate, canEdit, canDelete } = useResourcePermissions('employees');
 
   const {
@@ -31,9 +40,6 @@ const EmployeeToolbar: React.FC<Props> = ({ employees, onAdd, onDeleteMany, onSt
     columns, toggleColumn, reorderColumns, resetColumns,
     selectedIds, clearSelection,
   } = useEmployeeStore();
-
-  const { data: departments = [] } = useDepartments();
-  const { data: positions = [] } = usePositions();
 
   const { deptCounts, posCounts, statusCounts } = useFilterCounts(employees, searchTerm, filters);
 
@@ -193,7 +199,6 @@ const EmployeeToolbar: React.FC<Props> = ({ employees, onAdd, onDeleteMany, onSt
       showBack
       activeFilterCount={activeFilterCount}
       onClearAllFilters={handleClearAllFilters}
-      searchPlaceholder={txt('employee.searchPlaceholder')}
     />
   );
 };

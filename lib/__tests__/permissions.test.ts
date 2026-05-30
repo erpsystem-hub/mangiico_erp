@@ -1,7 +1,11 @@
-import { describe, expect, it, beforeEach } from 'vitest';
+import { describe, expect, it, beforeEach, vi } from 'vitest';
 import { can } from '../permissions';
 import type { User } from '@/types';
 import { usePermissionGrantStore } from '@/store/usePermissionGrantStore';
+
+vi.mock('@/lib/data/config', () => ({
+  isSupabase: () => false,
+}));
 
 const admin: User = {
   id: '1',
@@ -94,5 +98,46 @@ describe('can', () => {
   it('matrix: departments — admin token in matrix grants full CRUD', () => {
     usePermissionGrantStore.getState().setMatrixGrants({ 'he-thong/phong-ban': ['admin'] }, 9);
     expect(can(member, 'delete', 'departments')).toBe(true);
+  });
+
+  it('matrix: cap_bac=1 + only view on nhan-vien grants CRUD on all mapped modules', () => {
+    usePermissionGrantStore.getState().setMatrixGrants({ 'he-thong/nhan-vien': ['view'] }, 1);
+    const resources = ['employees', 'departments', 'positions', 'company', 'permissions'] as const;
+    for (const resource of resources) {
+      expect(can(member, 'create', resource)).toBe(true);
+      expect(can(member, 'edit', resource)).toBe(true);
+      expect(can(member, 'delete', resource)).toBe(true);
+    }
+  });
+
+  it('matrix: admin on nhan-vien grants CRUD employees only, not other modules', () => {
+    usePermissionGrantStore.getState().setMatrixGrants({ 'he-thong/nhan-vien': ['admin'] }, 2);
+    expect(can(member, 'create', 'employees')).toBe(true);
+    expect(can(member, 'edit', 'employees')).toBe(true);
+    expect(can(member, 'delete', 'employees')).toBe(true);
+    expect(can(member, 'delete', 'departments')).toBe(false);
+    expect(can(member, 'delete', 'positions')).toBe(false);
+    expect(can(member, 'edit', 'company')).toBe(false);
+    expect(can(member, 'edit', 'permissions')).toBe(false);
+  });
+
+  it('matrix: admin on chuc-vu grants CRUD positions only', () => {
+    usePermissionGrantStore.getState().setMatrixGrants({ 'he-thong/chuc-vu': ['admin'] }, 2);
+    expect(can(member, 'delete', 'positions')).toBe(true);
+    expect(can(member, 'delete', 'employees')).toBe(false);
+  });
+
+  it('matrix: admin on thong-tin-to-chuc grants edit company only', () => {
+    usePermissionGrantStore.getState().setMatrixGrants({ 'he-thong/thong-tin-to-chuc': ['admin'] }, 2);
+    expect(can(member, 'edit', 'company')).toBe(true);
+    expect(can(member, 'delete', 'company')).toBe(true);
+    expect(can(member, 'edit', 'employees')).toBe(false);
+  });
+
+  it('matrix: admin on phan-quyen grants edit permissions only', () => {
+    usePermissionGrantStore.getState().setMatrixGrants({ 'he-thong/phan-quyen': ['admin'] }, 2);
+    expect(can(member, 'edit', 'permissions')).toBe(true);
+    expect(can(member, 'delete', 'permissions')).toBe(true);
+    expect(can(member, 'edit', 'employees')).toBe(false);
   });
 });

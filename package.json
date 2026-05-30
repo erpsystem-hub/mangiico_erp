@@ -16,7 +16,12 @@
     "format": "prettier --write \"**/*.{ts,tsx,json,css,md}\"",
     "format:check": "prettier --check \"**/*.{ts,tsx,json,css,md}\"",
     "typecheck": "tsc --noEmit",
-    "types:supabase": "supabase gen types typescript --linked > lib/supabase/database.types.ts",
+    "audit:vi": "sh scripts/audit-vi-ui.sh",
+    "types:supabase": "supabase gen types typescript --linked > lib/supabase/database.types.ts.tmp && mv lib/supabase/database.types.ts.tmp lib/supabase/database.types.ts",
+    "seed:demo": "npx supabase@latest db query --linked --file supabase/scripts/seed_he_thong_demo.sql",
+    "seed:permissions": "npx supabase@latest db query --linked --file supabase/scripts/seed_var_phan_quyen.sql",
+    "seed:permissions:others": "npx supabase@latest db query --linked --file supabase/scripts/seed_var_phan_quyen_other_roles.sql",
+    "verify:supabase": "bash scripts/verify-supabase-setup.sh",
     "storage:create-avatars": "npx tsx scripts/create-avatars-bucket.ts"
   },
   "dependencies": {

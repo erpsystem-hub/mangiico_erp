@@ -1,19 +1,27 @@
 import { useUIStore } from '../store/useStore';
+import {
+  DEFAULT_PRIMARY_COLOR,
+  PRIMARY_COLOR_MAP,
+  getPrimaryHsl,
+} from './theme/tokens';
 
-/**
- * Shared color map – single source of truth for primary color HSL values.
- * Used by ThemeSynchronizer, index.html inline script, and usePrimaryColor hook.
- */
-export const PRIMARY_COLOR_MAP: Record<string, string> = {
-  blue: '221.2 83.2% 53.3%',
-  violet: '262.1 83.3% 57.8%',
-  emerald: '142.1 76.2% 36.3%',
-  rose: '346.8 77.2% 49.8%',
-  amber: '37.7 92.1% 50.2%',
-  orange: '24.6 95% 53.1%',
-  cyan: '188.7 94.5% 42.7%',
-  slate: '215.4 16.3% 46.9%',
-};
+export {
+  DEFAULT_PRIMARY_COLOR,
+  DEFAULT_FONT_FAMILY,
+  PRIMARY_COLOR_MAP,
+  getPrimaryHsl,
+  BADGE_COLOR_CLASSES,
+  RADIO_SELECTED_COLOR_CLASSES,
+  SEMANTIC_COLOR_DOT_HEX,
+  SEMANTIC_COLOR_CHART_FILL,
+  CHART_COLORS,
+  CHART_COLORS_HSL,
+  CHART_FILL_FALLBACK,
+  CHART_HEIGHT,
+  TEXT_SIZE_ROOT_PX,
+  TYPOGRAPHY,
+  type SemanticColor,
+} from './theme/tokens';
 
 /* ------------------------------------------------------------------ */
 /*  HSL ↔ Hex conversion helpers                                      */
@@ -48,8 +56,6 @@ export function hslToHex(hslStr: string): string {
 
 /**
  * Generate a lighter variant of an HSL string by mixing towards white.
- * @param hslStr  e.g. "221.2 83.2% 53.3%"
- * @param amount  0-1, how far to push towards white (0.9 → very light, 0.1 → barely lighter)
  */
 export function lightenHSL(hslStr: string, amount: number): string {
   const { h, s, l } = parseHSL(hslStr);
@@ -71,21 +77,17 @@ export function darkenHSL(hslStr: string, amount: number): string {
 /* ------------------------------------------------------------------ */
 
 export interface PrimaryColorInfo {
-  /** HSL string without hsl() wrapper, e.g. "221.2 83.2% 53.3%" */
   hsl: string;
-  /** Hex string, e.g. "#3b82f6" */
   hex: string;
-  /** Full CSS hsl() string, e.g. "hsl(221.2 83.2% 53.3%)" */
   cssHsl: string;
 }
 
 /**
  * Hook that returns the current primary color in multiple formats.
- * Useful for SVGs, Recharts, and other places that require hex/hsl strings.
  */
 export function usePrimaryColor(): PrimaryColorInfo {
   const primaryColor = useUIStore((s) => s.primaryColor);
-  const hsl = PRIMARY_COLOR_MAP[primaryColor] ?? PRIMARY_COLOR_MAP.blue;
+  const hsl = getPrimaryHsl(primaryColor);
   return {
     hsl,
     hex: hslToHex(hsl),

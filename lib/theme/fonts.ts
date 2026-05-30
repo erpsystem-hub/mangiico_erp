@@ -2,7 +2,7 @@
  * Typography — single source of truth for UI font stacks.
  *
  * - CSS default + runtime: `--font-sans` / `--font-mono` (see `index.css` @theme + ThemeSynchronizer).
- * - `buildSansStackCss()` must stay aligned with the `@theme --font-sans` default when primary is Inter.
+ * - `buildSansStackCss()` must stay aligned with the `@theme --font-sans` default (Be Vietnam Pro).
  * - Google Fonts params for lazy `loadFont()` — keep keys in sync with `store/useStore` ThemeState.fontFamily.
  */
 

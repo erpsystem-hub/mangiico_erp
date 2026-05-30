@@ -17,7 +17,7 @@ export const VIEW_TYPE_REGISTRY: Record<ViewTypeId, ViewTypeDefinition> = {
       'components/shared/ColumnManager.tsx',
       'components/shared/ExportDialog.tsx',
       'components/shared/ImportDialog.tsx',
-      'lib/createFeatureModule.tsx',
+      'features/he-thong/phong-ban/index.tsx',
     ],
   },
   detail: {

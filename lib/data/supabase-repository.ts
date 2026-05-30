@@ -1,7 +1,13 @@
 import { getSupabase } from '@/lib/supabase/client';
 import { handleSupabaseError } from '@/lib/supabase/errors';
 import type { Json, PublicTableName } from '@/lib/supabase/database.types';
-import type { IRepository, RepositoryMutationOptions, RepositoryQueryOptions } from './repository';
+import type {
+  IRepository,
+  RepositoryGetByIdOptions,
+  RepositoryListResult,
+  RepositoryMutationOptions,
+  RepositoryQueryOptions,
+} from './repository';
 
 /** Giới hạn mặc định mỗi lần getAll — tránh tải bảng lớn một lượt (PostgREST/Supabase). Tăng limit trong RepositoryQueryOptions nếu cần. */
 export const SUPABASE_DEFAULT_MAX_ROWS = 5_000;
@@ -30,26 +36,41 @@ export class SupabaseRepository<T extends { id: string | number }> implements IR
     return opts?.returningSelect ?? this.select;
   }
 
-  async getAll(options?: RepositoryQueryOptions): Promise<T[]> {
+  async count(): Promise<number> {
     const supabase = ensureClient();
-    let query = supabase.from(this.tableName).select(this.select);
+    const { count, error } = await supabase
+      .from(this.tableName)
+      .select('*', { count: 'exact', head: true });
+    if (error) handleSupabaseError(error);
+    return count ?? 0;
+  }
+
+  async getPage(options?: RepositoryQueryOptions): Promise<RepositoryListResult<T>> {
+    const supabase = ensureClient();
+    const select = options?.select ?? this.select;
+    let query = supabase.from(this.tableName).select(select, { count: 'exact' });
     if (options?.orderBy) {
       query = query.order(options.orderBy, { ascending: options.ascending !== false });
     }
     const offset = options?.offset ?? 0;
-    const limit = options?.limit;
-    const pageSize = limit ?? SUPABASE_DEFAULT_MAX_ROWS;
-    query = query.range(offset, offset + pageSize - 1);
-    const { data, error } = await query;
+    const limit = options?.limit ?? SUPABASE_DEFAULT_MAX_ROWS;
+    query = query.range(offset, offset + limit - 1);
+    const { data, error, count } = await query;
     if (error) handleSupabaseError(error);
-    return (data ?? []) as unknown as T[];
+    return { items: (data ?? []) as unknown as T[], total: count ?? 0 };
   }
 
-  async getById(id: string | number): Promise<T | null> {
+  async getAll(options?: RepositoryQueryOptions): Promise<T[]> {
+    const { items } = await this.getPage(options);
+    return items;
+  }
+
+  async getById(id: string | number, options?: RepositoryGetByIdOptions): Promise<T | null> {
     const supabase = ensureClient();
+    const select = options?.select ?? this.select;
     const { data, error } = await supabase
       .from(this.tableName)
-      .select(this.select)
+      .select(select)
       .eq('id', id as never)
       .maybeSingle();
     if (error) handleSupabaseError(error);
@@ -81,6 +102,22 @@ export class SupabaseRepository<T extends { id: string | number }> implements IR
       .single();
     if (error) handleSupabaseError(error);
     return data as unknown as T;
+  }
+
+  async updateMany(
+    ids: (string | number)[],
+    partial: Partial<T>,
+    opts?: RepositoryMutationOptions,
+  ): Promise<void> {
+    if (ids.length === 0) return;
+    const supabase = ensureClient();
+    const payload = { ...partial } as Record<string, Json>;
+    delete payload.id;
+    const { error } = await supabase
+      .from(this.tableName)
+      .update(payload)
+      .in('id', ids as never);
+    if (error) handleSupabaseError(error);
   }
 
   async remove(ids: (string | number)[]): Promise<void> {

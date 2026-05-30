@@ -3,8 +3,13 @@
  * - staleTime: giảm refetch không cần thiết
  * - gcTime: giữ cache trong RAM sau khi unmount (V5 dùng gcTime thay cho cacheTime)
  */
+import { normalizeSupabaseError } from './errors';
+
 export const SERVER_STALE_TIME_MS = 1000 * 60 * 5; // 5 phút
 export const SERVER_GC_TIME_MS = 1000 * 60 * 30; // 30 phút
+
+/** Signed avatar URL — TTL Storage 12h; cache client 11h để tránh gọi lại mỗi mount. */
+export const SIGNED_AVATAR_STALE_TIME_MS = 1000 * 60 * 60 * 11;
 
 /** Master data (phòng ban, chức vụ, nhiệm kỳ…) đổi ít — stale dài hơn để giảm egress. */
 export const MASTER_DATA_STALE_TIME_MS = 1000 * 60 * 30; // 30 phút
@@ -52,3 +57,14 @@ export const geoDataQueryOptions = {
   gcTime: GEO_DATA_GC_TIME_MS,
 } as const;
 
+const SUPABASE_QUERY_MAX_RETRIES = 2;
+
+/** Retry TanStack Query khi lỗi Supabase có thể thử lại (mạng / timeout). */
+export function supabaseQueryRetry(failureCount: number, error: unknown): boolean {
+  if (failureCount >= SUPABASE_QUERY_MAX_RETRIES) return false;
+  return normalizeSupabaseError(error).retryable === true;
+}
+
+export const supabaseListQueryRetryOptions = {
+  retry: supabaseQueryRetry,
+} as const;

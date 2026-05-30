@@ -21,6 +21,7 @@ import ListPageSkeleton from '../../../../components/shared/ListPageSkeleton';
 import EmptyState from '../../../../components/shared/EmptyState';
 import {
   buildFlatGroupedRows,
+  buildFlatUngroupedPositionRows,
   getGroupedPositionRowId,
   getGroupedPositionRowLevel,
   type GroupedPositionRow,
@@ -80,7 +81,13 @@ const PositionTable = memo(function PositionTable({
     [data, departments, sort, deptGroupLabels]
   );
 
-  const totalRecords = flatRows.length;
+  const displayFlatRows = useMemo(() => {
+    if (flatRows.length > 0) return flatRows;
+    if (data.length === 0) return flatRows;
+    return buildFlatUngroupedPositionRows(data, sort);
+  }, [flatRows, data, sort]);
+
+  const totalRecords = displayFlatRows.length;
   const totalPages = Math.max(1, Math.ceil(totalRecords / pagination.pageSize));
 
   useEffect(() => {
@@ -89,8 +96,8 @@ const PositionTable = memo(function PositionTable({
 
   const paginatedFlatRows = useMemo(() => {
     const start = (pagination.page - 1) * pagination.pageSize;
-    return flatRows.slice(start, start + pagination.pageSize);
-  }, [flatRows, pagination.page, pagination.pageSize]);
+    return displayFlatRows.slice(start, start + pagination.pageSize);
+  }, [displayFlatRows, pagination.page, pagination.pageSize]);
 
   const visibleColumns = useMemo(
     () => columns.filter((c) => c.visible).sort((a, b) => a.order - b.order),
@@ -475,18 +482,6 @@ const PositionTable = memo(function PositionTable({
   }
 
   if (data.length === 0) {
-    return (
-      <div className="flex flex-1 min-h-0 flex-col items-center justify-center p-4">
-        <EmptyState
-          title={txt('common.noResults')}
-          description={txt('common.noData')}
-          icon={<Folder className="h-10 w-10 text-muted-foreground" />}
-        />
-      </div>
-    );
-  }
-
-  if (flatRows.length === 0) {
     return (
       <div className="flex flex-1 min-h-0 flex-col items-center justify-center p-4">
         <EmptyState

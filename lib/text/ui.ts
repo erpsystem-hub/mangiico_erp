@@ -35,6 +35,7 @@ export const ui = {
     "roleMember": "Thành viên",
     "userAvatarAlt": "Ảnh đại diện",
     "profile": "Hồ sơ cá nhân",
+    "settings": "Cài đặt",
     "logout": "Đăng xuất",
     "logoutConfirmTitle": "Xác nhận đăng xuất",
     "logoutConfirmMessage": "Bạn có chắc chắn muốn kết thúc phiên làm việc?",
@@ -66,10 +67,14 @@ export const ui = {
       "selectAll": "Chọn tất cả",
       "pdfHeader": "Xuất ngày: {{date}} | {{count}} bản ghi",
       "exporting": "Đang xuất...",
-      "exportRows": "Xuất {{count}} dòng"
+      "exportRows": "Xuất {{count}} dòng",
+      "formatXlsx": "Excel",
+      "formatCsv": "CSV",
+      "formatPdf": "PDF",
+      "sheetName": "Du_lieu"
     },
     "import": {
-      "title": "Import dữ liệu",
+      "title": "Nhập dữ liệu",
       "subtitle": "Tải lên file Excel hoặc CSV",
       "dropHere": "Kéo thả file vào đây",
       "orClickToSelect": "hoặc nhấn để chọn file (.xlsx, .xls, .csv)",
@@ -87,7 +92,7 @@ export const ui = {
       "missingRequiredColumns": "Chưa mapping cột bắt buộc: {{columns}}",
       "rowEmptyField": "Dòng {{row}}: \"{{column}}\" không được để trống",
       "importError": "Lỗi khi import dữ liệu",
-      "importRows": "Import {{count}} dòng"
+      "importRows": "Nhập {{count}} dòng"
     },
     "empty": {
       "title": "Không có dữ liệu",
@@ -267,6 +272,16 @@ export const ui = {
       "comingSoonDesc": "Tính năng đang được phát triển.",
       "avatarUpdateSuccess": "Đã cập nhật ảnh đại diện."
     },
+    "settings": {
+      "title": "Cài đặt",
+      "description": "Tùy chỉnh giao diện và màu chủ đạo của ứng dụng.",
+      "autoSaved": "Đã lưu tự động",
+      "region": "Múi giờ & vùng",
+      "timezone": "Múi giờ",
+      "notifications": "Thông báo",
+      "restored": "Đã khôi phục cài đặt mặc định",
+      "fontSizePreview": "Văn bản mẫu — cỡ chữ áp dụng trên toàn ứng dụng."
+    },
     "systemDashboard": {
       "orgChartGroup": "Sơ đồ",
       "employee": "Nhân viên",
@@ -308,6 +323,7 @@ export const ui = {
     "companyInfo": "Thông tin tổ chức",
     "permission": "Phân quyền",
     "profile": "Hồ sơ cá nhân",
+    "settings": "Cài đặt",
     "matTranSalarySetup": "Thiết lập lương"
   },
   "clock": {
@@ -341,7 +357,7 @@ export const ui = {
     "sortDesc": "Sắp xếp Z đến A",
     /** Placeholder ô tìm trong header cột (dropdown + inline) — dùng chung mọi module */
     "columnHeaderSearchPlaceholder": "Lọc…",
-    "searchPlaceholder": "Tìm kiếm . . .",
+    "searchPlaceholder": "Tìm kiếm...",
     "searchShortcut": "Tìm kiếm... (nhấn /)",
     "unknown": "Không xác định",
     /** Giá trị trống trong bảng / chi tiết (phòng ban, chức vụ chưa gán) */
@@ -412,8 +428,30 @@ export const ui = {
     "buttonTitle": "Hướng dẫn",
     "modules": {},
   },
+  "notFound": {
+    "title": "Không tìm thấy trang",
+    "message": "Đường dẫn bạn truy cập không tồn tại hoặc đã được di chuyển.",
+    "backHome": "Về trang chủ"
+  },
   "settings": {
-    "primaryColor": "Màu",
+    "appearance": "Giao diện",
+    "displayMode": "Chế độ hiển thị",
+    "primaryColor": "Màu chủ đạo",
+    "colorScheme": "Giao diện",
+    "colorSchemeLight": "Sáng",
+    "colorSchemeDark": "Tối",
+    "colorSchemeSystem": "Theo hệ thống",
+    "fontFamily": "Phông chữ",
+    "fontSize": "Cỡ chữ",
+    "fontSizeSmall": "Nhỏ",
+    "fontSizeMedium": "Vừa",
+    "fontSizeLarge": "Lớn",
+    "fontInter": "Inter",
+    "fontBeVietnamPro": "Be Vietnam Pro",
+    "fontLexend": "Lexend",
+    "fontNunito": "Nunito",
+    "fontSourceSans3": "Source Sans 3",
+    "fontMerriweather": "Merriweather",
     "colorBlue": "Xanh dương",
     "colorViolet": "Tím",
     "colorEmerald": "Xanh lá",

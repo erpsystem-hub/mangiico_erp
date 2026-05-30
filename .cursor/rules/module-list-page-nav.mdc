@@ -1,13 +1,14 @@
 ---
-description: Trang module list — Back + TabGroup trên GenericToolbar; tránh tách Back/Tab lên DashboardToolbar
+description: Trang module list — TabGroup trên toolbar; GenericToolbar chỉ Back/filter/search/actions
 globs: "**/features/**/index.tsx,**/components/shared/GenericToolbar.tsx"
 alwaysApply: false
 ---
 
-# Module list: nút Back và TabGroup
+# Module list: TabGroup và toolbar
 
-- Trang có **TabGroup** trong cùng module và có **GenericToolbar**: dùng **một hàng** `GenericToolbar` với `showBack`, `onBack`, `desktopStartSlot={<TabGroup ... />}` — thứ tự: **Back → TabGroup →** filter/search/actions.
-- `desktopStartSlot` được render **sau nút Back** trên cả desktop và mobile.
-- Tránh gắn Back + TabGroup riêng trên `DashboardToolbar` phía trên card nếu mục tiêu là đồng bộ với toolbar danh sách.
-- Tab không có toolbar list (chỉ Back + tab): `GenericToolbar` với `hideSearch`, `showBack`, `onBack`, `desktopStartSlot`.
-- Tham chiếu: [`features/he-thong/phan-quyen/index.tsx`](mdc:features/he-thong/phan-quyen/index.tsx) (tab Module / Nhật ký).
+- Module có **TabGroup** (vd. Danh sách | Thống kê): hàng **phía trên card** (`shrink-0 relative z-0`), card `mt-1.5` — tham chiếu [`features/he-thong/nhan-vien/index.tsx`](mdc:features/he-thong/nhan-vien/index.tsx).
+- Placeholder module: TabGroup trong `DashboardToolbar.leadingContent` (5f template).
+- **Toolbar** (`GenericToolbar` / `DashboardToolbar`): Back, filter, search, actions — không nhét TabGroup vào `desktopStartSlot` trên trang list CRUD.
+- Tab không có toolbar list: `GenericToolbar` với `hideSearch`, `showBack`, `onBack`.
+- Đồng bộ tab với URL: `useTabSearchParam(['list','stats'], 'list')`.
+- Tham chiếu: [`features/he-thong/nhan-vien/index.tsx`](mdc:features/he-thong/nhan-vien/index.tsx).

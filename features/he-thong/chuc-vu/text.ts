@@ -24,6 +24,8 @@ export const position = {
   "loading": "Đang tải danh sách chức vụ...",
   "empty": "Chưa có chức vụ nào",
   "emptyHint": "Hãy tạo chức vụ đầu tiên để gán cho nhân viên.",
+  "listLoadErrorTitle": "Không tải được danh sách chức vụ",
+  "listLoadErrorHint": "Kiểm tra kết nối Supabase, đăng nhập (RLS yêu cầu authenticated) và migration FK phòng ban. Thử tải lại.",
   "code": "Mã số",
   "name": "Tên chức vụ",
   "form": {

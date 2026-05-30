@@ -6,17 +6,16 @@ import { createPortal } from 'react-dom';
 import { NavLink, useLocation, useNavigate, Link } from 'react-router-dom';
 import { useScrollRestoration } from '../../hooks/useScrollRestoration';
 import {
-  User, Sparkles, LogOut, Key,
+  User, Sparkles, LogOut, Key, Settings,
   PanelLeftClose, PanelLeft, ChevronDown,
   Eye, EyeOff, Lock
 } from 'lucide-react';
 import { NotificationBell } from '../notification';
 import { useAuthStore, useUIStore } from '../../store/useStore';
+import { getAuthService } from '../../lib/supabase/auth';
 import { motion, AnimatePresence } from 'framer-motion';
 import Button from '../ui/Button';
 import { cn } from '../../lib/utils';
-import Combobox, { type Option } from '../ui/Combobox';
-import { hslToHex, PRIMARY_COLOR_MAP } from '../../lib/theme-utils';
 import Breadcrumbs from '../shared/Breadcrumbs';
 import MobileBottomNav from './MobileBottomNav';
 // Lazy: chỉ tải khi user mở (Cmd/Ctrl+K hoặc click) — giảm bundle ban đầu.
@@ -42,7 +41,7 @@ const Layout: React.FC<{ children?: React.ReactNode }> = ({ children }) => {
   const matrixActive = usePermissionGrantStore((s) => s.matrixActive);
   const grantsByModule = usePermissionGrantStore((s) => s.grantsByModule);
   const chucVuCapBac = usePermissionGrantStore((s) => s.chucVuCapBac);
-  const { sidebarOpen, toggleSidebar, companyInfo, primaryColor, setTheme } = useUIStore();
+  const { sidebarOpen, toggleSidebar, companyInfo } = useUIStore();
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -64,33 +63,8 @@ const Layout: React.FC<{ children?: React.ReactNode }> = ({ children }) => {
   const prevPathRef = useRef(location.pathname);
   const isMobile = useIsMaxWidth(768);
 
-  const themeColorOptions = useMemo(
-    () =>
-      [
-        { name: 'blue' as const, label: txt('settings.colorBlue') },
-        { name: 'violet' as const, label: txt('settings.colorViolet') },
-        { name: 'emerald' as const, label: txt('settings.colorEmerald') },
-        { name: 'rose' as const, label: txt('settings.colorRose') },
-        { name: 'amber' as const, label: txt('settings.colorAmber') },
-        { name: 'orange' as const, label: txt('settings.colorOrange') },
-        { name: 'cyan' as const, label: txt('settings.colorCyan') },
-        { name: 'slate' as const, label: txt('settings.colorSlate') },
-      ] as const,
-    [],
-  );
-
-  const themeColorComboboxOptions: Option[] = useMemo(
-    () => themeColorOptions.map((c) => ({ value: c.name, label: c.label })),
-    [themeColorOptions],
-  );
-
-  const themeSwatchHex = (name: string) =>
-    hslToHex(PRIMARY_COLOR_MAP[name] ?? PRIMARY_COLOR_MAP.blue);
-
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      const el = event.target as HTMLElement | null;
-      if (el?.closest?.('[data-combobox-dropdown]')) return;
       if (userMenuRef.current && !userMenuRef.current.contains(event.target as Node)) {
         setIsUserMenuOpen(false);
       }
@@ -127,6 +101,7 @@ const Layout: React.FC<{ children?: React.ReactNode }> = ({ children }) => {
   }, [location.pathname, isMobile, sidebarOpen, toggleSidebar]);
 
   const handleLogout = () => {
+    void getAuthService().signOut();
     logout();
     setShowLogoutDialog(false);
     setIsUserMenuOpen(false);
@@ -372,7 +347,7 @@ const Layout: React.FC<{ children?: React.ReactNode }> = ({ children }) => {
                     initial={{ opacity: 0, y: 8, scale: 0.95 }}
                     animate={{ opacity: 1, y: 0, scale: 1 }}
                     exit={{ opacity: 0, y: 8, scale: 0.95 }}
-                    className="absolute right-0 top-full mt-2 w-64 bg-card rounded-xl shadow-xl border border-border overflow-hidden z-50 p-1.5"
+                    className="absolute right-0 top-full mt-2 w-56 bg-card rounded-xl shadow-xl border border-border overflow-hidden z-50 p-1.5"
                   >
                     <div className="px-3 py-2.5 border-b border-border md:hidden">
                       <p className="text-xs font-semibold text-foreground">{user?.full_name}</p>
@@ -385,44 +360,9 @@ const Layout: React.FC<{ children?: React.ReactNode }> = ({ children }) => {
                       <Link to="/ho-so" onClick={() => setIsUserMenuOpen(false)} className="flex items-center gap-3 px-3 py-2.5 text-xs font-medium text-muted-foreground hover:bg-primary/5 hover:text-primary rounded-lg transition-colors group">
                         <User size={15} className="text-muted-foreground group-hover:text-primary transition-colors" /> {txt('nav.profile')}
                       </Link>
-                      <div className="px-2 py-2 border-y border-border/60 my-0.5">
-                        <p className="text-xs font-medium text-muted-foreground mb-1.5 px-1">
-                          {txt('settings.primaryColor')}
-                        </p>
-                        <Combobox
-                          options={themeColorComboboxOptions}
-                          value={primaryColor}
-                          onChange={(v) => {
-                            if (v === '') return;
-                            setTheme({ primaryColor: v as typeof primaryColor });
-                          }}
-                          searchable={false}
-                          clearable={false}
-                          dropdownInPortal
-                          placeholder={txt('settings.primaryColor')}
-                          triggerClassName="h-9 text-xs py-0"
-                          renderValue={(opt) => (
-                            <span className="flex items-center gap-2 min-w-0">
-                              <span
-                                className="h-4 w-4 rounded-full shrink-0 border border-border/80 shadow-sm ring-1 ring-black/5 dark:ring-white/10"
-                                style={{ backgroundColor: themeSwatchHex(String(opt.value)) }}
-                                aria-hidden
-                              />
-                              <span className="truncate">{opt.label}</span>
-                            </span>
-                          )}
-                          renderOption={(opt) => (
-                            <span className="flex items-center gap-2.5 min-w-0">
-                              <span
-                                className="h-5 w-5 rounded-full shrink-0 border border-border/80 shadow-sm ring-1 ring-black/5 dark:ring-white/10"
-                                style={{ backgroundColor: themeSwatchHex(String(opt.value)) }}
-                                aria-hidden
-                              />
-                              <span className="truncate">{opt.label}</span>
-                            </span>
-                          )}
-                        />
-                      </div>
+                      <Link to="/cai-dat" onClick={() => setIsUserMenuOpen(false)} className="flex items-center gap-3 px-3 py-2.5 text-xs font-medium text-muted-foreground hover:bg-primary/5 hover:text-primary rounded-lg transition-colors group">
+                        <Settings size={15} className="text-muted-foreground group-hover:text-primary transition-colors" /> {txt('nav.settings')}
+                      </Link>
                       <button
                         type="button"
                         onClick={() => { setIsUserMenuOpen(false); setShowChangePasswordModal(true); setChangePasswordError(null); setChangePasswordForm({ current: '', new: '', confirm: '' }); }}

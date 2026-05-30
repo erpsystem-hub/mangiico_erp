@@ -6,17 +6,20 @@ import type { TrangThaiHoatDong } from '@/lib/constants/trang-thai';
 import { toast } from "sonner";
 import { txt } from '../../../../lib/text';
 import { queryKeys } from '@/lib/query-keys';
-import { masterDataQueryOptions } from '@/lib/supabase/query-config';
+import { masterDataQueryOptions, supabaseListQueryRetryOptions } from '@/lib/supabase/query-config';
+import { useSupabaseListEnabled } from '@/lib/supabase/use-supabase-list-enabled';
 import { getErrorMessage } from '@/lib/utils';
 
 const departmentsQueryKey = queryKeys.departments.all;
 
 export const useDepartments = (options?: { enabled?: boolean }) => {
+  const enabled = useSupabaseListEnabled(options?.enabled !== false);
   return useQuery({
     queryKey: departmentsQueryKey,
     queryFn: getDepartments,
-    enabled: options?.enabled !== false,
+    enabled,
     ...masterDataQueryOptions,
+    ...supabaseListQueryRetryOptions,
   });
 };
 
@@ -70,8 +73,14 @@ export const useDeleteDepartment = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: deleteDepartment,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: departmentsQueryKey });
+    onSuccess: (_, id) => {
+      queryClient.setQueryData<Department[]>(departmentsQueryKey, (old) =>
+        old?.filter((d) => d.id !== id),
+      );
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.employees.all,
+        refetchType: 'none',
+      });
       toast.success(txt('department.toast.deleteSuccess'));
     },
     onError: (err: unknown) => toast.error(getErrorMessage(err))
@@ -82,8 +91,9 @@ export const useImportDepartments = (onSuccess?: () => void) => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: importDepartments,
-    onSuccess: (result) => {
-      queryClient.invalidateQueries({ queryKey: departmentsQueryKey });
+    onSuccess: async (result) => {
+      const fresh = await getDepartments();
+      queryClient.setQueryData(departmentsQueryKey, fresh);
       if (result.created > 0) {
         toast.success(txt('department.toast.importSuccess', { count: result.created }));
       }

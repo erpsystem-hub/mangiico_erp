@@ -9,6 +9,12 @@ export interface RepositoryQueryOptions {
   limit?: number;
   /** Offset for pagination */
   offset?: number;
+  /** Override default PostgREST `.select()` for this request (Supabase only). */
+  select?: string;
+}
+
+export interface RepositoryGetByIdOptions {
+  select?: string;
 }
 
 /** Tùy chọn PostgREST: thu hẹp payload trả về sau insert/update (giảm egress). */
@@ -17,15 +23,29 @@ export interface RepositoryMutationOptions {
   returningSelect?: string;
 }
 
+export interface RepositoryListResult<T> {
+  items: T[];
+  total: number;
+}
+
 export interface IRepository<
   T extends { id: string | number },
   TCreate = Omit<T, 'id'>,
   TUpdate = Partial<T>,
 > {
+  count(): Promise<number>;
   getAll(options?: RepositoryQueryOptions): Promise<T[]>;
-  getById(id: string | number): Promise<T | null>;
+  /** Một request: items theo range + tổng số bản ghi (PostgREST count). */
+  getPage(options?: RepositoryQueryOptions): Promise<RepositoryListResult<T>>;
+  getById(id: string | number, options?: RepositoryGetByIdOptions): Promise<T | null>;
   insert(data: TCreate, options?: RepositoryMutationOptions): Promise<T>;
   update(id: string | number, data: TUpdate, options?: RepositoryMutationOptions): Promise<T>;
+  /** Cập nhật nhiều row cùng payload — một round-trip PostgREST `.in('id', ids)`. */
+  updateMany(
+    ids: (string | number)[],
+    data: TUpdate,
+    options?: RepositoryMutationOptions,
+  ): Promise<void>;
   remove(ids: (string | number)[]): Promise<void>;
   upsert?(data: TCreate | TCreate[]): Promise<T[]>;
 }

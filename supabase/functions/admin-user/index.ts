@@ -57,16 +57,15 @@ function buildEmail(username: string): string {
 }
 
 async function findAuthUserIdByEmail(adminClient: ReturnType<typeof createClient>, email: string): Promise<string | null> {
-  // listUsers chưa có filter email phía server -> phải duyệt phân trang.
-  const perPage = 1000;
-  for (let page = 1; page <= 50; page += 1) {
-    const { data, error } = await adminClient.auth.admin.listUsers({ page, perPage });
-    if (error) throw error;
-    const match = data.users.find((u) => (u.email ?? '').toLowerCase() === email);
-    if (match) return match.id;
-    if (data.users.length < perPage) break;
-  }
-  return null;
+  const normalized = email.trim().toLowerCase();
+  const { data, error } = await adminClient.auth.admin.listUsers({
+    filter: normalized,
+    perPage: 1,
+    page: 1,
+  });
+  if (error) throw error;
+  const match = data.users.find((u) => (u.email ?? '').toLowerCase() === normalized);
+  return match?.id ?? null;
 }
 
 // @ts-expect-error Deno runtime resolves remote modules
@@ -133,22 +132,24 @@ Deno.serve(async (req: Request) => {
   try {
     if (action === 'check') {
       const id = await findAuthUserIdByEmail(adminClient, email);
-      return jsonResponse(200, { exists: id !== null, user_id: id ?? undefined });
+      return jsonResponse(200, { exists: id !== null });
     }
 
     if (action === 'create') {
-      const existing = await findAuthUserIdByEmail(adminClient, email);
-      if (existing) {
-        return jsonResponse(409, { error: 'Email Auth đã tồn tại', user_id: existing });
-      }
-      const { data, error } = await adminClient.auth.admin.createUser({
+      const { error } = await adminClient.auth.admin.createUser({
         email,
         password,
         email_confirm: true,
         user_metadata: { full_name: username },
       });
-      if (error) return jsonResponse(400, { error: error.message });
-      return jsonResponse(200, { user_id: data.user?.id });
+      if (error) {
+        const msg = error.message.toLowerCase();
+        if (msg.includes('already') || msg.includes('registered') || msg.includes('exists')) {
+          return jsonResponse(409, { error: 'Email Auth đã tồn tại' });
+        }
+        return jsonResponse(400, { error: error.message });
+      }
+      return jsonResponse(200, { ok: true });
     }
 
     if (action === 'reset_password') {
@@ -156,7 +157,7 @@ Deno.serve(async (req: Request) => {
       if (!id) return jsonResponse(404, { error: 'Không tìm thấy user Auth' });
       const { error } = await adminClient.auth.admin.updateUserById(id, { password });
       if (error) return jsonResponse(400, { error: error.message });
-      return jsonResponse(200, { user_id: id });
+      return jsonResponse(200, { ok: true });
     }
 
     if (action === 'delete') {
@@ -164,7 +165,7 @@ Deno.serve(async (req: Request) => {
       if (!id) return jsonResponse(200, { deleted: false });
       const { error } = await adminClient.auth.admin.deleteUser(id);
       if (error) return jsonResponse(400, { error: error.message });
-      return jsonResponse(200, { deleted: true, user_id: id });
+      return jsonResponse(200, { deleted: true });
     }
 
     return jsonResponse(400, { error: `Action không hợp lệ: ${action}` });

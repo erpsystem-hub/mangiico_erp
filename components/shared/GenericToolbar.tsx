@@ -20,6 +20,10 @@ import type { FilterGroup } from '../ui/MobileFilterSheet';
 import type { ActionItem } from '../ui/MobileActionsSheet';
 import FilterChipOverflowRow from './FilterChipOverflowRow';
 
+/** Ô tìm kiếm toolbar — desktop 12px (class `.toolbar-search-input` trong index.css). */
+const TOOLBAR_SEARCH_INPUT_CLASS =
+    'toolbar-search-input w-full bg-muted/40 hover:bg-muted/60 border border-border/60 rounded-lg text-xs text-foreground placeholder:text-muted-foreground/70 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/40 focus:bg-background transition-all';
+
 interface GenericToolbarProps {
     selectedCount: number;
     searchTerm: string;
@@ -77,7 +81,7 @@ interface GenericToolbarProps {
     maxVisibleFilterChips?: number;
 
     /**
-     * Desktop: Back + TabGroup + chip lọc + search trên cùng một hàng (chip nằm bên phải TabGroup).
+     * Desktop: Back + search + TabGroup + chip lọc trên cùng một hàng (chip nằm bên phải search/TabGroup).
      */
     filtersDesktopSeparateScroll?: boolean;
     /**
@@ -114,7 +118,7 @@ const GenericToolbar: React.FC<GenericToolbarProps> = ({
     filtersMobileBelowSearchScroll = false,
     secondaryRow,
 }) => {
-    const resolvedSearchPlaceholder = searchPlaceholder ?? txt('common.searchPlaceholder');
+    const resolvedSearchPlaceholder = searchPlaceholder ?? txt('common.search');
     const [showMobileFilters, setShowMobileFilters] = useState(false);
     const [showMobileActions, setShowMobileActions] = useState(false);
     const [showColumnMenu, setShowColumnMenu] = useState(false);
@@ -167,6 +171,47 @@ const GenericToolbar: React.FC<GenericToolbarProps> = ({
             el.scrollIntoView({ block: 'nearest', behavior: reduce ? 'auto' : 'smooth' });
         });
     }, []);
+
+    const renderDesktopSearchInput = (wrapperClassName?: string) =>
+        !hideSearch ? (
+            <div
+                className={cn(
+                    'group relative h-8 w-64 min-w-[10rem] max-w-[21rem] shrink-0',
+                    wrapperClassName,
+                )}
+            >
+                <span
+                    className="pointer-events-none absolute inset-y-0 left-3 z-[1] flex items-center text-muted-foreground transition-colors group-focus-within:text-primary"
+                    aria-hidden
+                >
+                    <Search size={14} strokeWidth={2.25} />
+                </span>
+                <input
+                    ref={searchInputRef}
+                    type="search"
+                    value={localSearch}
+                    onChange={(e) => setLocalSearch(e.target.value)}
+                    placeholder={resolvedSearchPlaceholder}
+                    inputMode="search"
+                    enterKeyHint="search"
+                    autoComplete="off"
+                    autoCorrect="off"
+                    spellCheck={false}
+                    className={cn('h-8 w-full pl-10 pr-9', TOOLBAR_SEARCH_INPUT_CLASS)}
+                />
+                {localSearch && (
+                    <span className="absolute inset-y-0 right-2 flex items-center">
+                        <button
+                            type="button"
+                            onClick={() => setLocalSearch('')}
+                            className="text-muted-foreground hover:text-foreground rounded-full p-0.5 transition-all hover:bg-muted"
+                        >
+                            <X size={14} />
+                        </button>
+                    </span>
+                )}
+            </div>
+        ) : null;
 
     // Keyboard shortcut: "/" to focus search (chỉ khi có search) — mobile + desktop
     useEffect(() => {
@@ -277,21 +322,20 @@ const GenericToolbar: React.FC<GenericToolbarProps> = ({
                                 </button>
                             )}
 
-                            {desktopStartSlot ? (
-                                <div className="shrink-0 min-w-0 flex items-center max-w-[min(100%,28rem)]">
-                                    {desktopStartSlot}
-                                </div>
-                            ) : null}
-
-                            {/* Search — phân nhóm sau Back / Tab (mobile) */}
+                            {/* Search — ngay bên phải nút Back (mobile) */}
                             {!hideSearch ? (
                                 <div
                                     className={cn(
-                                        'relative flex-1 min-w-0 max-w-[21rem]',
-                                        desktopStartSlot && 'border-l border-border pl-3 ml-1',
+                                        'relative h-11 min-h-[44px] flex-1 min-w-0 max-w-[21rem]',
+                                        showBack && 'border-l border-border pl-3 ml-1',
                                     )}
                                 >
-                                    <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground pointer-events-none" />
+                                    <span
+                                        className="pointer-events-none absolute inset-y-0 left-3 z-[1] flex items-center text-muted-foreground"
+                                        aria-hidden
+                                    >
+                                        <Search size={14} strokeWidth={2.25} />
+                                    </span>
                                     <input
                                         ref={mobileSearchInputRef}
                                         type="search"
@@ -304,15 +348,18 @@ const GenericToolbar: React.FC<GenericToolbarProps> = ({
                                         autoCorrect="off"
                                         spellCheck={false}
                                         onFocus={(e) => scrollSearchIntoView(e.currentTarget)}
-                                        className="w-full h-11 min-h-[44px] pl-8 pr-7 bg-muted/40 border border-border/60 rounded-lg text-sm text-foreground placeholder:text-muted-foreground/60 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/40 transition-all"
+                                        className={cn('h-11 min-h-[44px] w-full pl-10 pr-9', TOOLBAR_SEARCH_INPUT_CLASS)}
                                     />
                                     {localSearch && (
-                                        <button
-                                            onClick={() => setLocalSearch('')}
-                                            className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground p-0.5 rounded-full"
-                                        >
-                                            <X size={12} />
-                                        </button>
+                                        <span className="absolute inset-y-0 right-2 flex items-center">
+                                            <button
+                                                type="button"
+                                                onClick={() => setLocalSearch('')}
+                                                className="rounded-full p-0.5 text-muted-foreground"
+                                            >
+                                                <X size={12} />
+                                            </button>
+                                        </span>
                                     )}
                                 </div>
                             ) : (
@@ -320,6 +367,17 @@ const GenericToolbar: React.FC<GenericToolbarProps> = ({
                             )}
 
                             {searchTrailing}
+
+                            {desktopStartSlot ? (
+                                <div
+                                    className={cn(
+                                        'shrink-0 min-w-0 flex items-center max-w-[min(100%,28rem)]',
+                                        (showBack || !hideSearch) && 'border-l border-border pl-3 ml-1',
+                                    )}
+                                >
+                                    {desktopStartSlot}
+                                </div>
+                            ) : null}
 
                             {/* Bộ lọc */}
                             {hasMobileFilterSheet && (
@@ -400,7 +458,7 @@ const GenericToolbar: React.FC<GenericToolbarProps> = ({
             )}
 
             {/* ======================================================== */}
-            {/* DESKTOP (>= sm): trái Back + desktopStartSlot + filters; phải search sát cột + actions */}
+            {/* DESKTOP (>= sm): Back + search; chip lọc giữa; actions bên phải */}
             {/* ======================================================== */}
             <div
                 className={cn(
@@ -449,13 +507,18 @@ const GenericToolbar: React.FC<GenericToolbarProps> = ({
                                 </button>
                             )}
 
+                            {renderDesktopSearchInput(showBack ? 'border-l border-border pl-3 ml-0.5' : undefined)}
+
+                            {searchTrailing}
+
                             {desktopStartSlot}
 
                             {(filters || (activeFilterCount > 0 && onClearAllFilters)) && (
                                 <div
                                     className={cn(
                                         'flex min-w-0 flex-1 flex-wrap items-center gap-2 py-0.5',
-                                        (showBack || desktopStartSlot) && 'border-l border-border pl-3 ml-0.5',
+                                        (showBack || !hideSearch || desktopStartSlot) &&
+                                            'border-l border-border pl-3 ml-0.5',
                                     )}
                                 >
                                     <FilterChipOverflowRow maxVisible={maxVisibleFilterChips}>{filters}</FilterChipOverflowRow>
@@ -471,42 +534,8 @@ const GenericToolbar: React.FC<GenericToolbarProps> = ({
                                 </div>
                             )}
 
-                            {filters && !hideSearch ? (
-                                <div className="h-7 w-px shrink-0 bg-border self-center" aria-hidden />
-                            ) : null}
-
-                            {/* Không giới hạn max-width chung — tránh ép ô tìm + actions vào vùng quá hẹp (mất nút Thêm). */}
-                            <div className="flex shrink-0 flex-nowrap items-center gap-2 py-0.5">
-                                {!hideSearch && (
-                                    <div className="relative w-72 min-w-[11rem] max-w-[22rem] shrink-0 group">
-                                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground group-focus-within:text-primary transition-colors pointer-events-none" />
-                                        <input
-                                            ref={searchInputRef}
-                                            type="search"
-                                            value={localSearch}
-                                            onChange={(e) => setLocalSearch(e.target.value)}
-                                            placeholder={resolvedSearchPlaceholder}
-                                            inputMode="search"
-                                            enterKeyHint="search"
-                                            autoComplete="off"
-                                            autoCorrect="off"
-                                            spellCheck={false}
-                                            className="w-full h-8 pl-10 pr-8 bg-muted/40 hover:bg-muted/60 border border-border/60 rounded-lg text-sm text-foreground placeholder:text-muted-foreground/70 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/40 focus:bg-background transition-all"
-                                        />
-                                        {localSearch && (
-                                            <button
-                                                type="button"
-                                                onClick={() => setLocalSearch('')}
-                                                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground p-0.5 rounded-full hover:bg-muted transition-all"
-                                            >
-                                                <X size={14} />
-                                            </button>
-                                        )}
-                                    </div>
-                                )}
-
-                                {searchTrailing}
-
+                            {/* Không giới hạn max-width chung — tránh ép actions vào vùng quá hẹp (mất nút Thêm). */}
+                            <div className="flex shrink-0 flex-nowrap items-center gap-2 py-0.5 ml-auto">
                                 {hasColumnManager && (
                                     <div className="relative shrink-0" ref={columnMenuRef}>
                                         <Tooltip content={txt('common.columnOptions')} placement="bottom" disabled={showColumnMenu}>
@@ -564,11 +593,15 @@ const GenericToolbar: React.FC<GenericToolbarProps> = ({
                                 </button>
                             )}
 
+                            {renderDesktopSearchInput(showBack ? 'border-l border-border pl-3 ml-0.5' : undefined)}
+
+                            {searchTrailing}
+
                             {desktopStartSlot}
 
                             {(filters || (activeFilterCount > 0 && onClearAllFilters)) &&
-                            (showBack || desktopStartSlot) ? (
-                                <div className="border-l border-border pl-3 ml-1 flex items-center gap-2 flex-wrap min-w-0">
+                            (showBack || !hideSearch || desktopStartSlot) ? (
+                                <div className="border-l border-border pl-3 ml-1 flex items-center gap-2 flex-wrap min-w-0 flex-1">
                                     <FilterChipOverflowRow maxVisible={maxVisibleFilterChips}>{filters}</FilterChipOverflowRow>
                                     {activeFilterCount > 0 && onClearAllFilters && (
                                         <button
@@ -583,7 +616,7 @@ const GenericToolbar: React.FC<GenericToolbarProps> = ({
                             ) : (
                                 <>
                                     {filters && (
-                                        <div className="flex items-center gap-2 flex-wrap min-w-0">
+                                        <div className="flex items-center gap-2 flex-wrap min-w-0 flex-1">
                                             <FilterChipOverflowRow maxVisible={maxVisibleFilterChips}>{filters}</FilterChipOverflowRow>
                                         </div>
                                     )}
@@ -651,36 +684,6 @@ const GenericToolbar: React.FC<GenericToolbarProps> = ({
                                 exit={{ opacity: 0, scale: 0.9 }}
                                 className="flex items-center gap-1"
                             >
-                                {!hideSearch && (
-                                    <div className="relative w-64 max-w-[21rem] min-w-[10rem] shrink-0 group">
-                                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground group-focus-within:text-primary transition-colors pointer-events-none" />
-                                        <input
-                                            ref={searchInputRef}
-                                            type="search"
-                                            value={localSearch}
-                                            onChange={(e) => setLocalSearch(e.target.value)}
-                                            placeholder={resolvedSearchPlaceholder}
-                                            inputMode="search"
-                                            enterKeyHint="search"
-                                            autoComplete="off"
-                                            autoCorrect="off"
-                                            spellCheck={false}
-                                            className="w-full h-8 pl-10 pr-8 bg-muted/40 hover:bg-muted/60 border border-border/60 rounded-lg text-sm text-foreground placeholder:text-muted-foreground/70 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/40 focus:bg-background transition-all"
-                                        />
-                                        {localSearch && (
-                                            <button
-                                                type="button"
-                                                onClick={() => setLocalSearch('')}
-                                                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground p-0.5 rounded-full hover:bg-muted transition-all"
-                                            >
-                                                <X size={14} />
-                                            </button>
-                                        )}
-                                    </div>
-                                )}
-
-                                {searchTrailing}
-
                                 {/* Column Manager (desktop) */}
                                 {hasColumnManager && (
                                     <div className="relative" ref={columnMenuRef}>

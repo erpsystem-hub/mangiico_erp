@@ -7,7 +7,7 @@ import { cn } from '@/lib/utils';
 export type DocumentListDownloadFormat = 'pdf' | 'docx' | 'xlsx';
 
 export interface DocumentListPreviewLayoutProps {
-  /** BEM prefix, e.g. `mttq-tap-huan-danh-sach-preview` → classes `{prefix}-preview-toolbar`. */
+  /** BEM prefix, e.g. `module-preview` → classes `{prefix}-preview-toolbar`. */
   previewClassPrefix: string;
   /** Không truyền thì không hiện tiêu đề phía trên toolbar. */
   pageTitle?: string;

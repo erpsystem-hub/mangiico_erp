@@ -1,7 +1,7 @@
 /**
  * Query keys tập trung — tránh lệch chuỗi khi invalidate / prefetch (TanStack Query + Supabase).
  */
-/** Tham số fetch danh sách nhân viên (đồng bộ với getEmployees + useEmployees). */
+/** Tham số fetch danh sách nhân viên (client mode). */
 export const EMPLOYEES_LIST_QUERY_PARAMS = {
   limit: 5000,
   offset: 0,
@@ -12,13 +12,28 @@ export const EMPLOYEES_LIST_QUERY_PARAMS = {
 export const queryKeys = {
   employees: {
     all: ['employees'] as const,
-    /** Danh sách có limit/offset/order — giảm refetch và khớp cache mutation. */
+    count: ['employees', 'count'] as const,
+    /** Danh sách client mode — full array. */
     list: (params: {
       limit: number;
       offset: number;
       orderBy: string;
       ascending: boolean;
     }) => ['employees', 'list', params] as const,
+    /** Server pagination — một trang + total. */
+    page: (params: {
+      limit: number;
+      offset: number;
+      orderBy: string;
+      ascending: boolean;
+    }) => ['employees', 'page', params] as const,
+    stats: (params: {
+      asAt: string;
+      rangeStart: string;
+      rangeEnd: string;
+      filterDept: string[];
+      filterStatus: string[];
+    }) => ['employees', 'stats', params] as const,
     /** Prefix: invalidate mọi query `['employee', id]` */
     anyDetail: ['employee'] as const,
     detail: (id: string) => ['employee', id] as const,
@@ -38,5 +53,9 @@ export const queryKeys = {
   },
   thongTinToChuc: {
     singleton: ['thong-tin-to-chuc', 'singleton'] as const,
+  },
+  avatars: {
+    /** Signed URL theo object path — cache ~11h (< TTL 12h Storage). */
+    signed: (objectPath: string) => ['avatars', 'signed', objectPath] as const,
   },
 } as const;

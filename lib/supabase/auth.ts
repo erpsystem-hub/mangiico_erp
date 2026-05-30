@@ -37,7 +37,7 @@ export interface VarNhanVienAuthRow {
   id_phong_ban: string | null;
   id_bo_phan: string | null;
   id_chuc_vu: string | null;
-  /** Tên chức vụ sau khi tra `var_chuc_vu` (không có FK embed trên `var_nhan_vien`). */
+  /** Tên chức vụ sau khi tra `var_chuc_vu` (auth select không embed; list/detail dùng FK embed). */
   ten_chuc_vu?: string | null;
   trang_thai: 'Hoạt động' | 'Khóa';
 }

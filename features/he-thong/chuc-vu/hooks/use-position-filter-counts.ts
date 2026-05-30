@@ -3,6 +3,7 @@ import { matchesSearchTerm } from '@/lib/searchUtils';
 import type { Position, PositionFilters } from '../core/types';
 import { POSITION_SEARCHABLE_KEYS } from '../utils/search-keys';
 import { positionMatchesColumnSearch } from '../utils/column-search';
+import { fkMatchesFilter, normFkId } from '../utils/group-positions-by-department';
 
 function statusChipKey(p: Position): 'Active' | 'Inactive' {
   return p.trang_thai === 'Đang hoạt động' ? 'Active' : 'Inactive';
@@ -20,9 +21,7 @@ export function usePositionFilterCounts(
     const matchesSearch = (p: Position) =>
       matchesSearchTerm(p as unknown as Record<string, unknown>, searchTerm, POSITION_SEARCHABLE_KEYS);
 
-    const matchesDept = (p: Position) =>
-      filters.phong_ban_id.length === 0 ||
-      (p.phong_ban_id != null && filters.phong_ban_id.includes(p.phong_ban_id));
+    const matchesDept = (p: Position) => fkMatchesFilter(p.phong_ban_id, filters.phong_ban_id);
 
     const matchesStatus = (p: Position) => {
       const key = statusChipKey(p);
@@ -40,7 +39,8 @@ export function usePositionFilterCounts(
       const passStatus = matchesStatus(p);
 
       if (passStatus && p.phong_ban_id) {
-        deptCounts[p.phong_ban_id] = (deptCounts[p.phong_ban_id] || 0) + 1;
+        const deptKey = normFkId(p.phong_ban_id);
+        if (deptKey) deptCounts[deptKey] = (deptCounts[deptKey] || 0) + 1;
       }
 
       if (passDept) {

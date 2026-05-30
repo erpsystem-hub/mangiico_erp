@@ -15,6 +15,13 @@ export { default as StatsCard } from './StatsCard';
 export { default as StatsTableCard } from './StatsTableCard';
 export { default as StatsTrendBadge } from './StatsTrendBadge';
 export { default as ColoredBar } from './ColoredBar';
+export { default as StatsChartCard } from './StatsChartCard';
+export { default as StatsScrollTable } from './StatsScrollTable';
+export { default as StatsExportMenu } from './StatsExportMenu';
+export { getStatsTableScrollMaxHeight } from './table-scroll';
+export type { StatsTableColumn, StatsScrollTableProps } from './StatsScrollTable';
+export type { StatsChartCardProps } from './StatsChartCard';
+export type { StatsExportMenuProps } from './StatsExportMenu';
 export type {
   StatsKpiCardItem,
   StatsTableRow,

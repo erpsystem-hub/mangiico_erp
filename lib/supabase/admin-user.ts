@@ -13,12 +13,23 @@ type AdminAction = 'check' | 'create' | 'reset_password' | 'delete';
 
 interface AdminResponse {
   exists?: boolean;
-  user_id?: string;
   deleted?: boolean;
   error?: string;
 }
 
-async function callAdminUser(action: AdminAction, username: string, extra?: { password?: string }): Promise<AdminResponse> {
+/** Edge trả 409 khi email Auth đã tồn tại (action create). */
+export class AuthUserConflictError extends Error {
+  constructor(message = 'Email Auth đã tồn tại') {
+    super(message);
+    this.name = 'AuthUserConflictError';
+  }
+}
+
+async function callAdminUser(
+  action: AdminAction,
+  username: string,
+  extra?: { password?: string },
+): Promise<AdminResponse> {
   if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
     throw new Error('Supabase chưa được cấu hình. Không thể gọi Edge Function.');
   }
@@ -46,15 +57,18 @@ async function callAdminUser(action: AdminAction, username: string, extra?: { pa
   } catch {
     json = {};
   }
+  if (res.status === 409) {
+    throw new AuthUserConflictError(json.error ?? 'Email Auth đã tồn tại');
+  }
   if (!res.ok) {
     throw new Error(json.error ?? `admin-user ${action} thất bại (HTTP ${res.status})`);
   }
   return json;
 }
 
-export async function checkAuthUserExists(username: string): Promise<{ exists: boolean; user_id?: string }> {
+export async function checkAuthUserExists(username: string): Promise<{ exists: boolean }> {
   const res = await callAdminUser('check', username);
-  return { exists: !!res.exists, user_id: res.user_id };
+  return { exists: !!res.exists };
 }
 
 export async function createAuthUser(username: string): Promise<void> {

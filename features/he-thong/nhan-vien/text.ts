@@ -1,9 +1,17 @@
 /** Nhân viên */
 export const employee = {
   "noViewPermission": "Bạn không có quyền xem module Nhân viên.",
+  "listLoadErrorTitle": "Không tải được danh sách nhân viên",
+  "listLoadErrorHint": "Kiểm tra kết nối Supabase, đăng nhập, migration FK (var_nhan_vien) và RPC get_nhan_vien_page. Thử tải lại.",
   "title": "Nhân viên",
   "tabList": "Danh sách",
   "tabStats": "Thống kê",
+  "statsTotal": "Tổng nhân viên",
+  "statsByDepartment": "Theo phòng ban",
+  "statsByPosition": "Theo chức vụ",
+  "statsByStatus": "Theo trạng thái",
+  "statsStatusActive": "Đang hoạt động",
+  "statsStatusLocked": "Đã khóa",
   "name": "Họ tên",
   "code": "Mã NV",
   "email": "Email",
@@ -29,7 +37,6 @@ export const employee = {
     "noPhone": "Chưa có số điện thoại",
   },
   "unassigned": "Chưa gán",
-  "searchPlaceholder": "Tìm theo tài khoản, họ tên, phòng ban, bộ phận, chức vụ, trạng thái…",
   "deleteConfirmTitle": "Xóa nhân viên?",
   "deleteConfirmMessage": "Bạn có chắc muốn xóa nhân viên",
   "deleteConfirmNote": "Bạn có thể hoàn tác trong vài giây.",
@@ -286,8 +293,8 @@ export const employee = {
     "bulkEditDesc": "Cập nhật {{count}} nhân viên đã chọn",
     "importDesc": "Nhập nhân viên từ file Excel",
     "exportDesc": "Xuất danh sách ra file Excel",
-    "importData": "Import dữ liệu",
-    "exportData": "Export dữ liệu"
+    "importData": "Nhập dữ liệu",
+    "exportData": "Xuất dữ liệu"
   },
   "stats": {
     "department": "Phòng ban",
@@ -313,7 +320,12 @@ export const employee = {
     "genderRatio": "Nam/Nữ:",
     "largestDepartment": "Phòng ban lớn nhất:",
     "comparedLastYear": "So với cùng kỳ năm trước: Tổng",
-    "workingShort": "Đang làm",
+    "workingShort": "Hoạt động",
+    "lockedShort": "Khóa",
+    "positionChart": "Phân bổ theo chức vụ",
+    "newAccountsInPeriod": "Tài khoản mới trong kỳ:",
+    "accountTrendChart": "Xu hướng tạo tài khoản (12 tháng)",
+    "newAccounts": "Tài khoản mới",
     "chartDrillDownHint": "Chạm hoặc nhấn vào biểu đồ để mở danh sách nhân viên (theo phòng ban hoặc trạng thái).",
     "departmentChart": "Phân bổ theo phòng ban",
     "statusChart": "Trạng thái nhân sự",
@@ -336,6 +348,7 @@ export const employee = {
       "custom": "Tùy chọn"
     },
     "preset": {
+      "all": "Tất cả",
       "thisWeek": "Tuần này",
       "lastWeek": "Tuần trước",
       "thisMonth": "Tháng này",
@@ -413,6 +426,7 @@ export const employee = {
   },
   "export": {
     "doc": "Word (.doc)",
+    "docx": "Word (.docx)",
     "excel": "Excel (.xlsx)",
     "pdf": "PDF"
   },

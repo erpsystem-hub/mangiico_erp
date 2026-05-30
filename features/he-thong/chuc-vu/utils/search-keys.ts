@@ -1,12 +1,13 @@
-/** Các trường dùng cho ô tìm kiếm tổng (toolbar) — đủ cột + FK hiển thị. */
+/** Các trường dùng cho ô tìm kiếm tổng (toolbar) — đủ cột hiển thị + FK enrich. */
 export const POSITION_SEARCHABLE_KEYS: string[] = [
+  'thu_tu',
   'ten_chuc_vu',
-  'mo_ta',
   'ten_cap_bac',
+  'cap_bac',
   'cap_quan_ly',
   'ten_phong_ban',
+  'mo_ta',
   'trang_thai',
-  'thu_tu',
   'tg_cap_nhat',
   'tg_tao',
 ];

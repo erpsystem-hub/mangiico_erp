@@ -5,11 +5,13 @@ import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../../../store/useStore';
 import { useCan } from '../../../hooks/use-can';
+import { useResourcePermissions } from '@/hooks/use-resource-permissions';
 import PhongBanToolbar from './components/phong-ban-toolbar';
 import DepartmentList from './components/phong-ban-list';
 import ExportDialog from '../../../components/shared/ExportDialog';
 import ImportDialog from '../../../components/shared/ImportDialog';
 import { useDepartments, useDeleteDepartment, useUpdateStatusDepartment, useImportDepartments } from './hooks/use-phong-ban';
+import ErrorState from '../../../components/shared/ErrorState';
 import { useDepartmentStore } from './store/useDepartmentStore';
 import { useConfirmStore } from '../../../store/useConfirmStore';
 import { CONFIRM_DELETE, CONFIRM_DELETE_ALL, CONFIRM_YES } from '../../../lib/button-labels';
@@ -42,6 +44,7 @@ const DrawerLazyFallback: React.FC = () => (
 const DepartmentPage = () => {
   const user = useAuthStore((s) => s.user);
   const canView = useCan('view', 'departments');
+  const { canCreate, canEdit, canDelete, canExport, canImport } = useResourcePermissions('departments');
   const navigate = useNavigate();
   const didRedirect = useRef(false);
 
@@ -76,7 +79,7 @@ const DepartmentPage = () => {
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(20);
 
-  const { data: departments = [], isLoading } = useDepartments({ enabled: canView });
+  const { data: departments = [], isLoading, isError, refetch } = useDepartments({ enabled: canView });
   const deleteMutation = useDeleteDepartment();
   const statusMutation = useUpdateStatusDepartment();
   const importMutation = useImportDepartments(() => setShowImport(false));
@@ -213,6 +216,7 @@ const DepartmentPage = () => {
   );
 
   const handleEdit = (item: Department) => {
+    if (!canEdit) return;
     setFormOrigin(detailStack.length > 0 ? 'detail' : 'list');
     setDetailStack((s) => (s.length ? [s[0]] : []));
     setEditingDept(item);
@@ -220,6 +224,7 @@ const DepartmentPage = () => {
   };
 
   const handleDelete = (id: string) => {
+    if (!canDelete) return;
     if (detailStack.length > 1) setDetailStack((s) => (s.length ? [s[0]] : []));
     confirm({
       title: txt('department.deleteTitle'),
@@ -241,6 +246,7 @@ const DepartmentPage = () => {
   };
 
   const handleStatusChange = (item: Department) => {
+    if (!canEdit) return;
     const newStatus = item.trang_thai === 'Đang hoạt động' ? 'Ngừng hoạt động' : 'Đang hoạt động';
     const statusLabel = newStatus === 'Đang hoạt động' ? txt('department.active') : txt('department.inactive');
     confirm({
@@ -262,6 +268,7 @@ const DepartmentPage = () => {
   };
 
   const handleDeleteMany = () => {
+    if (!canDelete) return;
     const ids = Array.from(selectedIds);
     confirm({
       title: txt('department.deleteTitle'),
@@ -279,6 +286,7 @@ const DepartmentPage = () => {
   };
 
   const handleStatusChangeMany = (status: import('@/lib/constants/trang-thai').TrangThaiHoatDong) => {
+    if (!canEdit) return;
     const ids = Array.from(selectedIds);
     const statusLabel = status === 'Đang hoạt động' ? txt('department.active') : txt('department.inactive');
     confirm({
@@ -296,6 +304,7 @@ const DepartmentPage = () => {
   };
 
   const handleImportData = async (data: Record<string, unknown>[]) => {
+    if (!canImport) return;
     const rows: DepartmentFormValues[] = data.map((row) => ({
       ten_phong_ban: String(row.ten_phong_ban ?? '').trim(),
       mo_ta: row.mo_ta != null ? String(row.mo_ta).trim() : undefined,
@@ -323,6 +332,7 @@ const DepartmentPage = () => {
   };
 
   const handleAddChild = (parent: Department) => {
+    if (!canCreate) return;
     setDetailStack((s) => (s.length ? [s[0]] : []));
     setAddChildOf(parent);
     setEditingDept(null);
@@ -331,6 +341,7 @@ const DepartmentPage = () => {
   };
 
   const handleExport = () => {
+    if (!canExport) return;
     if (sortedFilteredDepartments.length === 0) {
       toast.warning(txt('department.noExportData'));
       return;
@@ -357,6 +368,7 @@ const DepartmentPage = () => {
           departments={departments}
           selectedCount={selectedIds.size}
           onAdd={() => {
+            if (!canCreate) return;
             setFormOrigin('list');
             startTransition(() => setShowForm(true));
           }}
@@ -367,23 +379,33 @@ const DepartmentPage = () => {
         />
 
         <div className="flex-1 min-h-0 flex flex-col">
-          <DepartmentList
-            data={sortedFilteredDepartments}
-            allDepartments={departments}
-            columns={columns}
-            selectedIds={selectedIds}
-            onToggleSelection={toggleSelection}
-            onToggleAllSelection={toggleAllSelection}
-            isLoading={isLoading}
-            page={page}
-            pageSize={pageSize}
-            onPageChange={setPage}
-            onPageSizeChange={setPageSize}
-            onEdit={handleEdit}
-            onDelete={handleDelete}
-            onStatusChange={handleStatusChange}
-            onView={(d) => startTransition(() => setDetailStack([d]))}
-          />
+          {isError ? (
+            <ErrorState
+              title={txt('department.listLoadErrorTitle')}
+              message={txt('department.listLoadErrorHint')}
+              onRetry={() => refetch()}
+              primaryButtons
+              className="m-4 border-0 shadow-none"
+            />
+          ) : (
+            <DepartmentList
+                data={sortedFilteredDepartments}
+                allDepartments={departments}
+                columns={columns}
+                selectedIds={selectedIds}
+                onToggleSelection={toggleSelection}
+                onToggleAllSelection={toggleAllSelection}
+                isLoading={isLoading}
+                page={page}
+                pageSize={pageSize}
+                onPageChange={setPage}
+                onPageSizeChange={setPageSize}
+                onEdit={handleEdit}
+                onDelete={handleDelete}
+                onStatusChange={handleStatusChange}
+                onView={(d) => startTransition(() => setDetailStack([d]))}
+              />
+          )}
         </div>
       </div>
 

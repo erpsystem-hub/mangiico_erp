@@ -7,6 +7,7 @@ import PwaRegister from './components/shared/PwaRegister';
 
 const Login = lazy(() => import('./pages/Login'));
 const Profile = lazy(() => import('./pages/Profile'));
+const Settings = lazy(() => import('./pages/Settings'));
 const Home = lazy(() => import('./pages/Home'));
 const LicenseInfo = lazy(() => import('./pages/LicenseInfo'));
 const NotificationPage = lazy(() => import('./pages/NotificationPage'));
@@ -28,6 +29,7 @@ const ThongTinToChucPage = lazy(() => import('./features/he-thong/thong-tin-to-c
 const SecurityPage = lazy(() => import('./features/he-thong/phan-quyen/index'));
 const DepartmentPage = lazy(() => import('./features/he-thong/phong-ban/index'));
 const PositionPage = lazy(() => import('./features/he-thong/chuc-vu/index'));
+const NotFoundPage = lazy(() => import('./pages/NotFound'));
 
 const PageFallback = () => (
   <div className="flex flex-col items-center justify-center min-h-[40vh]" aria-busy="true" aria-label="Đang mở trang">
@@ -83,8 +85,9 @@ const App = () => {
           <Route path="/phan-quyen" element={<Navigate to="/he-thong/phan-quyen" replace />} />
 
           <Route path="/ho-so" element={<Profile />} />
+          <Route path="/cai-dat" element={<Settings />} />
           <Route path="/thong-bao" element={<NotificationPage />} />
-          <Route path="*" element={<Navigate to="/" replace />} />
+          <Route path="*" element={<NotFoundPage />} />
         </Route>
       </Routes>
     </>

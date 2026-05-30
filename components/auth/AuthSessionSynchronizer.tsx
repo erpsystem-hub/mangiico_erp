@@ -1,31 +1,35 @@
 import { useEffect } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { useAuthStore } from '@/store/useStore';
 import { getAuthService } from '@/lib/supabase/auth';
 import { isSupabase } from '@/lib/data/config';
+import { queryKeys } from '@/lib/query-keys';
 
 /**
- * Sau khi persist auth hydrate: làm mới `user` từ Supabase (họ tên, chức vụ, …)
- * để không phụ thuộc bản cache cũ trong localStorage/sessionStorage.
+ * Supabase mode: đồng bộ Zustand với Supabase Auth.
+ * - Phiên mock cũ (localStorage `auth-storage` không khớp JWT) → đăng xuất để buộc đăng nhập lại.
+ * - Có JWT hợp lệ → làm mới `user` từ `var_nhan_vien` (họ tên, chức vụ, …).
  */
 export function AuthSessionSynchronizer() {
   const hasHydrated = useAuthStore((s) => s._hasHydrated);
-  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
-  const userId = useAuthStore((s) => s.user?.id);
+  const queryClient = useQueryClient();
 
   useEffect(() => {
-    if (!isSupabase() || !hasHydrated || !isAuthenticated || !userId) return;
+    if (!isSupabase() || !hasHydrated) return;
 
-    let alive = true;
-    void (async () => {
-      const session = await getAuthService().getSession();
-      if (!alive || !session?.user) return;
-      useAuthStore.getState().login(session.user);
-    })();
-
-    return () => {
-      alive = false;
-    };
-  }, [hasHydrated, isAuthenticated, userId]);
+    const auth = getAuthService();
+    return auth.onAuthStateChange((session) => {
+      const { isAuthenticated, logout, login } = useAuthStore.getState();
+      if (!session?.user) {
+        if (isAuthenticated) logout();
+        return;
+      }
+      login(session.user);
+      void queryClient.invalidateQueries({ queryKey: queryKeys.departments.all });
+      void queryClient.invalidateQueries({ queryKey: queryKeys.positions.all });
+      void queryClient.invalidateQueries({ queryKey: queryKeys.employees.all });
+    });
+  }, [hasHydrated, queryClient]);
 
   return null;
 }

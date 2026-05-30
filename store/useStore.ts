@@ -6,6 +6,7 @@ import {
   DEFAULT_BRANDING_LOGO,
 } from '@/lib/branding-defaults';
 import type { AppFontFamily } from '../lib/theme/fonts';
+import { DEFAULT_FONT_FAMILY } from '../lib/theme/tokens';
 import { AuthState, User } from '../types';
 import { usePermissionGrantStore } from './usePermissionGrantStore';
 
@@ -163,7 +164,7 @@ export const useUIStore = create<UIState>()(
 
       // Default Theme Settings
       primaryColor: 'blue',
-      fontFamily: 'Inter',
+      fontFamily: DEFAULT_FONT_FAMILY,
       fontSize: 'medium',
       colorScheme: 'light',
       timezone: 'Asia/Ho_Chi_Minh',
@@ -194,7 +195,7 @@ export const useUIStore = create<UIState>()(
           typeof state.fontFamily === 'string' &&
           !ALLOWED_FONTS.has(state.fontFamily as ThemeState['fontFamily'])
         ) {
-          state.fontFamily = 'Inter';
+          state.fontFamily = DEFAULT_FONT_FAMILY;
         }
         // v1 → v2: chỉ còn tiếng Việt — bỏ language khỏi state đã lưu
         if (version < 2) {

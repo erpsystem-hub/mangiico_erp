@@ -12,6 +12,7 @@ import {
   Shield,
   UserCircle,
   Bell,
+  Settings,
   type LucideIcon,
 } from 'lucide-react';
 import { txt } from '@/lib/text';
@@ -28,6 +29,7 @@ const PATH_ICONS: Record<string, LucideIcon> = {
   '/he-thong/thong-tin-to-chuc': Landmark,
   '/he-thong/phan-quyen': Shield,
   '/ho-so': UserCircle,
+  '/cai-dat': Settings,
   '/thong-bao': Bell,
 };
 

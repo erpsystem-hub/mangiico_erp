@@ -1,6 +1,6 @@
 # Checklist xây dựng module mới
 
-Dùng checklist này khi tạo một module mới để tránh sót bước và đảm bảo **cùng độ đầy đủ** với các module chuẩn trong template (Dự án, Phòng ban, Nhân viên, Công việc…).
+Dùng checklist này khi tạo một module mới để tránh sót bước và đảm bảo **cùng độ đầy đủ** với các module chuẩn trong template (Phòng ban, Nhân viên, Chức vụ, Phân quyền, Thông tin tổ chức).
 
 ---
 
@@ -15,7 +15,7 @@ Dùng checklist này khi tạo một module mới để tránh sót bước và 
 
 ## 1. Cấu trúc thư mục & core
 
-- [ ] Tạo thư mục `features/<nhóm>/<module>/` (vd: `features/hanh-chinh/du-an/`).
+- [ ] Tạo thư mục `features/<nhóm>/<module>/` (vd: `features/he-thong/phong-ban/`).
 - [ ] **core/types.ts**: Định nghĩa type entity (id, các trường hiển thị, quan hệ); type cho filters nếu phức tạp.
 - [ ] **core/schema.ts**: Zod schema cho form (`XxxFormValues`); rule khớp với message validation trong i18n.
 - [ ] **core/constants.ts** (nếu cần): Options trạng thái, enum hiển thị, map value → label.
@@ -75,7 +75,7 @@ Dùng checklist này khi tạo một module mới để tránh sót bước và 
 - [ ] **handleEdit**: Từ detail → set `openedFormFromDetailId` (hoặc `formOrigin` + id) để **Hủy** mở lại detail.
 - [ ] **handleCloseForm**: mở lại detail theo state UX; **không** bắt buộc `invalidateQueries(detail)` khi Hủy nếu cache đã đúng (xem **5.1b**). Chỉ invalidate/refetch detail khi nghiệp vụ cần dữ liệu server mới và mutation chưa patch đủ.
 - [ ] **handleDeleteMany** onSuccess: Xóa cả bản ghi đang mở trong detail → `detailItem` / `detailChild` = null.
-- [ ] Export: `exportData` useMemo (cột + header đúng ngôn ngữ), `handleExport` → `exportToExcel` (hoặc helper thống nhất).
+- [ ] Export: `exportData` useMemo (cột + header tiếng Việt), `ExportDialog` / `exportTable` từ [`lib/export`](../lib/export/).
 - [ ] Import: `showImport`, `IMPORT_COLUMNS` (key/label/required), `ImportDialog`, wire toolbar.
 
 ### 5.4 Xác nhận xóa
@@ -125,7 +125,7 @@ Toolbar là **một hàng điều khiển** phía trên list; bắt buộc đủ
 
 ### 6.5 Tùy chọn
 
-- [ ] **`desktopStartSlot`**: TabGroup (vd List | Thống kê) chỉ desktop — khớp pattern Nhân viên nếu có tab.
+- [ ] **TabGroup** (vd. Danh sách | Thống kê): hàng riêng **phía trên** toolbar/card — không gắn vào `desktopStartSlot`/`leadingContent`; đồng bộ URL qua `useTabSearchParam`.
 - [ ] **`searchTrailing`**: Phụ kiện nhỏ cạnh ô search (vd combobox nhanh).
 
 ### 6.6 Quyền
@@ -325,6 +325,6 @@ Chỉ triển khai khi spec yêu cầu; mỗi mục có thể thành phase sau.
 
 ---
 
-*File này tham chiếu chuẩn từ các module: Dự án, Phòng ban, Nhân viên, Công việc. Cập nhật khi có quy ước UI/API mới.*
+*File này tham chiếu chuẩn từ các module Hệ thống: Phòng ban, Nhân viên, Chức vụ, Phân quyền, Thông tin tổ chức. Cập nhật khi có quy ước UI/API mới.*
 
 **TanStack Query (list + detail + form):** [`.cursor/rules/tanstack-query-list-detail-crud.mdc`](../.cursor/rules/tanstack-query-list-detail-crud.mdc), skill dự án `.cursor/skills/tanstack-query-crud-list-detail/SKILL.md`, và mục **C5–C6** trong [`.cursor/rules/egress-checklist.mdc`](../.cursor/rules/egress-checklist.mdc).

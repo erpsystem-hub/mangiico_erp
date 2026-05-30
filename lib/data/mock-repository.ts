@@ -1,4 +1,10 @@
-import type { IRepository, RepositoryMutationOptions, RepositoryQueryOptions } from './repository';
+import type {
+  IRepository,
+  RepositoryGetByIdOptions,
+  RepositoryListResult,
+  RepositoryMutationOptions,
+  RepositoryQueryOptions,
+} from './repository';
 
 const defaultDelay = 500;
 
@@ -20,6 +26,16 @@ export class MockRepository<T extends { id: string | number }> implements IRepos
   ) {
     this.data = JSON.parse(JSON.stringify(mockData));
     this.delayMs = options?.delay ?? defaultDelay;
+  }
+
+  async count(): Promise<number> {
+    await delay(this.delayMs);
+    return this.data.length;
+  }
+
+  async getPage(options?: RepositoryQueryOptions): Promise<RepositoryListResult<T>> {
+    const items = await this.getAll(options);
+    return { items, total: this.data.length };
   }
 
   async getAll(options?: RepositoryQueryOptions): Promise<T[]> {
@@ -50,7 +66,7 @@ export class MockRepository<T extends { id: string | number }> implements IRepos
     return list;
   }
 
-  async getById(id: string | number): Promise<T | null> {
+  async getById(id: string | number, _options?: RepositoryGetByIdOptions): Promise<T | null> {
     await delay(this.delayMs);
     const item = this.data.find((d) => d.id === id);
     return item ? ({ ...item } as T) : null;
@@ -71,6 +87,12 @@ export class MockRepository<T extends { id: string | number }> implements IRepos
     const updated = { ...this.data[index], ...data, id } as T;
     this.data = [...this.data.slice(0, index), updated, ...this.data.slice(index + 1)];
     return { ...updated } as T;
+  }
+
+  async updateMany(ids: (string | number)[], data: Partial<T>, _options?: RepositoryMutationOptions): Promise<void> {
+    await delay(this.delayMs);
+    const set = new Set(ids);
+    this.data = this.data.map((d) => (set.has(d.id) ? ({ ...d, ...data, id: d.id } as T) : d));
   }
 
   async remove(ids: (string | number)[]): Promise<void> {

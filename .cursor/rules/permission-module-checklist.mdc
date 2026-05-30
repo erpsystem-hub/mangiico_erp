@@ -19,9 +19,14 @@ export:  quan_tri (admin)  OR  xuat
 import:  quan_tri (admin)  OR  nhap
 ```
 
-Ngoại lệ `cap_bac=1`: Phòng ban dùng `canDepartmentsWithCapBac` — bypass view/create/edit/delete/export/import nếu `chucVuCapBac === 1`; các module khác trong `APP_RESOURCE_TO_MODULE` cũng bypass đủ các action đó (xem `lib/permissions.ts`).
+### Hai luồng đặc biệt
 
-Ma trận (`matrixActive`): chức vụ có token **xem** trên một `module_id` ⇒ `can(..., 'export'|'import', resource)` cũng **true**. Token **admin** / **all** vẫn cấp full quyền module.
+| Điều kiện | Phạm vi | Helper |
+|-----------|---------|--------|
+| **`cap_bac=1`** (Giám đốc) | **Mọi module** trong `APP_RESOURCE_TO_MODULE` — view/create/edit/delete/export/import | `isGlobalCapBacBypass()` trong [`lib/permissions.ts`](mdc:lib/permissions.ts) |
+| **`quan_tri`** (token `admin` ma trận) | **Chỉ module** có token — không lan sang module khác | `moduleGrantsAllow()` / `grantsAllow()` |
+
+Ma trận (`matrixActive`): chức vụ có token **xem** trên một `module_id` ⇒ `can(..., 'export'|'import', resource)` cũng **true** (client-side). Token **admin** / **all** cấp full quyền **trên module đó**.
 
 ## Lớp 1 — `lib/permissions.ts`
 
@@ -51,6 +56,7 @@ Thêm module vào nhóm phù hợp trong `PERMISSION_FUNCTIONS` (submenu Hệ th
 
 - Toolbar: ẩn nút Thêm/Xuất/Nhập theo `can(user, action, resource)`.
 - Row actions: view/edit/delete tương ứng.
+- **Handler guard** trong `index.tsx`: `if (!canCreate) return` (và tương tự edit/delete/import/export) trước mutation — phòng bypass UI.
 - Tham chiếu: [`features/he-thong/phong-ban/index.tsx`](mdc:features/he-thong/phong-ban/index.tsx), [`features/he-thong/nhan-vien/index.tsx`](mdc:features/he-thong/nhan-vien/index.tsx).
 
 ## Lớp 6 — Query gating

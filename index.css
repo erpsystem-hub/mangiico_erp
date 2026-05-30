@@ -3,16 +3,16 @@
 @theme {
   /* Typography — overridden at runtime via `ThemeSynchronizer` (`--font-sans` on <html>); stacks defined in `lib/theme/fonts.ts` */
   --font-sans:
-    'Inter', 'Noto Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
+    'Be Vietnam Pro', 'Noto Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
     'Segoe UI Symbol', 'Noto Color Emoji';
   --font-mono:
     ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;
 
-  --color-primary: hsl(243 75% 59%);
+  --color-primary: hsl(221.2 83.2% 53.3%);
   --color-primary-foreground: hsl(0 0% 100%);
   --color-border: hsl(215 16% 91%);
   --color-input: hsl(215 16% 91%);
-  --color-ring: hsl(243 75% 59% / 0.5);
+  --color-ring: hsl(221.2 83.2% 53.3% / 0.5);
   --color-background: hsl(210 40% 98%);
   --color-foreground: hsl(222 47% 11%);
   --color-secondary: hsl(210 40% 96.1%);
@@ -47,20 +47,20 @@
   --popover: 0 0% 100%;
   --popover-foreground: 222 47% 11%;
 
-  --primary: 243 75% 59%;
+  --primary: 221.2 83.2% 53.3%;
   --primary-foreground: 0 0% 100%;
 
   --secondary: 210 40% 96.1%;
-  --secondary-foreground: 243 75% 59%;
+  --secondary-foreground: 221.2 83.2% 53.3%;
   --muted: 210 40% 96.1%;
   --muted-foreground: 215 16% 47%;
   --accent: 210 40% 96.1%;
-  --accent-foreground: 243 75% 59%;
+  --accent-foreground: 221.2 83.2% 53.3%;
   --destructive: 0 84% 60%;
   --destructive-foreground: 210 40% 98%;
   --border: 215 16% 91%;
   --input: 215 16% 91%;
-  --ring: 243 75% 59%;
+  --ring: 221.2 83.2% 53.3%;
 
   --radius: 1rem;
 }
@@ -73,7 +73,7 @@
   --card-foreground: 210 40% 98%;
   --popover: 222 47% 12%;
   --popover-foreground: 210 40% 98%;
-  --primary: 243 75% 59%;
+  --primary: 221.2 83.2% 53.3%;
   --primary-foreground: 0 0% 100%;
   --secondary: 222 47% 16%;
   --secondary-foreground: 210 40% 98%;
@@ -83,7 +83,7 @@
   --accent-foreground: 210 40% 98%;
   --border: 222 47% 20%;
   --input: 222 47% 20%;
-  --ring: 243 75% 59%;
+  --ring: 221.2 83.2% 53.3%;
   --destructive: 0 62% 50%;
   --destructive-foreground: 210 40% 98%;
 
@@ -94,7 +94,7 @@
   --color-card-foreground: hsl(210 40% 98%);
   --color-popover: hsl(222 47% 12%);
   --color-popover-foreground: hsl(210 40% 98%);
-  --color-primary: hsl(243 75% 59%);
+  --color-primary: hsl(221.2 83.2% 53.3%);
   --color-secondary: hsl(222 47% 16%);
   --color-secondary-foreground: hsl(210 40% 98%);
   --color-muted: hsl(222 47% 16%);
@@ -175,6 +175,22 @@ input,
 textarea,
 select {
   font-size: max(16px, 1em);
+}
+
+/* Toolbar list search — desktop: text-xs (12px) khớp nút Back / chip lọc; mobile giữ ≥16px chống zoom iOS. */
+@media (min-width: 640px) {
+  input.toolbar-search-input {
+    font-size: 0.75rem;
+    line-height: 1.125rem;
+  }
+}
+
+input.toolbar-search-input::-webkit-search-decoration,
+input.toolbar-search-input::-webkit-search-cancel-button,
+input.toolbar-search-input::-webkit-search-results-button {
+  -webkit-appearance: none;
+  appearance: none;
+  display: none;
 }
 
 /* Smooth theme transition when switching between dark/light modes.
