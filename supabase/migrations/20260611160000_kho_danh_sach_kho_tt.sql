@@ -22,7 +22,7 @@ ALTER TABLE public.kho_danh_sach_kho
 
 SELECT setval(
   'public.kho_danh_sach_kho_tt_seq',
-  COALESCE((SELECT MAX(tt) FROM public.kho_danh_sach_kho), 0),
+  GREATEST(COALESCE((SELECT MAX(tt) FROM public.kho_danh_sach_kho), 1), 1),
   true
 );
 

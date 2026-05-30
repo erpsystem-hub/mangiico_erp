@@ -1,0 +1,23 @@
+# Dependencies
+node_modules/
+
+# Build
+dist/
+
+# Env & secrets
+.env
+.env.local
+.env.*.local
+
+# npm cache (local)
+.npm-cache/
+
+# Supabase CLI temp
+supabase/.temp/
+
+# OS / editor
+.DS_Store
+*.log
+
+# Test / coverage
+coverage/
