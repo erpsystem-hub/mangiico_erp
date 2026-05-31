@@ -28,6 +28,7 @@ import {
 } from '../../features/kinh-doanh/doi-tac/text';
 import { salesOrder } from '../../features/kinh-doanh/don-hang/text';
 import { purchaseOrder } from '../../features/kinh-doanh/mua-nguyen-lieu/text';
+import { productionOrder as productionOrderText } from '../../features/san-xuat/lenh-san-xuat/text';
 
 function flatten(prefix: string, obj: unknown): Record<string, string> {
   const out: Record<string, string> = {};
@@ -69,6 +70,7 @@ export const STRINGS: Readonly<Record<string, string>> = Object.freeze({
   ...flatten('customerPrice', customerPrice),
   ...flatten('salesOrder', salesOrder),
   ...flatten('purchaseOrder', purchaseOrder),
+  ...flatten('productionOrder', productionOrderText),
   ...flatten('tenure', tenure),
   ...flatten('taiLieu', taiLieu),
 });

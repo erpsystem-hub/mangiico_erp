@@ -26,6 +26,7 @@ const ProductCategoryPage = lazy(() => import('./features/san-xuat/danh-muc-hang
 const MaterialCategoryPage = lazy(() => import('./features/san-xuat/danh-muc-nguyen-lieu/index'));
 const MaterialCatalogPage = lazy(() => import('./features/san-xuat/danh-sach-nguyen-lieu/index'));
 const BomPage = lazy(() => import('./features/san-xuat/bom/index'));
+const LenhSanXuatPage = lazy(() => import('./features/san-xuat/lenh-san-xuat/index'));
 const DanhSachKhachHangPage = lazy(
   () => import('./features/kinh-doanh/danh-sach-khach-hang/index'),
 );
@@ -119,10 +120,7 @@ const App = () => {
             element={<BusinessModulePlaceholder moduleKey="bao-cao-cong-no-nha-cung-cap" />}
           />
           <Route path="/san-xuat" element={<ProductionDashboard />} />
-          <Route
-            path="/san-xuat/lenh-san-xuat"
-            element={<ProductionModulePlaceholder moduleKey="lenh-san-xuat" />}
-          />
+          <Route path="/san-xuat/lenh-san-xuat" element={<LenhSanXuatPage />} />
           <Route
             path="/san-xuat/bao-cao-san-xuat"
             element={<ProductionModulePlaceholder moduleKey="bao-cao-san-xuat" />}

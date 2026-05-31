@@ -675,6 +675,70 @@ export type Database = {
           },
         ]
       }
+      kd_don_hang_chi_tiet_bom: {
+        Row: {
+          bom_mau_id: number | null
+          don_hang_chi_tiet_id: number
+          don_vi_tinh: string
+          ghi_chu: string | null
+          id: number
+          nguyen_lieu_id: number
+          so_luong_dinh_muc: number
+          so_luong_tong: number
+          tg_cap_nhat: string
+          tg_tao: string
+          thu_tu: number
+        }
+        Insert: {
+          bom_mau_id?: number | null
+          don_hang_chi_tiet_id: number
+          don_vi_tinh?: string
+          ghi_chu?: string | null
+          id?: never
+          nguyen_lieu_id: number
+          so_luong_dinh_muc: number
+          so_luong_tong: number
+          tg_cap_nhat?: string
+          tg_tao?: string
+          thu_tu?: number
+        }
+        Update: {
+          bom_mau_id?: number | null
+          don_hang_chi_tiet_id?: number
+          don_vi_tinh?: string
+          ghi_chu?: string | null
+          id?: never
+          nguyen_lieu_id?: number
+          so_luong_dinh_muc?: number
+          so_luong_tong?: number
+          tg_cap_nhat?: string
+          tg_tao?: string
+          thu_tu?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "kd_don_hang_chi_tiet_bom_bom_mau_id_fkey"
+            columns: ["bom_mau_id"]
+            isOneToOne: false
+            referencedRelation: "sx_bom"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "kd_don_hang_chi_tiet_bom_don_hang_chi_tiet_id_fkey"
+            columns: ["don_hang_chi_tiet_id"]
+            isOneToOne: false
+            referencedRelation: "kd_don_hang_chi_tiet"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "kd_don_hang_chi_tiet_bom_nguyen_lieu_id_fkey"
+            columns: ["nguyen_lieu_id"]
+            isOneToOne: false
+            referencedRelation: "sx_danh_sach_nguyen_lieu"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       kd_don_mua: {
         Row: {
           chi_nhanh_id: number | null
@@ -1306,6 +1370,10 @@ export type Database = {
       kd_upsert_don_hang: {
         Args: { p_header: Json; p_lines: Json }
         Returns: Json
+      }
+      kd_generate_don_hang_chi_tiet_bom: {
+        Args: { p_don_hang_chi_tiet_id: number; p_replace?: boolean }
+        Returns: undefined
       }
       kd_generate_ma_don_hang: {
         Args: { p_ngay_dat: string }

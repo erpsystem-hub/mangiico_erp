@@ -108,6 +108,12 @@ export const queryKeys = {
     detail: (id: string) => ['purchase-orders', id] as const,
     byNhaCungCap: (nccId: string) => ['purchase-orders', 'by-ncc', nccId] as const,
   },
+  productionOrders: {
+    all: ['production-orders'] as const,
+    detail: (id: string) => ['production-orders', id] as const,
+    lines: ['production-orders', 'lines'] as const,
+    lineBom: (lineId: string) => ['production-orders', 'line-bom', lineId] as const,
+  },
   customerPriceMatrix: {
     all: ['customer-price-matrix'] as const,
     productGroups: ['customer-price-matrix', 'product-groups'] as const,
