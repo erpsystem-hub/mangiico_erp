@@ -13,6 +13,7 @@ interface Props {
   error?: string;
   required?: boolean;
   disabled?: boolean;
+  compact?: boolean;
 }
 
 const ProductSelect: React.FC<Props> = ({
@@ -25,6 +26,7 @@ const ProductSelect: React.FC<Props> = ({
   error,
   required,
   disabled,
+  compact = false,
 }) => {
   const options = useMemo(
     () =>
@@ -60,6 +62,8 @@ const ProductSelect: React.FC<Props> = ({
       clearable={!disabled}
       dropdownInPortal
       placeholder={placeholder}
+      triggerClassName={compact ? 'h-9 min-h-9 text-sm' : undefined}
+      className={compact ? 'space-y-0' : undefined}
     />
   );
 };

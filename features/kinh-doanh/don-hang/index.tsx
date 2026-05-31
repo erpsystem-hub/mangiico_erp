@@ -25,8 +25,11 @@ import {
   useSalesOrders,
   useDeleteSalesOrder,
   useSalesOrderDetail,
+  useUpsertSalesOrder,
 } from './hooks/use-don-hang';
 import { getSalesOrderById } from './services/don-hang-service';
+import { salesOrderToFormValues } from './utils/order-form-mapper';
+import type { SalesOrderLine } from './core/types';
 import ErrorState from '@/components/shared/ErrorState';
 import { useSalesOrderStore } from './store/useSalesOrderStore';
 import { useConfirmStore } from '@/store/useConfirmStore';
@@ -83,6 +86,7 @@ const DonHangPage: React.FC = () => {
   const { data: orders = [], isLoading, isError, refetch } = useSalesOrders({ enabled: canView });
   const { data: customers = [] } = usePartnerList('khach_hang', { enabled: canView });
   const deleteMutation = useDeleteSalesOrder();
+  const upsertLineMutation = useUpsertSalesOrder();
 
   const pendingViewId = (location.state as DonHangLocationState | null)?.viewOrderId;
   const { data: pendingViewOrder } = useSalesOrderDetail(pendingViewId, {
@@ -272,6 +276,38 @@ const DonHangPage: React.FC = () => {
     setFormOrigin('list');
   };
 
+  const handleDeleteLine = useCallback(
+    (order: SalesOrder, line: SalesOrderLine) => {
+      if (!canEdit) return;
+      const remaining = (order.lines ?? []).filter((ln) => ln.id !== line.id);
+      if (remaining.length === 0) {
+        toast.error(txt('salesOrder.validation.linesMin'));
+        return;
+      }
+      confirm({
+        title: txt('salesOrder.detail.deleteLineTitle'),
+        message: txt('salesOrder.detail.deleteLineMessage', {
+          product: line.ten_san_pham,
+          code: order.ma_don_hang,
+        }),
+        variant: 'danger',
+        confirmText: CONFIRM_DELETE(),
+        onConfirm: () => {
+          upsertLineMutation.mutate(
+            {
+              id: order.id,
+              data: salesOrderToFormValues({ ...order, lines: remaining }),
+            },
+            {
+              onSuccess: (saved) => setViewingItem(saved),
+            },
+          );
+        },
+      });
+    },
+    [canEdit, confirm, upsertLineMutation],
+  );
+
   if (isInitializing) return <SessionInitializingSpinner />;
 
   if (!canView) {
@@ -320,25 +356,31 @@ const DonHangPage: React.FC = () => {
       </div>
 
       <AnimatePresence>
-        {showForm && (
+        {viewingItem && (
           <Suspense fallback={<DrawerLazyFallback />}>
-            <DonHangForm
-              initialData={editingItem}
-              presetKhachHangId={presetKhachHangId}
-              onClose={handleCloseForm}
+            <DonHangDetail
+              data={viewingItem}
+              onClose={() => {
+                if (showForm) return;
+                setViewingItem(null);
+              }}
+              onEdit={handleEdit}
+              onDelete={handleDelete}
+              onEditLines={handleEdit}
+              onDeleteLine={handleDeleteLine}
             />
           </Suspense>
         )}
       </AnimatePresence>
 
       <AnimatePresence>
-        {viewingItem && !showForm && (
+        {showForm && (
           <Suspense fallback={<DrawerLazyFallback />}>
-            <DonHangDetail
-              data={viewingItem}
-              onClose={() => setViewingItem(null)}
-              onEdit={handleEdit}
-              onDelete={handleDelete}
+            <DonHangForm
+              initialData={editingItem}
+              presetKhachHangId={presetKhachHangId}
+              onClose={handleCloseForm}
+              stackLevel={viewingItem ? 1 : 0}
             />
           </Suspense>
         )}

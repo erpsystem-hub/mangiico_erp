@@ -16,12 +16,13 @@ import { useBranches } from '@/features/he-thong/chi-nhanh/hooks/use-chi-nhanh';
 import { useProductCatalogList } from '@/features/san-xuat/danh-sach-hang-hoa/hooks/use-danh-sach-hang-hoa';
 import { useSupabaseReady } from '@/lib/supabase/use-supabase-list-enabled';
 import GenericDrawer from '@/components/shared/GenericDrawer';
-import { DRAWER_WIDTH_WIDE } from '@/lib/dialog-sizes';
+import { DRAWER_WIDTH_WIDE, getDrawerWidthClass } from '@/lib/dialog-sizes';
 import FormDrawerFooter from '@/components/shared/FormDrawerFooter';
 import FormSection from '@/components/shared/FormSection';
-import FormGrid from '@/components/shared/FormGrid';
+import FormGrid, { FORM_GRID_SPAN_FULL } from '@/components/shared/FormGrid';
 import CustomerSelect from './customer-select';
 import OrderLinesEditor, { newLineRow, type OrderLineRow } from './order-lines-editor';
+import { lineRowsToFormLines } from '../utils/order-form-mapper';
 
 function todayIsoDate(): string {
   return new Date().toISOString().slice(0, 10);
@@ -52,39 +53,48 @@ const DonHangForm: React.FC<Props> = ({
   initialData,
   presetKhachHangId,
   onClose,
-  maxWidthClass = DRAWER_WIDTH_WIDE,
+  maxWidthClass,
   stackLevel = 0,
 }) => {
   const isEdit = !!initialData;
   const sessionReady = useSupabaseReady();
-  const upsertMutation = useUpsertSalesOrder(onClose);
+  const upsertMutation = useUpsertSalesOrder(() => onClose());
   const { data: customers = [] } = usePartnerList('khach_hang', { enabled: sessionReady });
   const { data: branches = [] } = useBranches({ enabled: sessionReady });
   const { data: products = [] } = useProductCatalogList({ enabled: sessionReady });
 
   const [lineRows, setLineRows] = useState<OrderLineRow[]>(() => orderToLineRows(initialData));
 
-  const { register, handleSubmit, formState: { errors }, reset, control, watch, setValue, getValues } =
-    useForm<SalesOrderFormValues>({
-      resolver: zodResolver(salesOrderSchema) as Resolver<SalesOrderFormValues>,
-      defaultValues: {
-        ma_don_hang: '',
-        khach_hang_id: '',
-        chi_nhanh_id: '',
-        ngay_dat: todayIsoDate(),
-        ngay_giao_du_kien: '',
-        dia_chi_giao: '',
-        ghi_chu: '',
-        trang_thai: 'Nháp',
-        lines: [],
-      },
-    });
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+    reset,
+    control,
+    watch,
+    setValue,
+    getValues,
+  } = useForm<SalesOrderFormValues>({
+    resolver: zodResolver(salesOrderSchema) as Resolver<SalesOrderFormValues>,
+    defaultValues: {
+      ma_don_hang: '',
+      khach_hang_id: '',
+      chi_nhanh_id: '',
+      ngay_dat: todayIsoDate(),
+      ngay_giao_du_kien: '',
+      dia_chi_giao: '',
+      ghi_chu: '',
+      trang_thai: 'Nháp',
+      lines: [lineRowsToFormLines([newLineRow(1)])[0]],
+    },
+  });
 
   const trangThai = watch('trang_thai');
   const codeEditable = canEditOrderCode(trangThai);
 
   useEffect(() => {
     if (initialData) {
+      const rows = orderToLineRows(initialData);
       reset({
         ma_don_hang: initialData.ma_don_hang,
         khach_hang_id: initialData.khach_hang_id,
@@ -94,10 +104,11 @@ const DonHangForm: React.FC<Props> = ({
         dia_chi_giao: initialData.dia_chi_giao ?? '',
         ghi_chu: initialData.ghi_chu ?? '',
         trang_thai: initialData.trang_thai,
-        lines: [],
+        lines: lineRowsToFormLines(rows),
       });
-      setLineRows(orderToLineRows(initialData));
+      setLineRows(rows);
     } else {
+      const rows = [newLineRow(1)];
       reset({
         ma_don_hang: '',
         khach_hang_id: presetKhachHangId?.trim() ?? '',
@@ -107,11 +118,15 @@ const DonHangForm: React.FC<Props> = ({
         dia_chi_giao: '',
         ghi_chu: '',
         trang_thai: 'Nháp',
-        lines: [],
+        lines: lineRowsToFormLines(rows),
       });
-      setLineRows([newLineRow(1)]);
+      setLineRows(rows);
     }
   }, [initialData, presetKhachHangId, reset]);
+
+  useEffect(() => {
+    setValue('lines', lineRowsToFormLines(lineRows), { shouldValidate: true });
+  }, [lineRows, setValue]);
 
   useEffect(() => {
     if (isEdit || !presetKhachHangId?.trim()) return;
@@ -128,16 +143,18 @@ const DonHangForm: React.FC<Props> = ({
   }));
 
   const onSubmit: SubmitHandler<SalesOrderFormValues> = (data) => {
+    const lines = lineRowsToFormLines(lineRows);
+    const missingProduct = lines.some((ln) => !ln.san_pham_id?.trim());
+    if (missingProduct) {
+      toast.error(txt('salesOrder.validation.productRequired'));
+      return;
+    }
     const payload: SalesOrderFormValues = {
       ...data,
-      lines: lineRows.map((ln, i) => ({
-        san_pham_id: ln.san_pham_id,
-        so_luong: ln.so_luong,
-        don_vi_tinh: ln.don_vi_tinh,
-        don_gia: ln.don_gia,
-        ghi_chu: ln.ghi_chu || null,
-        thu_tu: i + 1,
-      })),
+      ma_don_hang: data.ma_don_hang?.trim() || null,
+      chi_nhanh_id: data.chi_nhanh_id?.trim() || null,
+      ngay_giao_du_kien: data.ngay_giao_du_kien?.trim() || null,
+      lines,
     };
     upsertMutation.mutate({
       id: initialData?.id,
@@ -149,12 +166,19 @@ const DonHangForm: React.FC<Props> = ({
     toast.error(txt('salesOrder.form.validationError'));
   };
 
+  const drawerWidth = maxWidthClass ?? (stackLevel > 0 ? getDrawerWidthClass(stackLevel) : DRAWER_WIDTH_WIDE);
+
   return (
     <GenericDrawer
       title={isEdit ? txt('salesOrder.form.editTitle') : txt('salesOrder.form.createTitle')}
+      subtitle={
+        isEdit
+          ? txt('salesOrder.form.editSubtitle', { code: initialData?.ma_don_hang ?? '' })
+          : txt('salesOrder.form.createSubtitle')
+      }
       icon={<ShoppingCart size={20} />}
       onClose={onClose}
-      maxWidthClass={maxWidthClass}
+      maxWidthClass={drawerWidth}
       stackLevel={stackLevel}
       footer={
         <FormDrawerFooter
@@ -170,11 +194,11 @@ const DonHangForm: React.FC<Props> = ({
     >
       <form
         id="don-hang-form"
-        className="space-y-6"
+        className="space-y-5"
         onSubmit={handleSubmit(onSubmit, onInvalid)}
       >
         <FormSection title={txt('salesOrder.detail.orderInfo')} icon={<ShoppingCart size={14} />}>
-          <FormGrid>
+          <FormGrid cols={2}>
             <Input
               label={txt('salesOrder.store.codeCol')}
               icon={ShoppingCart}
@@ -192,7 +216,7 @@ const DonHangForm: React.FC<Props> = ({
                   value={field.value}
                   onChange={field.onChange}
                   onCustomerPick={(c) => {
-                    if (!watch('dia_chi_giao')?.trim() && c.dia_chi) {
+                    if (!getValues('dia_chi_giao')?.trim() && c.dia_chi) {
                       setValue('dia_chi_giao', c.dia_chi ?? '');
                     }
                   }}
@@ -224,7 +248,10 @@ const DonHangForm: React.FC<Props> = ({
               render={({ field }) => (
                 <Combobox
                   label={txt('salesOrder.form.branch')}
-                  options={[{ value: '', label: txt('salesOrder.form.branchNone') }, ...branchOptions]}
+                  options={[
+                    { value: '', label: txt('salesOrder.form.branchNone') },
+                    ...branchOptions,
+                  ]}
                   value={field.value ?? ''}
                   onChange={(v) => field.onChange(String(v ?? ''))}
                   searchable
@@ -249,14 +276,14 @@ const DonHangForm: React.FC<Props> = ({
                 />
               )}
             />
-            <div className="sm:col-span-2">
+            <div className={FORM_GRID_SPAN_FULL}>
               <Input
                 label={txt('salesOrder.form.deliveryAddress')}
                 icon={MapPin}
                 {...register('dia_chi_giao')}
               />
             </div>
-            <div className="sm:col-span-2">
+            <div className={FORM_GRID_SPAN_FULL}>
               <Textarea
                 label={txt('salesOrder.form.note')}
                 icon={FileText}

@@ -10,6 +10,8 @@ interface Props {
   placeholder?: string;
   error?: string;
   disabled?: boolean;
+  /** Bảng con trong form — trigger gọn, không label. */
+  compact?: boolean;
 }
 
 /** Chọn SP cho dòng đơn hàng — chỉ SP đang hoạt động (logic trong ProductSelect). */
@@ -21,6 +23,7 @@ const ProductLineSelect: React.FC<Props> = ({
   placeholder,
   error,
   disabled,
+  compact = false,
 }) => (
   <ProductSelect
     products={products}
@@ -30,6 +33,7 @@ const ProductLineSelect: React.FC<Props> = ({
     placeholder={placeholder}
     error={error}
     disabled={disabled}
+    compact={compact}
   />
 );
 

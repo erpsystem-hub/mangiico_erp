@@ -56,7 +56,7 @@ export const useSalesOrderDetail = (id: string | undefined, options?: { enabled?
   });
 };
 
-export const useUpsertSalesOrder = (onSuccess?: () => void) => {
+export const useUpsertSalesOrder = (onSuccess?: (saved: SalesOrder) => void) => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: ({ id, data }: { id?: string; data: SalesOrderFormValues }) =>
@@ -80,7 +80,7 @@ export const useUpsertSalesOrder = (onSuccess?: () => void) => {
           ? txt('salesOrder.toast.updateSuccess')
           : txt('salesOrder.toast.createSuccess'),
       );
-      onSuccess?.();
+      onSuccess?.(saved);
     },
     onError: (err: unknown) => toast.error(getErrorMessage(err)),
   });

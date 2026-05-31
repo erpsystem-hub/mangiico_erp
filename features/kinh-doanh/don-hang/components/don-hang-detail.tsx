@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import { txt } from '@/lib/text';
 import { useNavigate } from 'react-router-dom';
 import {
@@ -10,11 +10,14 @@ import {
   FileText,
   Users,
   Clock,
+  Plus,
+  Package,
 } from 'lucide-react';
 import Button from '@/components/ui/Button';
 import EnumBadge from '@/components/ui/EnumBadge';
+import EmptyState from '@/components/shared/EmptyState';
 import { salesOrderStatusBadgeConfig } from '../utils/order-badges';
-import type { SalesOrder } from '../core/types';
+import type { SalesOrder, SalesOrderLine } from '../core/types';
 import { canDeleteSalesOrder } from '../core/constants';
 import { formatCurrency, formatDate, formatDateTimeShort } from '@/lib/utils';
 import GenericDrawer, { DRAWER_WIDTH_DETAIL } from '@/components/shared/GenericDrawer';
@@ -25,12 +28,15 @@ import DetailFieldGrid from '@/components/shared/DetailFieldGrid';
 import EmbeddedChildDataGrid from '@/components/shared/EmbeddedChildDataGrid';
 import { BTN_CLOSE, BTN_EDIT, BTN_DELETE } from '@/lib/button-labels';
 import { useResourcePermissions } from '@/hooks/use-resource-permissions';
+import { SalesOrderLineRowActions } from './sales-order-line-row-actions';
 
 interface Props {
   data: SalesOrder;
   onClose: () => void;
   onEdit: (item: SalesOrder) => void;
   onDelete: (id: string) => void;
+  onEditLines?: (item: SalesOrder) => void;
+  onDeleteLine?: (order: SalesOrder, line: SalesOrderLine) => void;
   maxWidthClass?: string;
   stackLevel?: number;
 }
@@ -40,14 +46,24 @@ const DonHangDetail: React.FC<Props> = ({
   onClose,
   onEdit,
   onDelete,
+  onEditLines,
+  onDeleteLine,
   maxWidthClass = DRAWER_WIDTH_DETAIL,
   stackLevel = 0,
 }) => {
   const navigate = useNavigate();
   const { canEdit, canDelete: canDeletePerm } = useResourcePermissions('salesOrders');
   const canDelete = canDeletePerm && canDeleteSalesOrder(data.trang_thai);
+  const canEditLines = canEdit && Boolean(onEditLines);
+  const canDeleteLine = canEdit && Boolean(onDeleteLine);
+  const [lineMenuOpenId, setLineMenuOpenId] = useState<string | null>(null);
   const statusBadgeConfig = useMemo(() => salesOrderStatusBadgeConfig(), []);
   const lines = data.lines ?? [];
+
+  const openLineEditor = () => {
+    if (!canEditLines) return;
+    onEditLines?.(data);
+  };
 
   const renderFooter = (
     <div className="flex items-center justify-between w-full gap-2">
@@ -64,10 +80,7 @@ const DonHangDetail: React.FC<Props> = ({
           {canEdit && (
             <Button
               size="sm"
-              onClick={() => {
-                onEdit(data);
-                onClose();
-              }}
+              onClick={() => onEdit(data)}
               className="h-8 px-3 text-xs bg-primary text-white shadow-sm hover:bg-primary/90"
             >
               <Edit size={14} className="mr-1.5" />
@@ -167,15 +180,44 @@ const DonHangDetail: React.FC<Props> = ({
 
         <DetailSection
           title={txt('salesOrder.detail.linesSection')}
-          icon={<ShoppingCart size={14} />}
+          icon={<Package size={14} />}
           headerRight={
-            <span className="text-xs font-medium text-muted-foreground tabular-nums">
-              {lines.length} {txt('salesOrder.footerRecords')}
-            </span>
+            canEditLines ? (
+              <Button
+                type="button"
+                size="sm"
+                className="h-7 text-xs bg-primary text-white hover:bg-primary/90"
+                onClick={openLineEditor}
+              >
+                <Plus size={14} className="mr-1" />
+                {txt('salesOrder.detail.addOrEditLines')}
+              </Button>
+            ) : (
+              <span className="text-xs font-medium text-muted-foreground tabular-nums">
+                {lines.length} {txt('salesOrder.footerRecords')}
+              </span>
+            )
           }
         >
           {lines.length === 0 ? (
-            <p className="text-sm text-muted-foreground">{txt('salesOrder.detail.noLines')}</p>
+            <EmptyState
+              title={txt('salesOrder.detail.noLines')}
+              description={txt('salesOrder.form.addLineHint')}
+              icon={<Package className="h-10 w-10 text-muted-foreground" />}
+              action={
+                canEditLines ? (
+                  <Button
+                    type="button"
+                    size="sm"
+                    onClick={openLineEditor}
+                    className="bg-primary text-white hover:bg-primary/90"
+                  >
+                    <Plus size={14} className="mr-2" />
+                    {txt('salesOrder.form.addLine')}
+                  </Button>
+                ) : undefined
+              }
+            />
           ) : (
             <EmbeddedChildDataGrid
               rows={lines}
@@ -221,9 +263,21 @@ const DonHangDetail: React.FC<Props> = ({
                 },
               ]}
               actionsColumn={{
-                header: '',
-                widthClass: 'w-0 min-w-0 p-0',
-                renderCell: () => null,
+                header: txt('common.actions'),
+                widthClass: 'w-[92px] min-w-[92px]',
+                renderCell: (ln) =>
+                  canEditLines || canDeleteLine ? (
+                    <SalesOrderLineRowActions
+                      compact
+                      line={ln}
+                      menuOpenId={lineMenuOpenId}
+                      onMenuOpenChange={setLineMenuOpenId}
+                      canEdit={canEditLines}
+                      canDelete={canDeleteLine}
+                      onEdit={openLineEditor}
+                      onDelete={() => onDeleteLine?.(data, ln)}
+                    />
+                  ) : null,
               }}
               containerClassName="border-0 shadow-none"
             />
