@@ -13,6 +13,41 @@ export const COMMAND_PALETTE_ENTRIES: readonly CommandPaletteEntry[] = [
   { path: '/', nameKey: 'nav.home', groupKey: 'nav.commandPalette.groupGeneral' },
   { path: '/thong-tin-ban-quyen', nameKey: 'nav.licenseInfo', groupKey: 'nav.commandPalette.groupGeneral' },
   { path: '/kinh-doanh', nameKey: 'nav.business', groupKey: 'nav.commandPalette.groupBusiness' },
+  {
+    path: '/kinh-doanh/don-hang',
+    nameKey: 'page.businessDashboard.salesOrder',
+    groupKey: 'nav.commandPalette.groupBusiness',
+  },
+  {
+    path: '/kinh-doanh/bao-cao-ban-hang',
+    nameKey: 'page.businessDashboard.salesReport',
+    groupKey: 'nav.commandPalette.groupBusiness',
+  },
+  {
+    path: '/kinh-doanh/mua-nguyen-lieu',
+    nameKey: 'page.businessDashboard.materialPurchase',
+    groupKey: 'nav.commandPalette.groupBusiness',
+  },
+  {
+    path: '/kinh-doanh/danh-sach-khach-hang',
+    nameKey: 'page.businessDashboard.customerList',
+    groupKey: 'nav.commandPalette.groupBusiness',
+  },
+  {
+    path: '/kinh-doanh/bao-cao-cong-no-khach-hang',
+    nameKey: 'page.businessDashboard.customerDebtReport',
+    groupKey: 'nav.commandPalette.groupBusiness',
+  },
+  {
+    path: '/kinh-doanh/danh-sach-nha-cung-cap',
+    nameKey: 'page.businessDashboard.supplierList',
+    groupKey: 'nav.commandPalette.groupBusiness',
+  },
+  {
+    path: '/kinh-doanh/bao-cao-cong-no-nha-cung-cap',
+    nameKey: 'page.businessDashboard.supplierDebtReport',
+    groupKey: 'nav.commandPalette.groupBusiness',
+  },
   { path: '/san-xuat', nameKey: 'nav.production', groupKey: 'nav.commandPalette.groupProduction' },
   {
     path: '/san-xuat/lenh-san-xuat',

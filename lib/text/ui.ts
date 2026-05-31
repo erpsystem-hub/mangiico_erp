@@ -350,6 +350,31 @@ export const ui = {
       "bom": "BOM",
       "bomDesc": "Định mức nguyên vật liệu (Bill of Materials).",
       "backToProduction": "Quay lại Sản xuất"
+    },
+    "businessDashboard": {
+      "salesGroup": "Bán hàng",
+      "purchaseGroup": "Mua hàng",
+      "customerGroup": "Khách hàng",
+      "supplierGroup": "Nhà cung cấp",
+      "salesOrder": "Đơn hàng",
+      "salesOrderDesc": "Lập và quản lý đơn bán hàng.",
+      "salesReport": "Báo cáo bán hàng",
+      "salesReportDesc": "Thống kê doanh số và hiệu quả bán hàng.",
+      "materialPurchase": "Mua nguyên liệu",
+      "materialPurchaseDesc": "Đặt mua và theo dõi nguyên liệu.",
+      "customerCategory": "Nhóm khách hàng",
+      "customerCategoryDesc": "Phân nhóm khách hàng.",
+      "customerList": "Danh sách khách hàng",
+      "customerListDesc": "Nhóm KH và danh sách khách hàng (2 tab).",
+      "customerDebtReport": "Báo cáo công nợ",
+      "customerDebtReportDesc": "Công nợ phải thu theo khách hàng.",
+      "supplierCategory": "Nhóm nhà cung cấp",
+      "supplierCategoryDesc": "Phân nhóm nhà cung cấp.",
+      "supplierList": "Danh sách nhà cung cấp",
+      "supplierListDesc": "Nhóm NCC và danh sách nhà cung cấp (2 tab).",
+      "supplierDebtReport": "Báo cáo công nợ",
+      "supplierDebtReportDesc": "Công nợ phải trả theo nhà cung cấp.",
+      "backToBusiness": "Quay lại Kinh doanh"
     }
   },
   "notification": {
@@ -372,6 +397,15 @@ export const ui = {
     "goHome": "Về trang chủ",
     "systemAdmin": "Hệ thống",
     "business": "Kinh doanh",
+    "salesOrder": "Đơn hàng",
+    "salesReport": "Báo cáo bán hàng",
+    "materialPurchase": "Mua nguyên liệu",
+    "customerCategory": "Nhóm khách hàng",
+    "customerList": "Danh sách khách hàng",
+    "customerDebtReport": "Báo cáo công nợ (KH)",
+    "supplierCategory": "Nhóm nhà cung cấp",
+    "supplierList": "Danh sách nhà cung cấp",
+    "supplierDebtReport": "Báo cáo công nợ (NCC)",
     "production": "Sản xuất",
     "finance": "Tài chính",
     "financeLedger": "Sổ thu chi",
@@ -507,6 +541,18 @@ export const ui = {
     "title": "Không tìm thấy trang",
     "message": "Đường dẫn bạn truy cập không tồn tại hoặc đã được di chuyển.",
     "backHome": "Về trang chủ"
+  },
+  "partner": {
+    "tabCategory": "Nhóm",
+    "tabList": "Danh sách"
+  },
+  "partnerCategory": {
+    "title": "Nhóm đối tác",
+    "tabLabel": "Nhóm"
+  },
+  "partnerList": {
+    "title": "Danh sách đối tác",
+    "tabLabel": "Danh sách"
   },
   "settings": {
     "appearance": "Giao diện",

@@ -4,6 +4,7 @@ import { can, APP_RESOURCE_TO_MODULE, type AppResource } from '@/lib/permissions
 const HE_THONG_PREFIX = 'he-thong/';
 const TAI_CHINH_PREFIX = 'tai-chinh/';
 const SAN_XUAT_PREFIX = 'san-xuat/';
+const KINH_DOANH_PREFIX = 'kinh-doanh/';
 
 /** Các `AppResource` thuộc nhóm Hệ thống (prefix `he-thong/` trong ma trận). */
 export function getHeThongAppResources(): AppResource[] {
@@ -24,6 +25,12 @@ export function getSanXuatAppResources(): AppResource[] {
     .map(([res]) => res);
 }
 
+export function getKinhDoanhAppResources(): AppResource[] {
+  return (Object.entries(APP_RESOURCE_TO_MODULE) as [AppResource, string][])
+    .filter(([, mod]) => typeof mod === 'string' && mod.startsWith(KINH_DOANH_PREFIX))
+    .map(([res]) => res);
+}
+
 /**
  * Danh sách resource dùng để quyết định **có hiện mục sidebar / thẻ Trang chủ** không (`can('view', …)`).
  * `null` = chưa áp dụng lọc theo resource (luôn hiện nếu đã qua các điều kiện khác).
@@ -38,6 +45,9 @@ export function getSidebarPathGateResources(path: string): AppResource[] | null 
   if (path === '/san-xuat') {
     return getSanXuatAppResources();
   }
+  if (path === '/kinh-doanh') {
+    return getKinhDoanhAppResources();
+  }
   return null; // `/`, `/thong-tin-ban-quyen` → luôn hiện
 }
 
@@ -45,8 +55,7 @@ export function getSidebarPathGateResources(path: string): AppResource[] | null 
 export function isSidebarPathAlwaysVisible(path: string): boolean {
   return (
     path === '/' ||
-    path === '/thong-tin-ban-quyen' ||
-    path === '/kinh-doanh'
+    path === '/thong-tin-ban-quyen'
   );
 }
 

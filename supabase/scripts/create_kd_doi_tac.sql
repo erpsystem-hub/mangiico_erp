@@ -1,0 +1,2 @@
+-- Tạo bảng đối tác kinh doanh — đồng bộ migration 20260711900000_kd_doi_tac.sql
+-- Chạy file migration trực tiếp trong SQL Editor hoặc: supabase db push

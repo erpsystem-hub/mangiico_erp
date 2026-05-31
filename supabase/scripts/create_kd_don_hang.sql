@@ -1,0 +1,3 @@
+-- Schema kd_don_hang / kd_don_hang_chi_tiet: xem migration
+-- supabase/migrations/20260712000000_kd_don_hang.sql
+-- Seed demo: npm run seed:kd-don-hang  (supabase/scripts/seed_kd_don_hang.sql)

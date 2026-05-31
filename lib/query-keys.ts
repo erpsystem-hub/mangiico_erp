@@ -91,9 +91,22 @@ export const queryKeys = {
     all: ['material-catalog'] as const,
     detail: (id: string) => ['material-catalog', id] as const,
   },
+  partnerCategories: (kind: string) => ({
+    all: ['partner-categories', kind] as const,
+    detail: (id: string) => ['partner-categories', kind, id] as const,
+  }),
+  partnerList: (kind: string) => ({
+    all: ['partner-list', kind] as const,
+    detail: (id: string) => ['partner-list', kind, id] as const,
+  }),
   bom: {
     all: ['bom'] as const,
     detail: (id: string) => ['bom', id] as const,
+  },
+  salesOrders: {
+    all: ['sales-orders'] as const,
+    detail: (id: string) => ['sales-orders', id] as const,
+    byKhachHang: (khachHangId: string) => ['sales-orders', 'by-kh', khachHangId] as const,
   },
   thongTinToChuc: {
     singleton: ['thong-tin-to-chuc', 'singleton'] as const,

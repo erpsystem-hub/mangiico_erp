@@ -36,6 +36,13 @@ export type AppResource =
   | 'materialCategories'
   | 'materialCatalog'
   | 'bom'
+  | 'salesOrders'
+  | 'salesReports'
+  | 'materialPurchases'
+  | 'customerList'
+  | 'customerDebtReports'
+  | 'supplierList'
+  | 'supplierDebtReports'
   | 'profile'
   | 'notifications'
   | '*';
@@ -68,6 +75,13 @@ export const APP_RESOURCE_TO_MODULE: Partial<Record<AppResource, string>> = {
   materialCategories: 'san-xuat/danh-muc-nguyen-lieu',
   materialCatalog: 'san-xuat/danh-sach-nguyen-lieu',
   bom: 'san-xuat/bom',
+  salesOrders: 'kinh-doanh/don-hang',
+  salesReports: 'kinh-doanh/bao-cao-ban-hang',
+  materialPurchases: 'kinh-doanh/mua-nguyen-lieu',
+  customerList: 'kinh-doanh/danh-sach-khach-hang',
+  customerDebtReports: 'kinh-doanh/bao-cao-cong-no-khach-hang',
+  supplierList: 'kinh-doanh/danh-sach-nha-cung-cap',
+  supplierDebtReports: 'kinh-doanh/bao-cao-cong-no-nha-cung-cap',
 };
 
 /** Module id cũ (Thông tin công ty) — vẫn tính quyền khi ma trận chưa cập nhật. */

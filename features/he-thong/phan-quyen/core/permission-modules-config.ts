@@ -32,7 +32,41 @@ export const PERMISSION_FUNCTIONS: PermissionFunction[] = [
     id: 'kinh-doanh',
     nameKey: 'nav.business',
     color: 'sky',
-    groups: [],
+    groups: [
+      {
+        groupTitleKey: 'page.businessDashboard.salesGroup',
+        modules: [
+          { id: 'kinh-doanh/don-hang', nameKey: 'page.businessDashboard.salesOrder' },
+          { id: 'kinh-doanh/bao-cao-ban-hang', nameKey: 'page.businessDashboard.salesReport' },
+        ],
+      },
+      {
+        groupTitleKey: 'page.businessDashboard.purchaseGroup',
+        modules: [
+          { id: 'kinh-doanh/mua-nguyen-lieu', nameKey: 'page.businessDashboard.materialPurchase' },
+        ],
+      },
+      {
+        groupTitleKey: 'page.businessDashboard.customerGroup',
+        modules: [
+          { id: 'kinh-doanh/danh-sach-khach-hang', nameKey: 'page.businessDashboard.customerList' },
+          {
+            id: 'kinh-doanh/bao-cao-cong-no-khach-hang',
+            nameKey: 'page.businessDashboard.customerDebtReport',
+          },
+        ],
+      },
+      {
+        groupTitleKey: 'page.businessDashboard.supplierGroup',
+        modules: [
+          { id: 'kinh-doanh/danh-sach-nha-cung-cap', nameKey: 'page.businessDashboard.supplierList' },
+          {
+            id: 'kinh-doanh/bao-cao-cong-no-nha-cung-cap',
+            nameKey: 'page.businessDashboard.supplierDebtReport',
+          },
+        ],
+      },
+    ],
   },
   {
     id: 'san-xuat',
