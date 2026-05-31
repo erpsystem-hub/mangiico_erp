@@ -5,7 +5,9 @@ import {
   getSalesOrdersByKhachHang,
   upsertSalesOrder,
   deleteSalesOrder,
+  updateSalesOrderStatus,
 } from '../services/don-hang-service';
+import type { TrangThaiDonHang } from '../core/constants';
 import type { SalesOrderFormValues } from '../core/schema';
 import type { SalesOrder } from '../core/types';
 import { toast } from 'sonner';
@@ -104,6 +106,26 @@ export const useDeleteSalesOrder = () => {
         });
       }
       toast.success(txt('salesOrder.toast.deleteSuccess'));
+    },
+    onError: (err: unknown) => toast.error(getErrorMessage(err)),
+  });
+};
+
+export const useUpdateSalesOrderStatus = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, status }: { id: string; status: TrangThaiDonHang }) =>
+      updateSalesOrderStatus(id, status),
+    onSuccess: (updated) => {
+      queryClient.setQueryData<SalesOrder[]>(listQueryKey, (old) =>
+        old?.map((o) => (o.id === updated.id ? { ...o, ...updated } : o)),
+      );
+      queryClient.setQueryData(queryKeys.salesOrders.detail(updated.id), updated);
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.salesOrders.byKhachHang(updated.khach_hang_id),
+        refetchType: 'none',
+      });
+      toast.success(txt('salesOrder.toast.statusUpdateSuccess'));
     },
     onError: (err: unknown) => toast.error(getErrorMessage(err)),
   });

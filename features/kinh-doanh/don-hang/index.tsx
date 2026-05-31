@@ -26,6 +26,7 @@ import {
   useDeleteSalesOrder,
   useSalesOrderDetail,
   useUpsertSalesOrder,
+  useUpdateSalesOrderStatus,
 } from './hooks/use-don-hang';
 import { getSalesOrderById } from './services/don-hang-service';
 import { salesOrderToFormValues } from './utils/order-form-mapper';
@@ -38,11 +39,20 @@ import { useListWithFilter } from '@/lib/hooks';
 import { DRAWER_Z_CONTENT_BASE } from '@/lib/dialog-sizes';
 import { queryKeys } from '@/lib/query-keys';
 import type { SalesOrder } from './core/types';
+import type { TrangThaiDonHang } from './core/constants';
 import { matchesSalesOrderFilters } from './utils/order-list-filter';
 import { canDeleteSalesOrder } from './core/constants';
 
 const DonHangForm = lazy(() => import('./components/don-hang-form'));
 const DonHangDetail = lazy(() => import('./components/don-hang-detail'));
+const DonHangLineDetail = lazy(() => import('./components/don-hang-line-detail'));
+const DonHangLineForm = lazy(() => import('./components/don-hang-line-form'));
+const DonHangStatusChangeDialog = lazy(() => import('./components/don-hang-status-change-dialog'));
+
+type LineFormState =
+  | { mode: 'add' }
+  | { mode: 'edit'; line: SalesOrderLine }
+  | null;
 
 type DonHangLocationState = {
   openCreate?: boolean;
@@ -78,6 +88,9 @@ const DonHangPage: React.FC = () => {
   const [showForm, setShowForm] = useState(false);
   const [editingItem, setEditingItem] = useState<SalesOrder | null>(null);
   const [viewingItem, setViewingItem] = useState<SalesOrder | null>(null);
+  const [statusChangeTarget, setStatusChangeTarget] = useState<SalesOrder | null>(null);
+  const [viewingLine, setViewingLine] = useState<SalesOrderLine | null>(null);
+  const [lineForm, setLineForm] = useState<LineFormState>(null);
   const [formOrigin, setFormOrigin] = useState<FormOrigin>('list');
   const [presetKhachHangId, setPresetKhachHangId] = useState<string | undefined>();
 
@@ -87,6 +100,7 @@ const DonHangPage: React.FC = () => {
   const { data: customers = [] } = usePartnerList('khach_hang', { enabled: canView });
   const deleteMutation = useDeleteSalesOrder();
   const upsertLineMutation = useUpsertSalesOrder();
+  const statusMutation = useUpdateSalesOrderStatus();
 
   const pendingViewId = (location.state as DonHangLocationState | null)?.viewOrderId;
   const { data: pendingViewOrder } = useSalesOrderDetail(pendingViewId, {
@@ -122,6 +136,13 @@ const DonHangPage: React.FC = () => {
       });
     });
   }, [orders, viewingItem?.id, queryClient]);
+
+  useEffect(() => {
+    if (!viewingLine || !viewingItem) return;
+    const fresh = viewingItem.lines?.find((ln) => ln.id === viewingLine.id);
+    if (fresh) setViewingLine(fresh);
+    else setViewingLine(null);
+  }, [viewingItem, viewingLine?.id]);
 
   useEffect(() => {
     const state = location.state as DonHangLocationState | null;
@@ -287,7 +308,7 @@ const DonHangPage: React.FC = () => {
       confirm({
         title: txt('salesOrder.detail.deleteLineTitle'),
         message: txt('salesOrder.detail.deleteLineMessage', {
-          product: line.ten_san_pham,
+          category: line.ten_danh_muc,
           code: order.ma_don_hang,
         }),
         variant: 'danger',
@@ -299,13 +320,77 @@ const DonHangPage: React.FC = () => {
               data: salesOrderToFormValues({ ...order, lines: remaining }),
             },
             {
-              onSuccess: (saved) => setViewingItem(saved),
+              onSuccess: (saved) => {
+                setViewingItem(saved);
+                if (viewingLine?.id === line.id) setViewingLine(null);
+              },
             },
           );
         },
       });
     },
-    [canEdit, confirm, upsertLineMutation],
+    [canEdit, confirm, upsertLineMutation, viewingLine?.id],
+  );
+
+  const handleAddLine = useCallback(
+    (order: SalesOrder) => {
+      if (!canEdit) return;
+      setLineForm({ mode: 'add' });
+    },
+    [canEdit],
+  );
+
+  const handleViewLine = useCallback((_order: SalesOrder, line: SalesOrderLine) => {
+    setViewingLine(line);
+  }, []);
+
+  const handleEditLine = useCallback(
+    (_order: SalesOrder, line: SalesOrderLine) => {
+      if (!canEdit) return;
+      setLineForm({ mode: 'edit', line });
+    },
+    [canEdit],
+  );
+
+  const handleCloseLineForm = useCallback(() => {
+    setLineForm(null);
+  }, []);
+
+  const handleLineSaved = useCallback((saved: SalesOrder) => {
+    setViewingItem(saved);
+    setViewingLine((prev) => {
+      if (!prev) return null;
+      return saved.lines?.find((ln) => ln.id === prev.id) ?? null;
+    });
+  }, []);
+
+  const handleCloseLineDetail = useCallback(() => {
+    setViewingLine(null);
+  }, []);
+
+  const handleCloseOrderDetail = useCallback(() => {
+    if (showForm || lineForm) return;
+    setViewingItem(null);
+    setViewingLine(null);
+  }, [showForm, lineForm]);
+
+  const handleStatusChange = useCallback(
+    (item: SalesOrder) => {
+      if (!canEdit) return;
+      setStatusChangeTarget(item);
+    },
+    [canEdit],
+  );
+
+  const handleStatusSave = useCallback(
+    async (status: TrangThaiDonHang) => {
+      if (!canEdit || !statusChangeTarget) return;
+      const targetId = statusChangeTarget.id;
+      const updated = await statusMutation.mutateAsync({ id: targetId, status });
+      setViewingItem((prev) => (prev?.id === targetId ? updated : prev));
+      setStatusChangeTarget(null);
+    },
+    [statusChangeTarget, statusMutation, canEdit],
   );
 
   if (isInitializing) return <SessionInitializingSpinner />;
@@ -360,14 +445,50 @@ const DonHangPage: React.FC = () => {
           <Suspense fallback={<DrawerLazyFallback />}>
             <DonHangDetail
               data={viewingItem}
-              onClose={() => {
-                if (showForm) return;
-                setViewingItem(null);
-              }}
+              onClose={handleCloseOrderDetail}
               onEdit={handleEdit}
               onDelete={handleDelete}
-              onEditLines={handleEdit}
+              onStatusChange={handleStatusChange}
+              onAddLine={handleAddLine}
+              onViewLine={handleViewLine}
+              onEditLine={handleEditLine}
               onDeleteLine={handleDeleteLine}
+            />
+          </Suspense>
+        )}
+        {viewingItem && viewingLine && !lineForm && (
+          <Suspense fallback={<DrawerLazyFallback />}>
+            <DonHangLineDetail
+              order={viewingItem}
+              line={viewingLine}
+              onClose={handleCloseLineDetail}
+              onEdit={(line) => handleEditLine(viewingItem, line)}
+              onDelete={(line) => handleDeleteLine(viewingItem, line)}
+              canEdit={canEdit}
+              canDelete={canEdit}
+              stackLevel={1}
+            />
+          </Suspense>
+        )}
+        {viewingItem && lineForm && (
+          <Suspense fallback={<DrawerLazyFallback />}>
+            <DonHangLineForm
+              order={viewingItem}
+              initialLine={lineForm.mode === 'edit' ? lineForm.line : null}
+              onClose={handleCloseLineForm}
+              onSaved={handleLineSaved}
+              stackLevel={viewingLine ? 2 : 1}
+            />
+          </Suspense>
+        )}
+        {statusChangeTarget && (
+          <Suspense fallback={null}>
+            <DonHangStatusChangeDialog
+              open
+              order={statusChangeTarget}
+              isSubmitting={statusMutation.isPending}
+              onClose={() => setStatusChangeTarget(null)}
+              onSave={handleStatusSave}
             />
           </Suspense>
         )}
@@ -380,6 +501,9 @@ const DonHangPage: React.FC = () => {
               initialData={editingItem}
               presetKhachHangId={presetKhachHangId}
               onClose={handleCloseForm}
+              onSaved={(saved) => {
+                setViewingItem(saved);
+              }}
               stackLevel={viewingItem ? 1 : 0}
             />
           </Suspense>

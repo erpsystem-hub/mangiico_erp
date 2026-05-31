@@ -61,6 +61,7 @@ root.render(
                 if (!Array.isArray(k)) return defaultShouldDehydrateQuery(query);
                 if (k[0] === 'employees' && k[1] === 'list') return false;
                 if (k[0] === 'employee') return false;
+                if (k[0] === 'customer-price-matrix') return false;
                 return defaultShouldDehydrateQuery(query);
               },
             },

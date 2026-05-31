@@ -25,17 +25,21 @@ export async function getCategoryAttributeLinks(
   const { data, error } = await supabase
     .from('sx_danh_muc_thuoc_tinh')
     .select(
-      'thuoc_tinh_id, bat_buoc, thu_tu, sx_thuoc_tinh_hang_hoa ( ten_hien_thi )',
+      'thuoc_tinh_id, bat_buoc, thu_tu, sx_thuoc_tinh_hang_hoa ( ten_hien_thi, cac_gia_tri )',
     )
     .eq('danh_muc_id', dmId)
     .order('thu_tu', { ascending: true });
   if (error) handleSupabaseError(error);
 
   return (data ?? []).map((row) => {
-    const master = row.sx_thuoc_tinh_hang_hoa as { ten_hien_thi: string } | null;
+    const master = row.sx_thuoc_tinh_hang_hoa as {
+      ten_hien_thi: string;
+      cac_gia_tri?: string[] | null;
+    } | null;
     return {
       thuoc_tinh_id: String(row.thuoc_tinh_id),
       ten_hien_thi: master?.ten_hien_thi ?? '',
+      cac_gia_tri: Array.isArray(master?.cac_gia_tri) ? master.cac_gia_tri : [],
       bat_buoc: Boolean(row.bat_buoc),
       thu_tu: Number(row.thu_tu),
     };

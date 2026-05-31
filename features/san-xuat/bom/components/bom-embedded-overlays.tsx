@@ -23,9 +23,9 @@ interface Props {
   viewingBom: BomItem | null;
   editingBom: BomItem | null;
   showForm: boolean;
-  presetSanPhamId?: string;
+  presetDanhMucId?: string;
   presetNguyenLieuId?: string;
-  lockSanPham?: boolean;
+  lockDanhMuc?: boolean;
   lockNguyenLieu?: boolean;
   onCloseForm: () => void;
   onCloseDetail: () => void;
@@ -39,9 +39,9 @@ const BomEmbeddedOverlays: React.FC<Props> = ({
   viewingBom,
   editingBom,
   showForm,
-  presetSanPhamId,
+  presetDanhMucId,
   presetNguyenLieuId,
-  lockSanPham,
+  lockDanhMuc,
   lockNguyenLieu,
   onCloseForm,
   onCloseDetail,
@@ -53,11 +53,11 @@ const BomEmbeddedOverlays: React.FC<Props> = ({
     {showForm ? (
       <Suspense fallback={<DrawerLazyFallback />}>
         <BomForm
-          key={editingBom?.id ?? `new-${presetSanPhamId ?? ''}-${presetNguyenLieuId ?? ''}`}
+          key={editingBom?.id ?? `new-${presetDanhMucId ?? ''}-${presetNguyenLieuId ?? ''}`}
           initialData={editingBom}
-          presetSanPhamId={presetSanPhamId}
+          presetDanhMucId={presetDanhMucId}
           presetNguyenLieuId={presetNguyenLieuId}
-          lockSanPham={lockSanPham}
+          lockDanhMuc={lockDanhMuc}
           lockNguyenLieu={lockNguyenLieu}
           onClose={onCloseForm}
           stackLevel={stackLevel + (viewingBom ? 1 : 0)}

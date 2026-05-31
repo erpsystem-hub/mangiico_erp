@@ -19,9 +19,11 @@ import FormDrawerFooter from '@/components/shared/FormDrawerFooter';
 import FormSection from '@/components/shared/FormSection';
 import FormGrid from '@/components/shared/FormGrid';
 import { normalizeTrangThaiHoatDong } from '@/lib/constants/trang-thai';
+import AttributeValuesEditor from './attribute-values-editor';
 
 const DEFAULT_VALUES: ProductAttributeFormValues = {
   ten_hien_thi: '',
+  cac_gia_tri: [],
   thu_tu: 1,
   trang_thai: 'Đang hoạt động',
 };
@@ -48,6 +50,7 @@ const ProductAttributeForm: React.FC<Props> = ({ initialData, onClose }) => {
     if (initialData) {
       reset({
         ten_hien_thi: initialData.ten_hien_thi,
+        cac_gia_tri: initialData.cac_gia_tri ?? [],
         thu_tu: initialData.thu_tu,
         trang_thai: normalizeTrangThaiHoatDong(initialData.trang_thai),
       });
@@ -131,6 +134,19 @@ const ProductAttributeForm: React.FC<Props> = ({ initialData, onClose }) => {
                 />
               )}
             />
+            <div className="sm:col-span-2">
+              <Controller
+                name="cac_gia_tri"
+                control={control}
+                render={({ field }) => (
+                  <AttributeValuesEditor
+                    value={field.value ?? []}
+                    onChange={field.onChange}
+                    error={errors.cac_gia_tri?.message}
+                  />
+                )}
+              />
+            </div>
           </FormGrid>
         </FormSection>
       </form>

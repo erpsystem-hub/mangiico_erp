@@ -14,8 +14,8 @@ import {
   useUpdateBomStatus,
 } from './use-bom';
 
-export type BomEmbeddedParent = 'product' | 'material';
-export type BomEmbeddedFormOrigin = 'productDetail' | 'materialDetail' | 'bomDetail';
+export type BomEmbeddedParent = 'category' | 'material';
+export type BomEmbeddedFormOrigin = 'categoryDetail' | 'materialDetail' | 'bomDetail';
 
 export function useBomEmbeddedCrud(parentDetailOpen: boolean) {
   const queryClient = useQueryClient();
@@ -30,14 +30,14 @@ export function useBomEmbeddedCrud(parentDetailOpen: boolean) {
   const [viewingBom, setViewingBom] = useState<BomItem | null>(null);
   const [editingBom, setEditingBom] = useState<BomItem | null>(null);
   const [showBomForm, setShowBomForm] = useState(false);
-  const [bomFormOrigin, setBomFormOrigin] = useState<BomEmbeddedFormOrigin>('productDetail');
-  const [presetSanPhamId, setPresetSanPhamId] = useState<string | undefined>();
+  const [bomFormOrigin, setBomFormOrigin] = useState<BomEmbeddedFormOrigin>('categoryDetail');
+  const [presetDanhMucId, setPresetDanhMucId] = useState<string | undefined>();
   const [presetNguyenLieuId, setPresetNguyenLieuId] = useState<string | undefined>();
-  const [lockSanPham, setLockSanPham] = useState(false);
+  const [lockDanhMuc, setLockDanhMuc] = useState(false);
   const [lockNguyenLieu, setLockNguyenLieu] = useState(false);
 
   const viewingBomRef = useRef<BomItem | null>(null);
-  const bomFormOriginRef = useRef<BomEmbeddedFormOrigin>('productDetail');
+  const bomFormOriginRef = useRef<BomEmbeddedFormOrigin>('categoryDetail');
 
   const bomOverlayActive = parentDetailOpen || showBomForm || Boolean(viewingBom);
   const { data: bomItems = [], isLoading: bomLoading } = useBomList({
@@ -70,15 +70,15 @@ export function useBomEmbeddedCrud(parentDetailOpen: boolean) {
     [canViewBom, queryClient],
   );
 
-  const handleAddBomForProduct = useCallback(
-    (sanPhamId: string) => {
+  const handleAddBomForCategory = useCallback(
+    (danhMucId: string) => {
       if (!canCreateBom) return;
-      setPresetSanPhamId(sanPhamId);
+      setPresetDanhMucId(danhMucId);
       setPresetNguyenLieuId(undefined);
-      setLockSanPham(true);
+      setLockDanhMuc(true);
       setLockNguyenLieu(false);
       setEditingBom(null);
-      setBomFormOrigin('productDetail');
+      setBomFormOrigin('categoryDetail');
       setShowBomForm(true);
     },
     [canCreateBom],
@@ -87,9 +87,9 @@ export function useBomEmbeddedCrud(parentDetailOpen: boolean) {
   const handleAddBomForMaterial = useCallback(
     (nguyenLieuId: string) => {
       if (!canCreateBom) return;
-      setPresetSanPhamId(undefined);
+      setPresetDanhMucId(undefined);
       setPresetNguyenLieuId(nguyenLieuId);
-      setLockSanPham(false);
+      setLockDanhMuc(false);
       setLockNguyenLieu(true);
       setEditingBom(null);
       setBomFormOrigin('materialDetail');
@@ -103,9 +103,9 @@ export function useBomEmbeddedCrud(parentDetailOpen: boolean) {
       if (!canEditBom) return;
       const origin: BomEmbeddedFormOrigin = viewingBomRef.current ? 'bomDetail' : bomFormOriginRef.current;
       setBomFormOrigin(origin);
-      setPresetSanPhamId(undefined);
+      setPresetDanhMucId(undefined);
       setPresetNguyenLieuId(undefined);
-      setLockSanPham(false);
+      setLockDanhMuc(false);
       setLockNguyenLieu(false);
       setEditingBom(item);
       setShowBomForm(true);
@@ -117,15 +117,15 @@ export function useBomEmbeddedCrud(parentDetailOpen: boolean) {
     setShowBomForm(false);
     const edited = editingBom;
     setEditingBom(null);
-    setPresetSanPhamId(undefined);
+    setPresetDanhMucId(undefined);
     setPresetNguyenLieuId(undefined);
-    setLockSanPham(false);
+    setLockDanhMuc(false);
     setLockNguyenLieu(false);
     if (bomFormOriginRef.current === 'bomDetail' && edited) {
       const fresh = bomItems.find((b) => b.id === edited.id);
       setViewingBom(fresh ?? null);
     }
-    setBomFormOrigin('productDetail');
+    setBomFormOrigin('categoryDetail');
   }, [editingBom, bomItems]);
 
   const handleCloseBomDetail = useCallback(() => {
@@ -188,12 +188,12 @@ export function useBomEmbeddedCrud(parentDetailOpen: boolean) {
     viewingBom,
     editingBom,
     showBomForm,
-    presetSanPhamId,
+    presetDanhMucId,
     presetNguyenLieuId,
-    lockSanPham,
+    lockDanhMuc,
     lockNguyenLieu,
     handleViewBom,
-    handleAddBomForProduct,
+    handleAddBomForCategory,
     handleAddBomForMaterial,
     handleEditBom,
     handleCloseBomForm,

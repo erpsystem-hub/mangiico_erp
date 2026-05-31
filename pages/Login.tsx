@@ -7,7 +7,6 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowRight, X, Eye, EyeOff } from 'lucide-react';
-import { useUIStore } from '../store/useStore';
 import Button from '../components/ui/Button';
 import Input from '../components/ui/Input';
 import { toast } from 'sonner';
@@ -26,7 +25,6 @@ type LoginValues = {
 
 const Login: React.FC = () => {
   const navigate = useNavigate();
-  const { companyInfo } = useUIStore();
   const [isLoading, setIsLoading] = useState(false);
 
   const loginSchema = useMemo(() => z.object({
@@ -256,7 +254,7 @@ const Login: React.FC = () => {
       </motion.div>
 
       <div className="absolute bottom-6 text-center text-xs text-muted-foreground w-full left-0 px-4">
-        {txt('page.login.copyright')} {companyInfo.companyName || txt('page.login.companyFallback')}. {txt('page.login.legal')}
+        {txt('page.login.footer')}
       </div>
     </div>
   );

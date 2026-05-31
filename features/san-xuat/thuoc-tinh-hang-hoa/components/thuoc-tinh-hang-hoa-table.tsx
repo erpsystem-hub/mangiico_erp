@@ -14,6 +14,7 @@ import {
   ColumnHeaderFilter,
 } from '@/components/shared/column-header';
 import { ProductAttributeTableRowActions } from './product-attribute-table-row-actions';
+import AttributeValuesCell from './attribute-values-cell';
 
 interface Props {
   data: ProductAttribute[];
@@ -125,6 +126,8 @@ const ProductAttributeTable: React.FC<Props> = ({
             <span className="font-medium text-foreground truncate">{item.ten_hien_thi}</span>
           </div>
         );
+      case 'cac_gia_tri':
+        return <AttributeValuesCell values={item.cac_gia_tri ?? []} />;
       case 'trang_thai':
         return <EnumBadge value={item.trang_thai} config={trangThaiBadgeConfig} />;
       case 'tg_cap_nhat':
@@ -160,6 +163,11 @@ const ProductAttributeTable: React.FC<Props> = ({
           <h4 className="truncate text-sm font-semibold text-foreground">{item.ten_hien_thi}</h4>
           <EnumBadge value={item.trang_thai} config={trangThaiBadgeConfig} />
         </div>
+      }
+      subheader={
+        item.cac_gia_tri?.length ? (
+          <AttributeValuesCell values={item.cac_gia_tri} />
+        ) : undefined
       }
       footerStart={
         <label className="inline-flex h-7 w-7 shrink-0 cursor-pointer items-center justify-center rounded">

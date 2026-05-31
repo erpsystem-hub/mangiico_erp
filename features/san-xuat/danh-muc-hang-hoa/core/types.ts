@@ -17,6 +17,7 @@ export interface ProductCategory {
 export interface CategoryAttributeLink {
   thuoc_tinh_id: string;
   ten_hien_thi: string;
+  cac_gia_tri: string[];
   bat_buoc: boolean;
   thu_tu: number;
 }

@@ -92,7 +92,6 @@ export const PERMISSION_FUNCTIONS: PermissionFunction[] = [
         groupTitleKey: 'page.productionDashboard.goodsGroup',
         modules: [
           { id: 'san-xuat/danh-muc-hang-hoa', nameKey: 'page.productionDashboard.productCategory' },
-          { id: 'san-xuat/danh-sach-hang-hoa', nameKey: 'page.productionDashboard.productList' },
           { id: 'san-xuat/thuoc-tinh-hang-hoa', nameKey: 'page.productionDashboard.productAttributes' },
           { id: 'san-xuat/thong-so-do', nameKey: 'page.productionDashboard.measurementSpec' },
           { id: 'san-xuat/bom', nameKey: 'page.productionDashboard.bom' },

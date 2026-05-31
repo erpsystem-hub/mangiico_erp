@@ -36,6 +36,8 @@ import EmbeddedChildDataGrid from '@/components/shared/EmbeddedChildDataGrid';
 import { BTN_CLOSE, BTN_EDIT, BTN_DELETE } from '@/lib/button-labels';
 import { useResourcePermissions } from '@/hooks/use-resource-permissions';
 import { ProductCategoryTableRowActions } from './product-category-table-row-actions';
+import BomDetailSection from '@/features/san-xuat/bom/components/bom-detail-section';
+import type { BomItem } from '@/features/san-xuat/bom/core/types';
 
 interface Props {
   data: ProductCategory;
@@ -47,6 +49,11 @@ interface Props {
   onAddChild?: (parent: ProductCategory) => void;
   /** Click dòng con mở detail con (drawer do index render, đóng khi Thêm/Sửa/Xóa/Hủy) */
   onViewChild?: (child: ProductCategory) => void;
+  onViewBom?: (item: BomItem) => void;
+  onAddBom?: () => void;
+  onEditBom?: (item: BomItem) => void;
+  onDeleteBom?: (id: string) => void;
+  onStatusChangeBom?: (item: BomItem) => void;
   /** Drawer nhỏ hơn khi là detail con (stackLevel do index truyền) */
   maxWidthClass?: string;
   stackLevel?: number;
@@ -61,6 +68,11 @@ const ProductCategoryDetail: React.FC<Props> = ({
   onStatusChange,
   onAddChild,
   onViewChild,
+  onViewBom,
+  onAddBom,
+  onEditBom,
+  onDeleteBom,
+  onStatusChangeBom,
   maxWidthClass = DRAWER_WIDTH_DETAIL,
   stackLevel = 0,
 }) => {
@@ -259,6 +271,17 @@ const ProductCategoryDetail: React.FC<Props> = ({
                 </ul>
               )}
             </DetailSection>
+            {onViewBom && onAddBom && onEditBom && onDeleteBom && onStatusChangeBom ? (
+              <BomDetailSection
+                mode="category"
+                entityId={data.id}
+                onView={onViewBom}
+                onAdd={onAddBom}
+                onEdit={onEditBom}
+                onDelete={onDeleteBom}
+                onStatusChange={onStatusChangeBom}
+              />
+            ) : null}
           </>
         ) : null}
 

@@ -80,11 +80,6 @@ export const COMMAND_PALETTE_ENTRIES: readonly CommandPaletteEntry[] = [
     groupKey: 'nav.commandPalette.groupProduction',
   },
   {
-    path: '/san-xuat/danh-sach-hang-hoa',
-    nameKey: 'page.productionDashboard.productList',
-    groupKey: 'nav.commandPalette.groupProduction',
-  },
-  {
     path: '/san-xuat/thuoc-tinh-hang-hoa',
     nameKey: 'page.productionDashboard.productAttributes',
     groupKey: 'nav.commandPalette.groupProduction',

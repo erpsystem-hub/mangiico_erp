@@ -114,19 +114,18 @@ const BomDetail: React.FC<Props> = ({
               <GitBranch size={26} className="text-white" />
             </DetailSummaryIconTile>
           }
-          title={`${data.ten_san_pham} — ${data.ten_nguyen_lieu}`}
-          subtitle={`${data.ma_san_pham} · ${data.ma_nguyen_lieu}`}
+          title={`${data.ten_danh_muc} — ${data.ten_nguyen_lieu}`}
+          subtitle={`${data.ma_danh_muc} · ${data.ma_nguyen_lieu}`}
           badge={<EnumBadge value={data.trang_thai} config={trangThaiBadgeConfig} />}
         />
 
         {toolbarActions.length > 0 ? <DetailToolbar actions={toolbarActions} /> : null}
 
-        <DetailSection title={txt('bom.detail.productSection')} icon={<Package size={14} />}>
+        <DetailSection title={txt('bom.detail.categorySection')} icon={<Package size={14} />}>
           <DetailFieldGrid>
-            <DetailField label={txt('bom.store.productCodeCol')} value={data.ma_san_pham} />
-            <DetailField label={txt('bom.store.productNameCol')} value={data.ten_san_pham} />
-            <DetailField label={txt('bom.detail.categoryGroup')} value={data.ten_nhom_danh_muc_sp || '—'} />
-            <DetailField label={txt('bom.detail.category')} value={data.ten_danh_muc_sp || '—'} />
+            <DetailField label={txt('bom.store.categoryCodeCol')} value={data.ma_danh_muc} />
+            <DetailField label={txt('bom.store.categoryNameCol')} value={data.ten_danh_muc} />
+            <DetailField label={txt('bom.detail.categoryGroup')} value={data.ten_nhom_danh_muc || '—'} />
           </DetailFieldGrid>
         </DetailSection>
 

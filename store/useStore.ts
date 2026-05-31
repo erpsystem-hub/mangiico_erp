@@ -103,7 +103,7 @@ export const DEFAULT_COMPANY_INFO: CompanyInfo = {
   appName: DEFAULT_BRANDING_APP_NAME,
   appDescription: DEFAULT_BRANDING_APP_DESCRIPTION,
   appLogo: DEFAULT_BRANDING_LOGO,
-  companyName: 'Mặt trận Tổ quốc Việt Nam',
+  companyName: 'Mangiico',
   address: 'Khối 7, đường Hùng Vương, TP. Vinh, tỉnh Nghệ An',
   phone: '',
   email: '',
@@ -168,7 +168,7 @@ export const useUIStore = create<UIState>()(
     }),
     {
       name: 'ui-storage', // Persist UI settings including branding
-      version: 5,
+      version: 6,
       migrate: (persisted: unknown, version: number) => {
         if (!persisted || typeof persisted !== 'object') return persisted as UIState;
         const state = persisted as Record<string, unknown> & Partial<ThemeState>;
@@ -208,6 +208,37 @@ export const useUIStore = create<UIState>()(
           if (!ci.appLogo || ci.appLogo === oldLogo) updates.appLogo = DEFAULT_BRANDING_LOGO;
           if (oldNames.has(ci.appName)) updates.appName = DEFAULT_BRANDING_APP_NAME;
           if (oldDescs.has(ci.appDescription)) updates.appDescription = DEFAULT_BRANDING_APP_DESCRIPTION;
+          if (Object.keys(updates).length > 0) {
+            state.companyInfo = { ...ci, ...updates };
+          }
+        }
+        // v5 → v6: branding Mangiico ERP mới (5F edu / mô tả cũ / tên công ty mẫu)
+        if (version < 6 && state.companyInfo && typeof state.companyInfo === 'object') {
+          const ci = state.companyInfo as CompanyInfo;
+          const oldAppNames = new Set([
+            '5f edu',
+            '5f template',
+            'mangiico',
+            'mangiico erp',
+          ]);
+          const oldDescs = new Set([
+            'số hóa doanh nghiệp hiệu quả',
+            'hệ thống quản trị',
+            'hệ thống quản trị doanh nghiệp',
+            'hệ thống nền tảng số',
+          ]);
+          const updates: Partial<CompanyInfo> = {};
+          const appNameNorm = (ci.appName ?? '').trim().toLowerCase();
+          const appDescNorm = (ci.appDescription ?? '').trim().toLowerCase();
+          if (oldAppNames.has(appNameNorm)) {
+            updates.appName = DEFAULT_BRANDING_APP_NAME;
+          }
+          if (oldDescs.has(appDescNorm)) {
+            updates.appDescription = DEFAULT_BRANDING_APP_DESCRIPTION;
+          }
+          if (ci.companyName === 'Mặt trận Tổ quốc Việt Nam') {
+            updates.companyName = DEFAULT_COMPANY_INFO.companyName;
+          }
           if (Object.keys(updates).length > 0) {
             state.companyInfo = { ...ci, ...updates };
           }

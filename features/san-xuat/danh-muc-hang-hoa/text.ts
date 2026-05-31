@@ -66,6 +66,11 @@ export const productCategory = {
     emptyMeasurements: 'Chưa chọn số đo nào',
     dragToReorder: 'Kéo để sắp xếp',
     removeLink: 'Bỏ',
+    attributesSection: 'Thuộc tính',
+    attributesEmpty: 'Danh mục này chưa gán thuộc tính.',
+    attributeValuePlaceholder: 'Chọn hoặc nhập giá trị',
+    attributeValueSearch: 'Tìm giá trị…',
+    attributeValueCreate: 'Thêm «{{value}}»',
   },
   validation: {
     nameMin: 'Tên danh mục phải có ít nhất 2 ký tự',

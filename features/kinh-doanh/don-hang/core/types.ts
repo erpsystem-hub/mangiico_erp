@@ -3,9 +3,10 @@ import type { TrangThaiDonHang } from './constants';
 export interface SalesOrderLine {
   id: string;
   don_hang_id: string;
-  san_pham_id: string;
-  ma_san_pham: string;
-  ten_san_pham: string;
+  danh_muc_id: string;
+  ma_danh_muc: string;
+  ten_danh_muc: string;
+  ten_nhom_danh_muc: string;
   so_luong: number;
   don_vi_tinh: string;
   don_gia: number;
@@ -14,6 +15,25 @@ export interface SalesOrderLine {
   thu_tu: number;
   tg_tao?: string;
   tg_cap_nhat?: string;
+  thuoc_tinh_values?: SalesOrderLineAttributeValue[];
+  thong_so_do_values?: SalesOrderLineMeasurementValue[];
+}
+
+export interface SalesOrderLineAttributeValue {
+  thuoc_tinh_id: string;
+  ten_hien_thi: string;
+  gia_tri: string;
+  bat_buoc?: boolean;
+  thu_tu?: number;
+}
+
+export interface SalesOrderLineMeasurementValue {
+  thong_so_do_id: string;
+  ten_hien_thi: string;
+  don_vi: string;
+  gia_tri: number | null;
+  bat_buoc?: boolean;
+  thu_tu?: number;
 }
 
 export interface SalesOrder {
@@ -49,7 +69,7 @@ export interface SalesOrderFilters {
 /** Dòng chỉnh sửa trên form (có thể chưa có id DB). */
 export interface SalesOrderLineDraft {
   clientId: string;
-  san_pham_id: string;
+  danh_muc_id: string;
   so_luong: number;
   don_vi_tinh: string;
   don_gia: number;

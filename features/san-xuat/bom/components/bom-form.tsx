@@ -3,8 +3,9 @@ import { txt } from '@/lib/text';
 import { toast } from 'sonner';
 import { useForm, Controller, SubmitHandler, type Resolver } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { GitBranch, Package, Power } from 'lucide-react';
+import { GitBranch, Power } from 'lucide-react';
 import Input from '@/components/ui/Input';
+import NumericFormatInput from '@/components/ui/NumericFormatInput';
 import Textarea from '@/components/ui/Textarea';
 import StatusToggle from '@/components/ui/StatusToggle';
 import { bomSchema, type BomFormValues } from '../core/schema';
@@ -13,7 +14,7 @@ import {
   useCreateBomItem,
   useUpdateBomItem,
 } from '../hooks/use-bom';
-import { useProductCatalogList } from '@/features/san-xuat/danh-sach-hang-hoa/hooks/use-danh-sach-hang-hoa';
+import { useProductCategories } from '@/features/san-xuat/danh-muc-hang-hoa/hooks/use-danh-muc-hang-hoa';
 import { useMaterialCatalogList } from '@/features/san-xuat/danh-sach-nguyen-lieu/hooks/use-danh-sach-nguyen-lieu';
 import { useSupabaseReady } from '@/lib/supabase/use-supabase-list-enabled';
 import GenericDrawer, { DRAWER_WIDTH_FORM } from '@/components/shared/GenericDrawer';
@@ -21,11 +22,11 @@ import FormDrawerFooter from '@/components/shared/FormDrawerFooter';
 import FormSection from '@/components/shared/FormSection';
 import FormGrid from '@/components/shared/FormGrid';
 import { normalizeTrangThaiHoatDong } from '@/lib/constants/trang-thai';
-import ProductSelect from './product-select';
+import CategoryLevel2GroupedSelect from '@/features/san-xuat/danh-muc-hang-hoa/components/category-level2-grouped-select';
 import MaterialLineSelect from './material-line-select';
 
 const DEFAULT_VALUES: BomFormValues = {
-  san_pham_id: '',
+  danh_muc_id: '',
   nguyen_lieu_id: '',
   so_luong: 1,
   don_vi_tinh: '',
@@ -36,9 +37,9 @@ const DEFAULT_VALUES: BomFormValues = {
 
 interface Props {
   initialData?: BomItem | null;
-  presetSanPhamId?: string;
+  presetDanhMucId?: string;
   presetNguyenLieuId?: string;
-  lockSanPham?: boolean;
+  lockDanhMuc?: boolean;
   lockNguyenLieu?: boolean;
   onClose: () => void;
   maxWidthClass?: string;
@@ -47,9 +48,9 @@ interface Props {
 
 const BomForm: React.FC<Props> = ({
   initialData,
-  presetSanPhamId,
+  presetDanhMucId,
   presetNguyenLieuId,
-  lockSanPham = false,
+  lockDanhMuc = false,
   lockNguyenLieu = false,
   onClose,
   maxWidthClass,
@@ -59,7 +60,7 @@ const BomForm: React.FC<Props> = ({
   const sessionReady = useSupabaseReady();
   const createMutation = useCreateBomItem(onClose);
   const updateMutation = useUpdateBomItem(onClose);
-  const { data: products = [] } = useProductCatalogList({ enabled: sessionReady });
+  const { data: categories = [] } = useProductCategories({ enabled: sessionReady });
   const { data: materials = [] } = useMaterialCatalogList({ enabled: sessionReady });
 
   const { register, handleSubmit, formState: { errors }, reset, control, watch, setValue } =
@@ -71,7 +72,7 @@ const BomForm: React.FC<Props> = ({
   useEffect(() => {
     if (initialData) {
       reset({
-        san_pham_id: initialData.san_pham_id,
+        danh_muc_id: initialData.danh_muc_id,
         nguyen_lieu_id: initialData.nguyen_lieu_id,
         so_luong: initialData.so_luong,
         don_vi_tinh: initialData.don_vi_tinh ?? '',
@@ -82,11 +83,11 @@ const BomForm: React.FC<Props> = ({
     } else {
       reset({
         ...DEFAULT_VALUES,
-        san_pham_id: presetSanPhamId?.trim() ?? '',
+        danh_muc_id: presetDanhMucId?.trim() ?? '',
         nguyen_lieu_id: presetNguyenLieuId?.trim() ?? '',
       });
     }
-  }, [initialData, presetSanPhamId, presetNguyenLieuId, reset]);
+  }, [initialData, presetDanhMucId, presetNguyenLieuId, reset]);
 
   const onSubmit: SubmitHandler<BomFormValues> = (data) => {
     if (isEdit && initialData) {
@@ -101,9 +102,9 @@ const BomForm: React.FC<Props> = ({
   };
 
   const isPending = !sessionReady || createMutation.isPending || updateMutation.isPending;
-  const lockProductField = isEdit || lockSanPham;
+  const lockCategoryField = isEdit || lockDanhMuc;
   const lockMaterialField = isEdit || lockNguyenLieu;
-  const showPairLockHint = lockProductField && lockMaterialField;
+  const showPairLockHint = lockCategoryField && lockMaterialField;
 
   return (
     <GenericDrawer
@@ -128,22 +129,22 @@ const BomForm: React.FC<Props> = ({
       <form id="bom-form" onSubmit={handleSubmit(onSubmit, onInvalid)} className="space-y-5">
         <FormSection title={txt('bom.form.generalInfo')} icon={<GitBranch size={14} />}>
           {showPairLockHint ? (
-            <p className="text-xs text-muted-foreground mb-2 px-0.5">{txt('bom.form.productLocked')}</p>
+            <p className="text-xs text-muted-foreground mb-2 px-0.5">{txt('bom.form.pairLocked')}</p>
           ) : null}
           <FormGrid cols={2}>
             <Controller
-              name="san_pham_id"
+              name="danh_muc_id"
               control={control}
               render={({ field }) => (
-                <ProductSelect
-                  products={products}
+                <CategoryLevel2GroupedSelect
+                  categories={categories}
                   value={field.value}
                   onChange={field.onChange}
-                  label={txt('bom.form.product')}
-                  placeholder={txt('bom.form.productPlaceholder')}
+                  label={txt('bom.form.category')}
+                  placeholder={txt('bom.form.categoryPlaceholder')}
                   required
-                  disabled={lockProductField}
-                  error={errors.san_pham_id?.message}
+                  disabled={lockCategoryField}
+                  error={errors.danh_muc_id?.message}
                 />
               )}
             />
@@ -168,14 +169,20 @@ const BomForm: React.FC<Props> = ({
                 />
               )}
             />
-            <Input
-              type="number"
-              min={0}
-              step="any"
-              label={txt('bom.form.quantity')}
-              required
-              error={errors.so_luong?.message}
-              {...register('so_luong', { valueAsNumber: true })}
+            <Controller
+              name="so_luong"
+              control={control}
+              render={({ field }) => (
+                <NumericFormatInput
+                  label={txt('bom.form.quantity')}
+                  required
+                  error={errors.so_luong?.message}
+                  value={field.value}
+                  onChange={field.onChange}
+                  decimalScale={4}
+                  min={0.0001}
+                />
+              )}
             />
             <Input
               label={txt('bom.form.unit')}

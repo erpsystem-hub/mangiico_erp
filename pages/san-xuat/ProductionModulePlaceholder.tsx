@@ -9,7 +9,6 @@ export type ProductionModuleKey =
   | 'phieu-kho'
   | 'bao-cao-kho'
   | 'danh-muc-hang-hoa'
-  | 'danh-sach-hang-hoa'
   | 'thuoc-tinh-hang-hoa'
   | 'thong-so-do'
   | 'danh-sach-kho'
@@ -23,7 +22,6 @@ const TITLE_KEYS: Record<ProductionModuleKey, string> = {
   'phieu-kho': 'page.productionDashboard.warehouseSlip',
   'bao-cao-kho': 'page.productionDashboard.warehouseReport',
   'danh-muc-hang-hoa': 'page.productionDashboard.productCategory',
-  'danh-sach-hang-hoa': 'page.productionDashboard.productList',
   'thuoc-tinh-hang-hoa': 'page.productionDashboard.productAttributes',
   'thong-so-do': 'page.productionDashboard.measurementSpec',
   'danh-sach-kho': 'page.productionDashboard.warehouseList',
@@ -38,7 +36,6 @@ const MODULE_PATHS: Record<ProductionModuleKey, string> = {
   'phieu-kho': '/san-xuat/phieu-kho',
   'bao-cao-kho': '/san-xuat/bao-cao-kho',
   'danh-muc-hang-hoa': '/san-xuat/danh-muc-hang-hoa',
-  'danh-sach-hang-hoa': '/san-xuat/danh-sach-hang-hoa',
   'thuoc-tinh-hang-hoa': '/san-xuat/thuoc-tinh-hang-hoa',
   'thong-so-do': '/san-xuat/thong-so-do',
   'danh-sach-kho': '/san-xuat/danh-sach-kho',

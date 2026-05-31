@@ -44,6 +44,7 @@ import { useExportData } from '@/lib/useExportData';
 import type { ProductAttribute } from './core/types';
 import { PRODUCT_ATTRIBUTE_SEARCHABLE_KEYS } from './utils/search-keys';
 import { productAttributeMatchesColumnSearch } from './utils/column-search';
+import { formatCacGiaTriDisplay } from './utils/normalize-cac-gia-tri';
 
 const ProductAttributeForm = lazy(() => import('./components/thuoc-tinh-hang-hoa-form'));
 const ProductAttributeDetail = lazy(() => import('./components/thuoc-tinh-hang-hoa-detail'));
@@ -110,6 +111,7 @@ const ProductAttributePage: React.FC = () => {
   const IMPORT_COLUMNS = useMemo(
     () => [
       { key: 'ten_hien_thi', label: txt('productAttribute.form.displayName'), required: true },
+      { key: 'cac_gia_tri', label: txt('productAttribute.form.valuesLabel') },
       { key: 'trang_thai', label: txt('common.status') },
     ],
     [],
@@ -135,11 +137,15 @@ const ProductAttributePage: React.FC = () => {
 
   const filterFn = useCallback(
     (item: ProductAttribute, term: string, f: typeof filters) => {
-      const matchesSearch = matchesSearchTerm(
-        item as unknown as Record<string, unknown>,
-        term,
-        [...PRODUCT_ATTRIBUTE_SEARCHABLE_KEYS],
-      );
+      const termLower = term.trim().toLowerCase();
+      const matchesSearch =
+        matchesSearchTerm(
+          item as unknown as Record<string, unknown>,
+          term,
+          [...PRODUCT_ATTRIBUTE_SEARCHABLE_KEYS],
+        ) ||
+        (termLower.length > 0 &&
+          formatCacGiaTriDisplay(item.cac_gia_tri).toLowerCase().includes(termLower));
       const statusKey = item.trang_thai === 'Đang hoạt động' ? 'Active' : 'Inactive';
       const matchesStatus = f.status.length === 0 || f.status.includes(statusKey);
       const matchesCol = productAttributeMatchesColumnSearch(item, f.columnSearch);
@@ -153,6 +159,7 @@ const ProductAttributePage: React.FC = () => {
   const EXPORT_COLUMNS = useMemo(
     () => [
       { key: 'ten_hien_thi', label: txt('productAttribute.exportDisplayName') },
+      { key: 'cac_gia_tri_text', label: txt('productAttribute.exportValues') },
       { key: 'trang_thai_text', label: txt('productAttribute.exportStatus') },
     ],
     [],
@@ -161,6 +168,7 @@ const ProductAttributePage: React.FC = () => {
   const exportMapFn = useCallback(
     (item: ProductAttribute) => ({
       ten_hien_thi: item.ten_hien_thi,
+      cac_gia_tri_text: (item.cac_gia_tri ?? []).join(', '),
       trang_thai_text: item.trang_thai,
     }),
     [],

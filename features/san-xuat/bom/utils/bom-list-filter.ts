@@ -11,7 +11,7 @@ export function matchesBomFilters(
   searchTerm: string,
   filters: BomFilters,
 ): boolean {
-  const spDanhMucId = item.danh_muc_id_sp;
+  const spDanhMucId = item.danh_muc_id;
   const visibleUnderRoots =
     filters.id_danh_muc_goc.length > 0
       ? getVisibleCategoryIdsUnderRoots(productCategories, filters.id_danh_muc_goc)

@@ -15,8 +15,16 @@ const DEFAULT_COLUMNS: ColumnConfig[] = [
     maxWidth: 420,
     order: 1,
   },
-  { id: 'trang_thai', label: txt('productAttribute.store.statusCol'), visible: true, ...P.enumBadge, order: 2 },
-  { id: 'tg_cap_nhat', label: txt('productAttribute.store.updatedCol'), visible: true, ...P.datetime, order: 3 },
+  {
+    id: 'cac_gia_tri',
+    label: txt('productAttribute.store.valuesCol'),
+    visible: true,
+    minWidth: 200,
+    maxWidth: 360,
+    order: 2,
+  },
+  { id: 'trang_thai', label: txt('productAttribute.store.statusCol'), visible: true, ...P.enumBadge, order: 3 },
+  { id: 'tg_cap_nhat', label: txt('productAttribute.store.updatedCol'), visible: true, ...P.datetime, order: 4 },
 ];
 
 const initialFilters: ProductAttributeFilters = {

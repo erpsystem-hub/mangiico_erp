@@ -6,14 +6,12 @@ import { navPathIcon } from '@/lib/nav-path-icons';
 export type BusinessModuleKey =
   | 'don-hang'
   | 'bao-cao-ban-hang'
-  | 'mua-nguyen-lieu'
   | 'bao-cao-cong-no-khach-hang'
   | 'bao-cao-cong-no-nha-cung-cap';
 
 const TITLE_KEYS: Record<BusinessModuleKey, string> = {
   'don-hang': 'page.businessDashboard.salesOrder',
   'bao-cao-ban-hang': 'page.businessDashboard.salesReport',
-  'mua-nguyen-lieu': 'page.businessDashboard.materialPurchase',
   'bao-cao-cong-no-khach-hang': 'page.businessDashboard.customerDebtReport',
   'bao-cao-cong-no-nha-cung-cap': 'page.businessDashboard.supplierDebtReport',
 };
@@ -21,7 +19,6 @@ const TITLE_KEYS: Record<BusinessModuleKey, string> = {
 const MODULE_PATHS: Record<BusinessModuleKey, string> = {
   'don-hang': '/kinh-doanh/don-hang',
   'bao-cao-ban-hang': '/kinh-doanh/bao-cao-ban-hang',
-  'mua-nguyen-lieu': '/kinh-doanh/mua-nguyen-lieu',
   'bao-cao-cong-no-khach-hang': '/kinh-doanh/bao-cao-cong-no-khach-hang',
   'bao-cao-cong-no-nha-cung-cap': '/kinh-doanh/bao-cao-cong-no-nha-cung-cap',
 };

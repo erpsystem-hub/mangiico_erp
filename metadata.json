@@ -1,6 +1,6 @@
 {
-  "name": "Mangiico ERP",
-  "description": "Hệ thống quản trị doanh nghiệp",
+  "name": "mangiico",
+  "description": "phần mềm quản trị Erp",
   "requestFramePermissions": [
     "microphone"
   ]

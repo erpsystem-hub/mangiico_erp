@@ -5,6 +5,7 @@ import { useForm, Controller, SubmitHandler, type Resolver } from 'react-hook-fo
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Landmark, MapPinned, Building2, CreditCard, User, Wallet, Power } from 'lucide-react';
 import Input from '@/components/ui/Input';
+import CurrencyInput from '@/components/ui/CurrencyInput';
 import Combobox from '@/components/ui/Combobox';
 import StatusToggle from '@/components/ui/StatusToggle';
 import { FinanceAccountFormValues, financeAccountSchema } from '../core/schema';
@@ -203,14 +204,18 @@ const FinanceAccountForm: React.FC<Props> = ({ initialData, onClose }) => {
                 </div>
               )}
             />
-            <Input
-              label={txt('financeAccount.form.openingBalance')}
-              type="number"
-              min={0}
-              step="1000"
-              icon={Wallet}
-              error={errors.so_du_khoi_dau?.message}
-              {...register('so_du_khoi_dau')}
+            <Controller
+              name="so_du_khoi_dau"
+              control={control}
+              render={({ field }) => (
+                <CurrencyInput
+                  label={txt('financeAccount.form.openingBalance')}
+                  icon={Wallet}
+                  error={errors.so_du_khoi_dau?.message}
+                  value={field.value ?? 0}
+                  onChange={field.onChange}
+                />
+              )}
             />
             <Controller
               name="trang_thai"

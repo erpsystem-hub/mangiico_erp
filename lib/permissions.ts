@@ -29,7 +29,6 @@ export type AppResource =
   | 'warehouseSlips'
   | 'warehouseReports'
   | 'productCategories'
-  | 'productCatalog'
   | 'productAttributes'
   | 'measurementSpecs'
   | 'warehouseList'
@@ -68,7 +67,6 @@ export const APP_RESOURCE_TO_MODULE: Partial<Record<AppResource, string>> = {
   warehouseSlips: 'san-xuat/phieu-kho',
   warehouseReports: 'san-xuat/bao-cao-kho',
   productCategories: 'san-xuat/danh-muc-hang-hoa',
-  productCatalog: 'san-xuat/danh-sach-hang-hoa',
   productAttributes: 'san-xuat/thuoc-tinh-hang-hoa',
   measurementSpecs: 'san-xuat/thong-so-do',
   warehouseList: 'san-xuat/danh-sach-kho',

@@ -5,10 +5,10 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover" />
     <meta name="theme-color" content="#ffffff" />
-    <title>Mangiico - Hệ thống quản trị</title>
-    <meta name="description" content="Hệ thống quản trị" />
-    <meta property="og:title" content="Mangiico - Hệ thống quản trị" />
-    <meta property="og:description" content="Hệ thống quản trị" />
+    <title>mangiico - phần mềm quản trị Erp</title>
+    <meta name="description" content="phần mềm quản trị Erp" />
+    <meta property="og:title" content="mangiico - phần mềm quản trị Erp" />
+    <meta property="og:description" content="phần mềm quản trị Erp" />
     <meta property="og:image" content="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRKffuRSheGugfycCmEm46856oXbHMXKHiOjg&s" />
     <link rel="icon" href="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRKffuRSheGugfycCmEm46856oXbHMXKHiOjg&s" />
     <link rel="apple-touch-icon" href="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRKffuRSheGugfycCmEm46856oXbHMXKHiOjg&s" />
@@ -85,8 +85,8 @@
     <script>
       (function() {
         var DEFAULT_LOGO = 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRKffuRSheGugfycCmEm46856oXbHMXKHiOjg&s';
-        var DEFAULT_NAME = 'Mangiico';
-        var DEFAULT_DESC = 'Hệ thống quản trị';
+        var DEFAULT_NAME = 'mangiico';
+        var DEFAULT_DESC = 'phần mềm quản trị Erp';
         function guessMime(url) {
           if (!url) return '';
           if (url.indexOf('data:image/png') === 0) return 'image/png';
@@ -129,8 +129,17 @@
             var parsed = JSON.parse(raw);
             ci = parsed.state && parsed.state.companyInfo;
           }
-          var name = (ci && ci.appName && String(ci.appName).trim()) || DEFAULT_NAME;
-          var desc = (ci && ci.appDescription != null) ? String(ci.appDescription).trim() : DEFAULT_DESC;
+          var OLD_NAMES = { '5f edu': 1, '5f template': 1, 'mangiico': 1, 'mangiico erp': 1 };
+          var OLD_DESCS = {
+            'số hóa doanh nghiệp hiệu quả': 1,
+            'hệ thống quản trị': 1,
+            'hệ thống quản trị doanh nghiệp': 1,
+            'hệ thống nền tảng số': 1
+          };
+          var rawName = (ci && ci.appName && String(ci.appName).trim()) || '';
+          var rawDesc = (ci && ci.appDescription != null) ? String(ci.appDescription).trim() : '';
+          var name = OLD_NAMES[rawName.toLowerCase()] ? DEFAULT_NAME : (rawName || DEFAULT_NAME);
+          var desc = OLD_DESCS[rawDesc.toLowerCase()] ? DEFAULT_DESC : (rawDesc || DEFAULT_DESC);
           var logo = (ci && ci.appLogo && String(ci.appLogo).trim()) || DEFAULT_LOGO;
           var title = desc ? name + ' - ' + desc : name;
           var mime = guessMime(logo);

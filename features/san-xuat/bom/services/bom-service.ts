@@ -20,13 +20,6 @@ type ProductCategoryJoin = {
   cha_id: number | null;
 };
 
-type ProductJoin = {
-  ma_san_pham: string;
-  ten_san_pham: string;
-  danh_muc_id: number;
-  sx_danh_muc_hang_hoa: ProductCategoryJoin | ProductCategoryJoin[] | null;
-};
-
 type MaterialJoin = {
   ma_nguyen_lieu: string;
   ten_nguyen_lieu: string;
@@ -35,7 +28,7 @@ type MaterialJoin = {
 
 type BomListRow = {
   id: number;
-  san_pham_id: number;
+  danh_muc_id: number;
   nguyen_lieu_id: number;
   so_luong: number;
   don_vi_tinh: string;
@@ -44,7 +37,7 @@ type BomListRow = {
   trang_thai: string;
   tg_tao: string;
   tg_cap_nhat: string;
-  sx_danh_sach_san_pham: ProductJoin | ProductJoin[] | null;
+  sx_danh_muc_hang_hoa: ProductCategoryJoin | ProductCategoryJoin[] | null;
   sx_danh_sach_nguyen_lieu: MaterialJoin | MaterialJoin[] | null;
 };
 
@@ -55,28 +48,21 @@ function buildCategoryNameMap(categories: ProductCategory[]): Map<string, string
 }
 
 function normalizeBomRow(raw: BomListRow, categoryNameById: Map<string, string>): BomItem {
-  const sp = Array.isArray(raw.sx_danh_sach_san_pham)
-    ? raw.sx_danh_sach_san_pham[0]
-    : raw.sx_danh_sach_san_pham;
+  const dm = Array.isArray(raw.sx_danh_muc_hang_hoa)
+    ? raw.sx_danh_muc_hang_hoa[0]
+    : raw.sx_danh_muc_hang_hoa;
   const nl = Array.isArray(raw.sx_danh_sach_nguyen_lieu)
     ? raw.sx_danh_sach_nguyen_lieu[0]
     : raw.sx_danh_sach_nguyen_lieu;
-  const dm = sp
-    ? Array.isArray(sp.sx_danh_muc_hang_hoa)
-      ? sp.sx_danh_muc_hang_hoa[0]
-      : sp.sx_danh_muc_hang_hoa
-    : null;
   const chaId = dm?.cha_id != null ? String(dm.cha_id) : '';
   const tenNhom = chaId ? (categoryNameById.get(chaId) ?? '') : '';
 
   return {
     id: String(raw.id),
-    san_pham_id: String(raw.san_pham_id),
-    danh_muc_id_sp: sp ? String(sp.danh_muc_id) : '',
-    ma_san_pham: sp?.ma_san_pham ?? '',
-    ten_san_pham: sp?.ten_san_pham ?? '',
-    ten_danh_muc_sp: dm?.ten_danh_muc ?? '',
-    ten_nhom_danh_muc_sp: tenNhom,
+    danh_muc_id: String(raw.danh_muc_id),
+    ma_danh_muc: dm?.ma_danh_muc ?? '',
+    ten_danh_muc: dm?.ten_danh_muc ?? '',
+    ten_nhom_danh_muc: tenNhom,
     nguyen_lieu_id: String(raw.nguyen_lieu_id),
     ma_nguyen_lieu: nl?.ma_nguyen_lieu ?? '',
     ten_nguyen_lieu: nl?.ten_nguyen_lieu ?? '',
@@ -92,7 +78,7 @@ function normalizeBomRow(raw: BomListRow, categoryNameById: Map<string, string>)
 
 function formToPayload(data: BomFormValues) {
   return {
-    san_pham_id: Number(data.san_pham_id),
+    danh_muc_id: Number(data.danh_muc_id),
     nguyen_lieu_id: Number(data.nguyen_lieu_id),
     so_luong: data.so_luong,
     don_vi_tinh: data.don_vi_tinh?.trim() ?? '',
@@ -102,8 +88,8 @@ function formToPayload(data: BomFormValues) {
   };
 }
 
-async function assertUniqueSpNl(
-  sanPhamId: string,
+async function assertUniqueDmNl(
+  danhMucId: string,
   nguyenLieuId: string,
   excludeId?: string,
 ): Promise<void> {
@@ -112,7 +98,7 @@ async function assertUniqueSpNl(
   const { data, error } = await supabase
     .from('sx_bom')
     .select('id')
-    .eq('san_pham_id', Number(sanPhamId))
+    .eq('danh_muc_id', Number(danhMucId))
     .eq('nguyen_lieu_id', Number(nguyenLieuId));
   handleSupabaseError(error);
   for (const row of data ?? []) {
@@ -161,7 +147,7 @@ export const createBomItem = async (
   const supabase = getSupabase();
   if (!supabase) throw new Error('Supabase client is not configured.');
 
-  await assertUniqueSpNl(data.san_pham_id, data.nguyen_lieu_id);
+  await assertUniqueDmNl(data.danh_muc_id, data.nguyen_lieu_id);
 
   const now = new Date().toISOString();
   const { data: inserted, error } = await supabase
@@ -185,7 +171,7 @@ export const updateBomItem = async (
   const supabase = getSupabase();
   if (!supabase) throw new Error('Supabase client is not configured.');
 
-  await assertUniqueSpNl(data.san_pham_id, data.nguyen_lieu_id, id);
+  await assertUniqueDmNl(data.danh_muc_id, data.nguyen_lieu_id, id);
 
   const { error } = await supabase
     .from('sx_bom')

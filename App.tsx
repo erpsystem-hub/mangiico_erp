@@ -23,7 +23,6 @@ import BusinessModulePlaceholder from './pages/kinh-doanh/BusinessModulePlacehol
 const ProductAttributePage = lazy(() => import('./features/san-xuat/thuoc-tinh-hang-hoa/index'));
 const MeasurementSpecPage = lazy(() => import('./features/san-xuat/thong-so-do/index'));
 const ProductCategoryPage = lazy(() => import('./features/san-xuat/danh-muc-hang-hoa/index'));
-const ProductCatalogPage = lazy(() => import('./features/san-xuat/danh-sach-hang-hoa/index'));
 const MaterialCategoryPage = lazy(() => import('./features/san-xuat/danh-muc-nguyen-lieu/index'));
 const MaterialCatalogPage = lazy(() => import('./features/san-xuat/danh-sach-nguyen-lieu/index'));
 const BomPage = lazy(() => import('./features/san-xuat/bom/index'));
@@ -34,6 +33,7 @@ const DanhSachNhaCungCapPage = lazy(
   () => import('./features/kinh-doanh/danh-sach-nha-cung-cap/index'),
 );
 const DonHangPage = lazy(() => import('./features/kinh-doanh/don-hang/index'));
+const MuaNguyenLieuPage = lazy(() => import('./features/kinh-doanh/mua-nguyen-lieu/index'));
 const FinanceCategoryPage = lazy(() => import('./features/tai-chinh/danh-muc-tai-chinh/index'));
 const FinanceAccountPage = lazy(() => import('./features/tai-chinh/tai-khoan/index'));
 import {
@@ -99,10 +99,7 @@ const App = () => {
             path="/kinh-doanh/bao-cao-ban-hang"
             element={<BusinessModulePlaceholder moduleKey="bao-cao-ban-hang" />}
           />
-          <Route
-            path="/kinh-doanh/mua-nguyen-lieu"
-            element={<BusinessModulePlaceholder moduleKey="mua-nguyen-lieu" />}
-          />
+          <Route path="/kinh-doanh/mua-nguyen-lieu" element={<MuaNguyenLieuPage />} />
           <Route
             path="/kinh-doanh/nhom-khach-hang"
             element={<Navigate to="/kinh-doanh/danh-sach-khach-hang?tab=nhom" replace />}
@@ -140,7 +137,6 @@ const App = () => {
             element={<ProductionModulePlaceholder moduleKey="danh-sach-kho" />}
           />
           <Route path="/san-xuat/danh-muc-hang-hoa" element={<ProductCategoryPage />} />
-          <Route path="/san-xuat/danh-sach-hang-hoa" element={<ProductCatalogPage />} />
           <Route path="/san-xuat/thuoc-tinh-hang-hoa" element={<ProductAttributePage />} />
           <Route path="/san-xuat/thong-so-do" element={<MeasurementSpecPage />} />
           <Route path="/san-xuat/danh-muc-nguyen-lieu" element={<MaterialCategoryPage />} />

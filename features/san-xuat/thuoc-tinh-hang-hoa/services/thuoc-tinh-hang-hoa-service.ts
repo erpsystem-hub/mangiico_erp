@@ -15,6 +15,7 @@ import {
 } from '../core/supabase-select';
 import { txt } from '@/lib/text';
 import { productAttributeSchema } from '../core/schema';
+import { normalizeCacGiaTri } from '../utils/normalize-cac-gia-tri';
 
 const repo = createRepository<ProductAttribute>({
   tableName: 'sx_thuoc_tinh_hang_hoa',
@@ -26,6 +27,7 @@ function normalizeProductAttributeRow(raw: ProductAttribute): ProductAttribute {
     ...raw,
     id: String(raw.id),
     ten_hien_thi: String(raw.ten_hien_thi).trim(),
+    cac_gia_tri: normalizeCacGiaTri(raw.cac_gia_tri),
     thu_tu: typeof raw.thu_tu === 'number' ? raw.thu_tu : Number(raw.thu_tu ?? 0),
     trang_thai: normalizeTrangThaiHoatDong(raw.trang_thai),
   };
@@ -71,6 +73,7 @@ export const createProductAttribute = async (
   const thu_tu = data.thu_tu ?? (await nextThuTu());
   const payload = {
     ten_hien_thi: ten,
+    cac_gia_tri: normalizeCacGiaTri(data.cac_gia_tri),
     thu_tu,
     trang_thai: data.trang_thai,
     tg_tao: now,
@@ -94,6 +97,7 @@ export const updateProductAttribute = async (
 
   const payload = {
     ten_hien_thi: ten,
+    cac_gia_tri: normalizeCacGiaTri(data.cac_gia_tri),
     thu_tu: data.thu_tu ?? 0,
     trang_thai: data.trang_thai,
     tg_cap_nhat: new Date().toISOString(),
@@ -144,6 +148,9 @@ export const importProductAttributes = async (
 
     const parsed = productAttributeSchema.safeParse({
       ten_hien_thi,
+      cac_gia_tri: row.cac_gia_tri
+        ? normalizeCacGiaTri(String(row.cac_gia_tri).split(/[,;|]/))
+        : [],
       trang_thai: parseTrangThaiHoatDongImport(row.trang_thai),
     });
 

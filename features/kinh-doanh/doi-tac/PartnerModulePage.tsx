@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { txt } from '@/lib/text';
-import { FolderTree, Users } from 'lucide-react';
+import { BadgeDollarSign, FolderTree, Users } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { useAuthStore } from '@/store/useStore';
@@ -12,6 +12,7 @@ import type { PartnerKind } from './core/types';
 import { partnerListResource, partnerModuleBackPath } from './core/constants';
 import PartnerCategoryTab from './PartnerCategoryTab';
 import PartnerListTab from './PartnerListTab';
+import CustomerPriceMatrixTab from './gia-kh/CustomerPriceMatrixTab';
 
 export interface PartnerModulePageProps {
   kind: PartnerKind;
@@ -23,7 +24,11 @@ const PartnerModulePage: React.FC<PartnerModulePageProps> = ({ kind }) => {
   const listResource = partnerListResource(kind);
   const canViewList = useCan('view', listResource);
   useResourcePermissions(listResource);
-  const [activeTab, setActiveTab] = useTabSearchParam(['nhom', 'danh-sach'] as const, 'nhom');
+  const isCustomer = kind === 'khach_hang';
+  const tabIds = isCustomer
+    ? (['nhom', 'danh-sach', 'cai-dat-gia'] as const)
+    : (['nhom', 'danh-sach'] as const);
+  const [activeTab, setActiveTab] = useTabSearchParam(tabIds, 'nhom');
   const [listDanhMucFilter, setListDanhMucFilter] = useState<string[]>([]);
 
   React.useEffect(() => {
@@ -46,29 +51,32 @@ const PartnerModulePage: React.FC<PartnerModulePageProps> = ({ kind }) => {
     );
   }
 
+  const tabs = [
+    { id: 'nhom' as const, label: txt('partner.tabCategory'), icon: FolderTree },
+    { id: 'danh-sach' as const, label: txt('partner.tabList'), icon: Users },
+    ...(isCustomer
+      ? [{ id: 'cai-dat-gia' as const, label: txt('partner.tabPriceSettings'), icon: BadgeDollarSign }]
+      : []),
+  ];
+
   return (
     <div className="flex flex-col h-page relative">
       <div className="shrink-0 relative z-0">
-        <TabGroup
-          tabs={[
-            { id: 'nhom', label: txt('partner.tabCategory'), icon: FolderTree },
-            { id: 'danh-sach', label: txt('partner.tabList'), icon: Users },
-          ]}
-          activeTab={activeTab}
-          onChange={setActiveTab}
-        />
+        <TabGroup tabs={tabs} activeTab={activeTab} onChange={setActiveTab} />
       </div>
 
       <div className="flex-1 min-h-0 flex flex-col mt-1.5">
         {activeTab === 'nhom' ? (
           <PartnerCategoryTab kind={kind} onNavigateToList={handleNavigateToList} />
-        ) : (
+        ) : activeTab === 'danh-sach' ? (
           <PartnerListTab
             kind={kind}
             initialDanhMucIds={listDanhMucFilter.length ? listDanhMucFilter : undefined}
             onNavigateToList={handleNavigateToList}
           />
-        )}
+        ) : isCustomer ? (
+          <CustomerPriceMatrixTab />
+        ) : null}
       </div>
     </div>
   );

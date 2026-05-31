@@ -1,4 +1,5 @@
 import type { ProductAttribute } from '../core/types';
+import { formatCacGiaTriDisplay } from './normalize-cac-gia-tri';
 
 export function productAttributeMatchesColumnSearch(
   item: ProductAttribute,
@@ -11,6 +12,9 @@ export function productAttributeMatchesColumnSearch(
     switch (colId) {
       case 'ten_hien_thi':
         hay = item.ten_hien_thi;
+        break;
+      case 'cac_gia_tri':
+        hay = formatCacGiaTriDisplay(item.cac_gia_tri);
         break;
       default:
         continue;

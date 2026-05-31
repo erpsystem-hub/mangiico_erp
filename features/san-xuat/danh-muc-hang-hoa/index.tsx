@@ -42,6 +42,8 @@ import { productCategoryMatchesColumnSearch } from './utils/column-search';
 import { compareProductCategories } from './utils/product-category-sort';
 import { matchesSearchTerm } from '@/lib/searchUtils';
 import { PRODUCT_CATEGORY_SEARCHABLE_KEYS } from './utils/search-keys';
+import { useBomEmbeddedCrud } from '@/features/san-xuat/bom/hooks/use-bom-embedded-crud';
+import BomEmbeddedOverlays from '@/features/san-xuat/bom/components/bom-embedded-overlays';
 
 const ProductCategoryForm = lazy(() => import('./components/danh-muc-hang-hoa-form'));
 const ProductCategoryDetail = lazy(() => import('./components/danh-muc-hang-hoa-detail'));
@@ -102,6 +104,8 @@ const ProductCategoryPage = () => {
   const [showImport, setShowImport] = useState(false);
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(20);
+
+  const bomCrud = useBomEmbeddedCrud(detailStack.length > 0);
 
   const matrixTabActive = activeTab === 'thuoc-tinh' || activeTab === 'so-do';
 
@@ -596,6 +600,13 @@ const ProductCategoryPage = () => {
                   }}
                   maxWidthClass={index > 0 ? DRAWER_WIDTH_DETAIL_SMALL : undefined}
                   stackLevel={index}
+                  onViewBom={bomCrud.handleViewBom}
+                  onAddBom={
+                    dept.cap_do === 2 ? () => bomCrud.handleAddBomForCategory(dept.id) : undefined
+                  }
+                  onEditBom={bomCrud.handleEditBom}
+                  onDeleteBom={bomCrud.handleDeleteBom}
+                  onStatusChangeBom={bomCrud.handleBomStatusChange}
                 />
               ))}
             </>
@@ -629,6 +640,22 @@ const ProductCategoryPage = () => {
           />
         )}
       </AnimatePresence>
+
+      <BomEmbeddedOverlays
+        stackLevel={bomCrud.bomStackLevel}
+        viewingBom={bomCrud.viewingBom}
+        editingBom={bomCrud.editingBom}
+        showForm={bomCrud.showBomForm}
+        presetDanhMucId={bomCrud.presetDanhMucId}
+        presetNguyenLieuId={bomCrud.presetNguyenLieuId}
+        lockDanhMuc={bomCrud.lockDanhMuc}
+        lockNguyenLieu={bomCrud.lockNguyenLieu}
+        onCloseForm={bomCrud.handleCloseBomForm}
+        onCloseDetail={bomCrud.handleCloseBomDetail}
+        onEdit={bomCrud.handleEditBom}
+        onDelete={bomCrud.handleDeleteBom}
+        onStatusChange={bomCrud.handleBomStatusChange}
+      />
     </div>
   );
 };

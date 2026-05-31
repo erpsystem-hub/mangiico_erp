@@ -2,12 +2,10 @@ import type { TrangThaiHoatDong } from '@/lib/constants/trang-thai';
 
 export interface BomItem {
   id: string;
-  san_pham_id: string;
-  danh_muc_id_sp: string;
-  ma_san_pham: string;
-  ten_san_pham: string;
-  ten_danh_muc_sp: string;
-  ten_nhom_danh_muc_sp: string;
+  danh_muc_id: string;
+  ma_danh_muc: string;
+  ten_danh_muc: string;
+  ten_nhom_danh_muc: string;
   nguyen_lieu_id: string;
   ma_nguyen_lieu: string;
   ten_nguyen_lieu: string;

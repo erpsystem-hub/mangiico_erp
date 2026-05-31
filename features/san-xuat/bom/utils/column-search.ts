@@ -9,11 +9,11 @@ export function bomMatchesColumnSearch(
     if (!t) continue;
     let hay = '';
     switch (colId) {
-      case 'ma_san_pham':
-        hay = item.ma_san_pham;
+      case 'ma_danh_muc':
+        hay = item.ma_danh_muc;
         break;
-      case 'ten_san_pham':
-        hay = item.ten_san_pham;
+      case 'ten_danh_muc':
+        hay = item.ten_danh_muc;
         break;
       case 'ma_nguyen_lieu':
         hay = item.ma_nguyen_lieu;
@@ -24,11 +24,8 @@ export function bomMatchesColumnSearch(
       case 'don_vi_tinh':
         hay = item.don_vi_tinh;
         break;
-      case 'ten_danh_muc_sp':
-        hay = item.ten_danh_muc_sp;
-        break;
-      case 'ten_nhom_danh_muc_sp':
-        hay = item.ten_nhom_danh_muc_sp;
+      case 'ten_nhom_danh_muc':
+        hay = item.ten_nhom_danh_muc;
         break;
       default:
         break;

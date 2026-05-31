@@ -76,13 +76,6 @@ const ProductionDashboard: React.FC = () => {
             color: 'bg-lime-500',
           },
           {
-            path: '/san-xuat/danh-sach-hang-hoa',
-            title: txt('page.productionDashboard.productList'),
-            description: txt('page.productionDashboard.productListDesc'),
-            icon: navPathIcon('/san-xuat/danh-sach-hang-hoa'),
-            color: 'bg-green-500',
-          },
-          {
             path: '/san-xuat/thuoc-tinh-hang-hoa',
             title: txt('page.productionDashboard.productAttributes'),
             description: txt('page.productionDashboard.productAttributesDesc'),

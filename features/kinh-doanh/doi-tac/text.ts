@@ -197,4 +197,27 @@ export const partnerList = {
 export const partner = {
   tabCategory: 'Nhóm',
   tabList: 'Danh sách',
+  tabPriceSettings: 'Cài đặt giá',
+} as const;
+
+/** Ma trận hệ số giá KH × nhóm SP (tab Cài đặt giá) */
+export const customerPrice = {
+  loading: 'Đang tải ma trận hệ số giá…',
+  toast: {
+    saveSuccess: 'Đã lưu hệ số giá',
+  },
+  matrix: {
+    categoryCol: 'Loại khách hàng',
+    productGroupCol: 'Loại hàng',
+    searchPlaceholder: 'Tìm loại khách hàng…',
+    emptyCategories: 'Chưa có nhóm khách hàng',
+    emptyCategoriesHint: 'Tạo nhóm KH ở tab Nhóm trước.',
+    emptyProductGroups: 'Chưa có loại hàng',
+    emptyProductGroupsHint: 'Thêm loại hàng (cấp 2) tại Danh mục hàng hóa.',
+    openProductCategories: 'Mở Danh mục hàng hóa',
+    loadErrorTitle: 'Không tải được ma trận hệ số',
+    loadErrorHint: 'Kiểm tra kết nối Supabase và quyền xem. Thử tải lại.',
+    invalidValue: 'Hệ số phải là số dương (0,01 – 999)',
+    defaultHint: 'Ô trống = hệ số 1 (mặc định)',
+  },
 } as const;

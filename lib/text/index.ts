@@ -17,12 +17,17 @@ import { financeAccount } from '../../features/tai-chinh/tai-khoan/text';
 import { productAttribute } from '../../features/san-xuat/thuoc-tinh-hang-hoa/text';
 import { measurementSpec } from '../../features/san-xuat/thong-so-do/text';
 import { productCategory } from '../../features/san-xuat/danh-muc-hang-hoa/text';
-import { productCatalog } from '../../features/san-xuat/danh-sach-hang-hoa/text';
 import { materialCategory } from '../../features/san-xuat/danh-muc-nguyen-lieu/text';
 import { materialCatalog } from '../../features/san-xuat/danh-sach-nguyen-lieu/text';
 import { bom } from '../../features/san-xuat/bom/text';
-import { partner, partnerCategory, partnerList } from '../../features/kinh-doanh/doi-tac/text';
+import {
+  customerPrice,
+  partner,
+  partnerCategory,
+  partnerList,
+} from '../../features/kinh-doanh/doi-tac/text';
 import { salesOrder } from '../../features/kinh-doanh/don-hang/text';
+import { purchaseOrder } from '../../features/kinh-doanh/mua-nguyen-lieu/text';
 
 function flatten(prefix: string, obj: unknown): Record<string, string> {
   const out: Record<string, string> = {};
@@ -55,14 +60,15 @@ export const STRINGS: Readonly<Record<string, string>> = Object.freeze({
   ...flatten('productAttribute', productAttribute),
   ...flatten('measurementSpec', measurementSpec),
   ...flatten('productCategory', productCategory),
-  ...flatten('productCatalog', productCatalog),
   ...flatten('materialCategory', materialCategory),
   ...flatten('materialCatalog', materialCatalog),
   ...flatten('bom', bom),
   ...flatten('partner', partner),
   ...flatten('partnerCategory', partnerCategory),
   ...flatten('partnerList', partnerList),
+  ...flatten('customerPrice', customerPrice),
   ...flatten('salesOrder', salesOrder),
+  ...flatten('purchaseOrder', purchaseOrder),
   ...flatten('tenure', tenure),
   ...flatten('taiLieu', taiLieu),
 });

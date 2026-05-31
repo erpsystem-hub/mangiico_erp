@@ -53,7 +53,6 @@ export const NAV_PATH_ICONS: Record<string, LucideIcon> = {
   '/san-xuat/phieu-kho': ScrollText,
   '/san-xuat/bao-cao-kho': Warehouse,
   '/san-xuat/danh-muc-hang-hoa': FolderTree,
-  '/san-xuat/danh-sach-hang-hoa': Package,
   '/san-xuat/thuoc-tinh-hang-hoa': SlidersHorizontal,
   '/san-xuat/thong-so-do': Ruler,
   '/san-xuat/danh-sach-kho': Boxes,

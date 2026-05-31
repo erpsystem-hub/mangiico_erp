@@ -315,9 +315,9 @@ const MaterialCatalogPage: React.FC = () => {
         viewingBom={bomCrud.viewingBom}
         editingBom={bomCrud.editingBom}
         showForm={bomCrud.showBomForm}
-        presetSanPhamId={bomCrud.presetSanPhamId}
+        presetDanhMucId={bomCrud.presetDanhMucId}
         presetNguyenLieuId={bomCrud.presetNguyenLieuId}
-        lockSanPham={bomCrud.lockSanPham}
+        lockDanhMuc={bomCrud.lockDanhMuc}
         lockNguyenLieu={bomCrud.lockNguyenLieu}
         onCloseForm={bomCrud.handleCloseBomForm}
         onCloseDetail={bomCrud.handleCloseBomDetail}

@@ -1,7 +1,13 @@
-import type { SalesOrder, SalesOrderLine } from '../core/types';
+import type {
+  SalesOrder,
+  SalesOrderLine,
+  SalesOrderLineAttributeValue,
+  SalesOrderLineMeasurementValue,
+} from '../core/types';
 import type { SalesOrderFormValues } from '../core/schema';
 import type { TrangThaiDonHang } from '../core/constants';
 import { getSupabase } from '@/lib/supabase/client';
+import type { SupabaseClient } from '@supabase/supabase-js';
 import { handleSupabaseError } from '@/lib/supabase/errors';
 import { txt } from '@/lib/text';
 import {
@@ -11,7 +17,35 @@ import {
 
 type KhJoin = { ma_doi_tac: string; ten_doi_tac: string } | { ma_doi_tac: string; ten_doi_tac: string }[] | null;
 type CnJoin = { ten_chi_nhanh: string } | { ten_chi_nhanh: string }[] | null;
-type SpJoin = { ma_san_pham: string; ten_san_pham: string } | { ma_san_pham: string; ten_san_pham: string }[] | null;
+type DmJoin = {
+  ma_danh_muc: string | null;
+  ten_danh_muc: string;
+  cha_id: number | null;
+} | {
+  ma_danh_muc: string | null;
+  ten_danh_muc: string;
+  cha_id: number | null;
+}[] | null;
+
+type AttrJoin = {
+  thuoc_tinh_id: number;
+  gia_tri: string;
+  sx_thuoc_tinh_hang_hoa: { ten_hien_thi: string } | { ten_hien_thi: string }[] | null;
+} | {
+  thuoc_tinh_id: number;
+  gia_tri: string;
+  sx_thuoc_tinh_hang_hoa: { ten_hien_thi: string } | { ten_hien_thi: string }[] | null;
+}[] | null;
+
+type SpecJoin = {
+  thong_so_do_id: number;
+  gia_tri: number | null;
+  sx_thong_so_do: { ten_hien_thi: string; don_vi: string } | { ten_hien_thi: string; don_vi: string }[] | null;
+} | {
+  thong_so_do_id: number;
+  gia_tri: number | null;
+  sx_thong_so_do: { ten_hien_thi: string; don_vi: string } | { ten_hien_thi: string; don_vi: string }[] | null;
+}[] | null;
 
 type ListRow = {
   id: number;
@@ -34,7 +68,7 @@ type ListRow = {
 type LineRow = {
   id: number;
   don_hang_id: number;
-  san_pham_id: number;
+  danh_muc_id: number;
   so_luong: number;
   don_vi_tinh: string;
   don_gia: number;
@@ -43,7 +77,9 @@ type LineRow = {
   thu_tu: number;
   tg_tao: string;
   tg_cap_nhat: string;
-  san_pham: SpJoin;
+  danh_muc: DmJoin;
+  thuoc_tinh_values?: AttrJoin;
+  thong_so_do_values?: SpecJoin;
 };
 
 type DetailRow = ListRow & {
@@ -55,14 +91,41 @@ function pickOne<T>(v: T | T[] | null | undefined): T | null {
   return Array.isArray(v) ? (v[0] ?? null) : v;
 }
 
-function normalizeLine(raw: LineRow): SalesOrderLine {
-  const sp = pickOne(raw.san_pham);
+function normalizeAttrRows(raw: AttrJoin): SalesOrderLineAttributeValue[] {
+  const rows = Array.isArray(raw) ? raw : raw ? [raw] : [];
+  return rows.map((row) => {
+    const master = pickOne(row.sx_thuoc_tinh_hang_hoa);
+    return {
+      thuoc_tinh_id: String(row.thuoc_tinh_id),
+      ten_hien_thi: master?.ten_hien_thi ?? '',
+      gia_tri: String(row.gia_tri ?? ''),
+    };
+  });
+}
+
+function normalizeSpecRows(raw: SpecJoin): SalesOrderLineMeasurementValue[] {
+  const rows = Array.isArray(raw) ? raw : raw ? [raw] : [];
+  return rows.map((row) => {
+    const master = pickOne(row.sx_thong_so_do);
+    return {
+      thong_so_do_id: String(row.thong_so_do_id),
+      ten_hien_thi: master?.ten_hien_thi ?? '',
+      don_vi: master?.don_vi ?? '',
+      gia_tri: row.gia_tri == null ? null : Number(row.gia_tri),
+    };
+  });
+}
+
+function normalizeLine(raw: LineRow, parentNames?: Map<number, string>): SalesOrderLine {
+  const dm = pickOne(raw.danh_muc);
+  const chaId = dm?.cha_id != null ? Number(dm.cha_id) : null;
   return {
     id: String(raw.id),
     don_hang_id: String(raw.don_hang_id),
-    san_pham_id: String(raw.san_pham_id),
-    ma_san_pham: sp?.ma_san_pham ?? '',
-    ten_san_pham: sp?.ten_san_pham ?? '',
+    danh_muc_id: String(raw.danh_muc_id),
+    ma_danh_muc: dm?.ma_danh_muc ?? '',
+    ten_danh_muc: dm?.ten_danh_muc ?? '',
+    ten_nhom_danh_muc: chaId != null ? (parentNames?.get(chaId) ?? '') : '',
     so_luong: Number(raw.so_luong),
     don_vi_tinh: String(raw.don_vi_tinh ?? 'cái'),
     don_gia: Number(raw.don_gia),
@@ -71,6 +134,8 @@ function normalizeLine(raw: LineRow): SalesOrderLine {
     thu_tu: Number(raw.thu_tu),
     tg_tao: raw.tg_tao,
     tg_cap_nhat: raw.tg_cap_nhat,
+    thuoc_tinh_values: normalizeAttrRows(raw.thuoc_tinh_values ?? null),
+    thong_so_do_values: normalizeSpecRows(raw.thong_so_do_values ?? null),
   };
 }
 
@@ -113,12 +178,20 @@ function formToRpcPayload(data: SalesOrderFormValues, id?: string) {
       trang_thai: data.trang_thai,
     },
     lines: data.lines.map((ln, i) => ({
-      san_pham_id: ln.san_pham_id,
+      danh_muc_id: ln.danh_muc_id,
       so_luong: ln.so_luong,
       don_vi_tinh: ln.don_vi_tinh || 'cái',
       don_gia: ln.don_gia,
       ghi_chu: ln.ghi_chu || null,
       thu_tu: ln.thu_tu ?? i + 1,
+      thuoc_tinh_values: (ln.thuoc_tinh_values ?? []).map((v) => ({
+        thuoc_tinh_id: v.thuoc_tinh_id,
+        gia_tri: String(v.gia_tri ?? '').trim(),
+      })),
+      thong_so_do_values: (ln.thong_so_do_values ?? []).map((v) => ({
+        thong_so_do_id: v.thong_so_do_id,
+        gia_tri: v.gia_tri == null ? null : Number(v.gia_tri),
+      })),
     })),
   };
 }
@@ -154,6 +227,26 @@ export const getSalesOrdersByKhachHang = async (
   return (data ?? []).map((row) => normalizeOrder(row as ListRow));
 };
 
+async function fetchCategoryParentNameMap(
+  supabase: SupabaseClient,
+  lineRows: LineRow[],
+): Promise<Map<number, string>> {
+  const chaIds = new Set<number>();
+  for (const ln of lineRows) {
+    const dm = pickOne(ln.danh_muc);
+    if (dm?.cha_id != null) chaIds.add(Number(dm.cha_id));
+  }
+  if (chaIds.size === 0) return new Map();
+
+  const { data, error } = await supabase
+    .from('sx_danh_muc_hang_hoa')
+    .select('id, ten_danh_muc')
+    .in('id', [...chaIds]);
+  handleSupabaseError(error);
+
+  return new Map((data ?? []).map((r) => [Number(r.id), String(r.ten_danh_muc)]));
+}
+
 export const getSalesOrderById = async (id: string): Promise<SalesOrder | null> => {
   const supabase = getSupabase();
   if (!supabase) throw new Error('Supabase client is not configured.');
@@ -166,10 +259,11 @@ export const getSalesOrderById = async (id: string): Promise<SalesOrder | null> 
   handleSupabaseError(error);
   if (!data) return null;
 
-  const row = data as DetailRow;
-  const lineRows = row.lines ?? [];
+  const row = data as unknown as DetailRow;
+  const lineRows = (row.lines ?? []) as LineRow[];
+  const parentNames = await fetchCategoryParentNameMap(supabase, lineRows);
   const lines = lineRows
-    .map((ln) => normalizeLine(ln as LineRow))
+    .map((ln) => normalizeLine(ln, parentNames))
     .sort((a, b) => a.thu_tu - b.thu_tu);
   return normalizeOrder(row, lines);
 };
@@ -203,4 +297,22 @@ export const deleteSalesOrder = async (id: string): Promise<void> => {
 
   const { error } = await supabase.from('kd_don_hang').delete().eq('id', Number(id));
   handleSupabaseError(error);
+};
+
+export const updateSalesOrderStatus = async (
+  id: string,
+  status: TrangThaiDonHang,
+): Promise<SalesOrder> => {
+  const supabase = getSupabase();
+  if (!supabase) throw new Error('Supabase client is not configured.');
+
+  const { error } = await supabase
+    .from('kd_don_hang')
+    .update({ trang_thai: status })
+    .eq('id', Number(id));
+  handleSupabaseError(error);
+
+  const fresh = await getSalesOrderById(id);
+  if (!fresh) throw new Error(txt('salesOrder.service.notFound'));
+  return fresh;
 };

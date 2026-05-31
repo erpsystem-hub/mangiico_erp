@@ -34,7 +34,6 @@ const getRouteConfig = (t: TFunction): Record<string, RouteConfig> => ({
   '/san-xuat/bao-cao-kho': { label: t('breadcrumb.warehouseReport'), parentPath: '/san-xuat' },
   '/san-xuat/danh-sach-kho': { label: t('breadcrumb.warehouseList'), parentPath: '/san-xuat' },
   '/san-xuat/danh-muc-hang-hoa': { label: t('breadcrumb.productCategory'), parentPath: '/san-xuat' },
-  '/san-xuat/danh-sach-hang-hoa': { label: t('breadcrumb.productList'), parentPath: '/san-xuat' },
   '/san-xuat/thuoc-tinh-hang-hoa': { label: t('breadcrumb.productAttributes'), parentPath: '/san-xuat' },
   '/san-xuat/danh-muc-nguyen-lieu': { label: t('breadcrumb.materialCategory'), parentPath: '/san-xuat' },
   '/san-xuat/danh-sach-nguyen-lieu': { label: t('breadcrumb.materialList'), parentPath: '/san-xuat' },

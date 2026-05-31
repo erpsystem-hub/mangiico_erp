@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
 import { txt } from '@/lib/text';
-import { Edit, Trash2, SlidersHorizontal, Power, Type, Calendar, Clock } from 'lucide-react';
+import { Edit, Trash2, SlidersHorizontal, Power, Type, Calendar, Clock, List } from 'lucide-react';
 import Button from '@/components/ui/Button';
 import EnumBadge from '@/components/ui/EnumBadge';
 import type { BadgeConfig } from '@/components/ui/EnumBadge';
@@ -14,6 +14,7 @@ import DetailFieldGrid from '@/components/shared/DetailFieldGrid';
 import DetailToolbar, { DetailToolbarAction } from '@/components/shared/DetailToolbar';
 import { BTN_CLOSE, BTN_EDIT, BTN_DELETE } from '@/lib/button-labels';
 import { useResourcePermissions } from '@/hooks/use-resource-permissions';
+import { formatCacGiaTriDisplay } from '../utils/normalize-cac-gia-tri';
 
 interface Props {
   data: ProductAttribute;
@@ -132,6 +133,11 @@ const ProductAttributeDetail: React.FC<Props> = ({
               label={txt('productAttribute.form.displayName')}
               value={data.ten_hien_thi}
               icon={<Type size={12} />}
+            />
+            <DetailField
+              label={txt('productAttribute.form.valuesLabel')}
+              value={formatCacGiaTriDisplay(data.cac_gia_tri) || '—'}
+              icon={<List size={12} />}
             />
             <DetailField
               label={txt('common.status')}

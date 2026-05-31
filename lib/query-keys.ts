@@ -71,11 +71,6 @@ export const queryKeys = {
     all: ['measurement-specs'] as const,
     detail: (id: string) => ['measurement-specs', id] as const,
   },
-  productCatalog: {
-    all: ['product-catalog'] as const,
-    detail: (id: string) => ['product-catalog', id] as const,
-    attributeValues: (id: string) => ['product-catalog', id, 'attribute-values'] as const,
-  },
   productCategories: {
     all: ['product-categories'] as const,
     detail: (id: string) => ['product-categories', id] as const,
@@ -107,6 +102,15 @@ export const queryKeys = {
     all: ['sales-orders'] as const,
     detail: (id: string) => ['sales-orders', id] as const,
     byKhachHang: (khachHangId: string) => ['sales-orders', 'by-kh', khachHangId] as const,
+  },
+  purchaseOrders: {
+    all: ['purchase-orders'] as const,
+    detail: (id: string) => ['purchase-orders', id] as const,
+    byNhaCungCap: (nccId: string) => ['purchase-orders', 'by-ncc', nccId] as const,
+  },
+  customerPriceMatrix: {
+    all: ['customer-price-matrix'] as const,
+    productGroups: ['customer-price-matrix', 'product-groups'] as const,
   },
   thongTinToChuc: {
     singleton: ['thong-tin-to-chuc', 'singleton'] as const,

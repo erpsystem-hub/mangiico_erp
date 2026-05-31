@@ -78,6 +78,7 @@ const CategoryLinksSection: React.FC<Props> = ({
       added.push({
         thuoc_tinh_id: id,
         ten_hien_thi: master.ten_hien_thi,
+        cac_gia_tri: master.cac_gia_tri ?? [],
         bat_buoc: false,
         thu_tu: order++,
       });
@@ -144,6 +145,7 @@ const CategoryLinksSection: React.FC<Props> = ({
                 items.map((row) => ({
                   thuoc_tinh_id: row.thuoc_tinh_id,
                   ten_hien_thi: row.ten_hien_thi,
+                  cac_gia_tri: row.cac_gia_tri ?? [],
                   bat_buoc: row.bat_buoc,
                   thu_tu: row.thu_tu,
                 })),

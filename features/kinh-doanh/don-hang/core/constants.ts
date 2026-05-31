@@ -1,6 +1,6 @@
 import { txt } from '@/lib/text';
 
-export const TRANG_THAI_DON_HANG = ['Nháp', 'Mới', 'Hoàn thành', 'Hủy'] as const;
+export const TRANG_THAI_DON_HANG = ['Nháp', 'Mới', 'Chuyển sản xuất', 'Hoàn thành', 'Hủy'] as const;
 export type TrangThaiDonHang = (typeof TRANG_THAI_DON_HANG)[number];
 
 export const TRANG_THAI_DON_HANG_OPTIONS: { value: TrangThaiDonHang; label: string }[] =

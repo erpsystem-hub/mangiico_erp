@@ -13,7 +13,7 @@ import type { BomItem } from '../core/types';
 import { bomTrangThaiBadgeConfig } from '../utils/bom-badges';
 import { BomTableRowActions } from './bom-table-row-actions';
 
-export type BomDetailSectionMode = 'product' | 'material';
+export type BomDetailSectionMode = 'category' | 'material';
 
 interface Props {
   mode: BomDetailSectionMode;
@@ -46,19 +46,19 @@ const BomDetailSection: React.FC<Props> = ({
 
   const rows = useMemo(() => {
     const filtered =
-      mode === 'product'
-        ? allBom.filter((b) => b.san_pham_id === entityId)
+      mode === 'category'
+        ? allBom.filter((b) => b.danh_muc_id === entityId)
         : allBom.filter((b) => b.nguyen_lieu_id === entityId);
     return filtered.sort((a, b) => {
-      const ta = mode === 'product' ? a.ten_nguyen_lieu : a.ten_san_pham;
-      const tb = mode === 'product' ? b.ten_nguyen_lieu : b.ten_san_pham;
+      const ta = mode === 'category' ? a.ten_nguyen_lieu : a.ten_danh_muc;
+      const tb = mode === 'category' ? b.ten_nguyen_lieu : b.ten_danh_muc;
       return ta.localeCompare(tb, 'vi');
     });
   }, [allBom, mode, entityId]);
 
   const statusBadgeConfig = useMemo(() => bomTrangThaiBadgeConfig(), []);
   const labelHeader =
-    mode === 'product' ? txt('bom.store.materialNameCol') : txt('bom.store.productNameCol');
+    mode === 'category' ? txt('bom.store.materialNameCol') : txt('bom.store.categoryNameCol');
 
   return (
     <DetailSection
@@ -94,8 +94,8 @@ const BomDetailSection: React.FC<Props> = ({
         <EmptyState
           title={txt('bom.embedded.empty')}
           description={
-            mode === 'product'
-              ? txt('bom.embedded.emptyProductHint')
+            mode === 'category'
+              ? txt('bom.embedded.emptyCategoryHint')
               : txt('bom.embedded.emptyMaterialHint')
           }
           icon={<GitBranch className="h-10 w-10 text-muted-foreground" />}
@@ -122,17 +122,20 @@ const BomDetailSection: React.FC<Props> = ({
             minWidthClass: 'min-w-[140px]',
             renderCell: (b) => (
               <span className="font-medium text-foreground truncate">
-                {mode === 'product' ? b.ten_nguyen_lieu : b.ten_san_pham}
+                {mode === 'category' ? b.ten_nguyen_lieu : b.ten_danh_muc}
               </span>
             ),
           }}
           columns={[
             {
               id: 'code',
-              header: mode === 'product' ? txt('bom.store.materialCodeCol') : txt('bom.store.productCodeCol'),
+              header:
+                mode === 'category'
+                  ? txt('bom.store.materialCodeCol')
+                  : txt('bom.store.categoryCodeCol'),
               renderCell: (b) => (
                 <span className="font-mono text-xs text-muted-foreground">
-                  {mode === 'product' ? b.ma_nguyen_lieu : b.ma_san_pham}
+                  {mode === 'category' ? b.ma_nguyen_lieu : b.ma_danh_muc}
                 </span>
               ),
             },

@@ -24,7 +24,7 @@ export const SALES_ORDER_SELECT_LIST = `
 export const SALES_ORDER_LINE_SELECT = `
   id,
   don_hang_id,
-  san_pham_id,
+  danh_muc_id,
   so_luong,
   don_vi_tinh,
   don_gia,
@@ -33,9 +33,25 @@ export const SALES_ORDER_LINE_SELECT = `
   thu_tu,
   tg_tao,
   tg_cap_nhat,
-  san_pham:sx_danh_sach_san_pham (
-    ma_san_pham,
-    ten_san_pham
+  danh_muc:sx_danh_muc_hang_hoa (
+    ma_danh_muc,
+    ten_danh_muc,
+    cha_id
+  ),
+  thuoc_tinh_values:kd_don_hang_chi_tiet_thuoc_tinh (
+    thuoc_tinh_id,
+    gia_tri,
+    sx_thuoc_tinh_hang_hoa (
+      ten_hien_thi
+    )
+  ),
+  thong_so_do_values:kd_don_hang_chi_tiet_thong_so_do (
+    thong_so_do_id,
+    gia_tri,
+    sx_thong_so_do (
+      ten_hien_thi,
+      don_vi
+    )
   )
 `;
 

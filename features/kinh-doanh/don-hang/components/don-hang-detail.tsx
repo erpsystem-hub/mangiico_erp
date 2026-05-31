@@ -12,6 +12,7 @@ import {
   Clock,
   Plus,
   Package,
+  RefreshCw,
 } from 'lucide-react';
 import Button from '@/components/ui/Button';
 import EnumBadge from '@/components/ui/EnumBadge';
@@ -25,8 +26,9 @@ import DetailSummaryCard, { DetailSummaryIconTile } from '@/components/shared/De
 import DetailSection from '@/components/shared/DetailSection';
 import DetailField from '@/components/shared/DetailField';
 import DetailFieldGrid from '@/components/shared/DetailFieldGrid';
+import DetailToolbar, { DetailToolbarAction } from '@/components/shared/DetailToolbar';
 import EmbeddedChildDataGrid from '@/components/shared/EmbeddedChildDataGrid';
-import { BTN_CLOSE, BTN_EDIT, BTN_DELETE } from '@/lib/button-labels';
+import { BTN_CLOSE, BTN_EDIT, BTN_DELETE, BTN_ADD } from '@/lib/button-labels';
 import { useResourcePermissions } from '@/hooks/use-resource-permissions';
 import { SalesOrderLineRowActions } from './sales-order-line-row-actions';
 
@@ -35,7 +37,10 @@ interface Props {
   onClose: () => void;
   onEdit: (item: SalesOrder) => void;
   onDelete: (id: string) => void;
-  onEditLines?: (item: SalesOrder) => void;
+  onStatusChange?: (item: SalesOrder) => void;
+  onAddLine?: (item: SalesOrder) => void;
+  onViewLine?: (order: SalesOrder, line: SalesOrderLine) => void;
+  onEditLine?: (order: SalesOrder, line: SalesOrderLine) => void;
   onDeleteLine?: (order: SalesOrder, line: SalesOrderLine) => void;
   maxWidthClass?: string;
   stackLevel?: number;
@@ -46,7 +51,10 @@ const DonHangDetail: React.FC<Props> = ({
   onClose,
   onEdit,
   onDelete,
-  onEditLines,
+  onStatusChange,
+  onAddLine,
+  onViewLine,
+  onEditLine,
   onDeleteLine,
   maxWidthClass = DRAWER_WIDTH_DETAIL,
   stackLevel = 0,
@@ -54,15 +62,29 @@ const DonHangDetail: React.FC<Props> = ({
   const navigate = useNavigate();
   const { canEdit, canDelete: canDeletePerm } = useResourcePermissions('salesOrders');
   const canDelete = canDeletePerm && canDeleteSalesOrder(data.trang_thai);
-  const canEditLines = canEdit && Boolean(onEditLines);
+  const canManageLines = canEdit && Boolean(onAddLine);
+  const canEditLine = canEdit && Boolean(onEditLine);
   const canDeleteLine = canEdit && Boolean(onDeleteLine);
   const [lineMenuOpenId, setLineMenuOpenId] = useState<string | null>(null);
   const statusBadgeConfig = useMemo(() => salesOrderStatusBadgeConfig(), []);
   const lines = data.lines ?? [];
 
-  const openLineEditor = () => {
-    if (!canEditLines) return;
-    onEditLines?.(data);
+  const toolbarActions: DetailToolbarAction[] = [
+    ...(onStatusChange && canEdit
+      ? [
+          {
+            label: txt('salesOrder.detail.changeStatus'),
+            icon: <RefreshCw size={16} />,
+            onClick: () => onStatusChange(data),
+            variant: 'info' as const,
+          },
+        ]
+      : []),
+  ];
+
+  const openAddLine = () => {
+    if (!canManageLines) return;
+    onAddLine?.(data);
   };
 
   const renderFooter = (
@@ -129,6 +151,10 @@ const DonHangDetail: React.FC<Props> = ({
           </p>
         </DetailSummaryCard>
 
+        {toolbarActions.length > 0 ? (
+          <DetailToolbar actions={toolbarActions} className="bg-card rounded-xl border border-border" />
+        ) : null}
+
         <DetailSection title={txt('salesOrder.detail.customerSection')} icon={<Users size={14} />}>
           <DetailFieldGrid>
             <DetailField label={txt('salesOrder.store.customerCol')} value={data.ten_khach_hang} />
@@ -182,15 +208,15 @@ const DonHangDetail: React.FC<Props> = ({
           title={txt('salesOrder.detail.linesSection')}
           icon={<Package size={14} />}
           headerRight={
-            canEditLines ? (
+            canManageLines ? (
               <Button
                 type="button"
                 size="sm"
                 className="h-7 text-xs bg-primary text-white hover:bg-primary/90"
-                onClick={openLineEditor}
+                onClick={openAddLine}
               >
                 <Plus size={14} className="mr-1" />
-                {txt('salesOrder.detail.addOrEditLines')}
+                {BTN_ADD()}
               </Button>
             ) : (
               <span className="text-xs font-medium text-muted-foreground tabular-nums">
@@ -205,15 +231,15 @@ const DonHangDetail: React.FC<Props> = ({
               description={txt('salesOrder.form.addLineHint')}
               icon={<Package className="h-10 w-10 text-muted-foreground" />}
               action={
-                canEditLines ? (
+                canManageLines ? (
                   <Button
                     type="button"
                     size="sm"
-                    onClick={openLineEditor}
+                    onClick={openAddLine}
                     className="bg-primary text-white hover:bg-primary/90"
                   >
                     <Plus size={14} className="mr-2" />
-                    {txt('salesOrder.form.addLine')}
+                    {BTN_ADD()}
                   </Button>
                 ) : undefined
               }
@@ -223,10 +249,10 @@ const DonHangDetail: React.FC<Props> = ({
               rows={lines}
               getRowKey={(ln) => ln.id}
               labelColumn={{
-                header: txt('salesOrder.form.product'),
+                header: txt('salesOrder.form.category'),
                 minWidthClass: 'min-w-[180px]',
                 renderCell: (ln) => (
-                  <span className="font-medium text-foreground">{ln.ten_san_pham}</span>
+                  <span className="font-medium text-foreground">{ln.ten_danh_muc}</span>
                 ),
               }}
               columns={[
@@ -235,7 +261,7 @@ const DonHangDetail: React.FC<Props> = ({
                   header: txt('partnerList.store.codeCol'),
                   headerClassName: 'min-w-[100px]',
                   renderCell: (ln) => (
-                    <span className="font-mono text-xs text-muted-foreground">{ln.ma_san_pham}</span>
+                    <span className="font-mono text-xs text-muted-foreground">{ln.ma_danh_muc}</span>
                   ),
                 },
                 {
@@ -266,19 +292,20 @@ const DonHangDetail: React.FC<Props> = ({
                 header: txt('common.actions'),
                 widthClass: 'w-[92px] min-w-[92px]',
                 renderCell: (ln) =>
-                  canEditLines || canDeleteLine ? (
+                  canEditLine || canDeleteLine ? (
                     <SalesOrderLineRowActions
                       compact
                       line={ln}
                       menuOpenId={lineMenuOpenId}
                       onMenuOpenChange={setLineMenuOpenId}
-                      canEdit={canEditLines}
+                      canEdit={canEditLine}
                       canDelete={canDeleteLine}
-                      onEdit={openLineEditor}
+                      onEdit={() => onEditLine?.(data, ln)}
                       onDelete={() => onDeleteLine?.(data, ln)}
                     />
                   ) : null,
               }}
+              onRowClick={onViewLine ? (ln) => onViewLine(data, ln) : undefined}
               containerClassName="border-0 shadow-none"
             />
           )}

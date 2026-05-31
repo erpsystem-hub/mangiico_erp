@@ -5,6 +5,7 @@ export function salesOrderStatusBadgeConfig(): BadgeConfig<string> {
   return {
     Nháp: { label: txt('salesOrder.status.nhap'), color: 'slate' },
     Mới: { label: txt('salesOrder.status.moi'), color: 'sky' },
+    'Chuyển sản xuất': { label: txt('salesOrder.status.chuyenSanXuat'), color: 'amber' },
     'Hoàn thành': { label: txt('salesOrder.status.hoanThanh'), color: 'primary' },
     Hủy: { label: txt('salesOrder.status.huy'), color: 'rose' },
   };

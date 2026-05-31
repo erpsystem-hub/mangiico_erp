@@ -1,0 +1,3 @@
+-- Bảng kd_kh_he_so_gia_nhom_sp: xem migration
+-- supabase/migrations/20260712100000_kd_kh_he_so_gia_nhom_sp.sql
+-- Seed: npm run seed:kd-kh-he-so-gia

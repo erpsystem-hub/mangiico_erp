@@ -106,15 +106,15 @@ const BomTable: React.FC<Props> = ({
 
   const renderCell = (colId: string, item: BomItem) => {
     switch (colId) {
-      case 'ma_san_pham':
+      case 'ma_danh_muc':
         return (
-          <span className="text-sm font-mono text-muted-foreground">{item.ma_san_pham}</span>
+          <span className="text-sm font-mono text-muted-foreground">{item.ma_danh_muc}</span>
         );
-      case 'ten_san_pham':
+      case 'ten_danh_muc':
         return (
           <div className="flex items-center gap-2 min-w-0">
             <Package size={14} className="shrink-0 text-muted-foreground" />
-            <span className="font-medium text-foreground truncate">{item.ten_san_pham}</span>
+            <span className="font-medium text-foreground truncate">{item.ten_danh_muc}</span>
           </div>
         );
       case 'ma_nguyen_lieu':
@@ -140,10 +140,10 @@ const BomTable: React.FC<Props> = ({
             {item.don_vi_tinh || '—'}
           </span>
         );
-      case 'ten_nhom_danh_muc_sp':
+      case 'ten_nhom_danh_muc':
         return (
           <span className="text-sm text-muted-foreground truncate">
-            {item.ten_nhom_danh_muc_sp || '—'}
+            {item.ten_nhom_danh_muc || '—'}
           </span>
         );
       case 'trang_thai':
@@ -177,13 +177,13 @@ const BomTable: React.FC<Props> = ({
       }
       titleRow={
         <div className="flex min-w-0 items-center justify-between gap-2">
-          <h4 className="truncate text-sm font-semibold text-foreground">{item.ten_san_pham}</h4>
+          <h4 className="truncate text-sm font-semibold text-foreground">{item.ten_danh_muc}</h4>
           <EnumBadge value={item.trang_thai} config={trangThaiBadgeConfig} />
         </div>
       }
       subheader={
         <span className="text-xs text-muted-foreground truncate">
-          {item.ma_san_pham} · {item.ten_nguyen_lieu} ({item.ma_nguyen_lieu})
+          {item.ma_danh_muc} · {item.ten_nguyen_lieu} ({item.ma_nguyen_lieu})
         </span>
       }
       metaLine={
