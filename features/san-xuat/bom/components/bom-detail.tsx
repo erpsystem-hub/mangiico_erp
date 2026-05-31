@@ -1,10 +1,10 @@
 import React, { useMemo } from 'react';
 import { txt } from '@/lib/text';
-import { Edit, Trash2, FlaskConical, Power, Hash, FolderTree, Calendar, Clock } from 'lucide-react';
+import { Edit, Trash2, GitBranch, Power, Package, FlaskConical, Calendar, Clock } from 'lucide-react';
 import Button from '@/components/ui/Button';
 import EnumBadge from '@/components/ui/EnumBadge';
-import { materialCatalogTrangThaiBadgeConfig } from '../utils/material-catalog-badges';
-import type { MaterialCatalogItem } from '../core/types';
+import { bomTrangThaiBadgeConfig } from '../utils/bom-badges';
+import type { BomItem } from '../core/types';
 import { formatDate, formatDateTimeShort } from '@/lib/utils';
 import GenericDrawer, { DRAWER_WIDTH_DETAIL } from '@/components/shared/GenericDrawer';
 import { DRAWER_WIDTH_DETAIL_SMALL } from '@/lib/dialog-sizes';
@@ -15,51 +15,35 @@ import DetailFieldGrid from '@/components/shared/DetailFieldGrid';
 import DetailToolbar, { DetailToolbarAction } from '@/components/shared/DetailToolbar';
 import { BTN_CLOSE, BTN_EDIT, BTN_DELETE } from '@/lib/button-labels';
 import { useResourcePermissions } from '@/hooks/use-resource-permissions';
-import { MaterialSpecFieldsDetailSection } from './material-spec-fields-section';
-import BomDetailSection from '@/features/san-xuat/bom/components/bom-detail-section';
-import type { BomItem } from '@/features/san-xuat/bom/core/types';
 
 interface Props {
-  data: MaterialCatalogItem;
+  data: BomItem;
   onClose: () => void;
-  onEdit: (item: MaterialCatalogItem) => void;
+  onEdit: (item: BomItem) => void;
   onDelete: (id: string) => void;
-  onStatusChange?: (item: MaterialCatalogItem) => void;
-  onViewBom?: (item: BomItem) => void;
-  onAddBom?: () => void;
-  onEditBom?: (item: BomItem) => void;
-  onDeleteBom?: (id: string) => void;
-  onStatusChangeBom?: (item: BomItem) => void;
+  onStatusChange?: (item: BomItem) => void;
   maxWidthClass?: string;
   stackLevel?: number;
 }
 
-const MaterialCatalogDetail: React.FC<Props> = ({
+const BomDetail: React.FC<Props> = ({
   data,
   onClose,
   onEdit,
   onDelete,
   onStatusChange,
-  onViewBom,
-  onAddBom,
-  onEditBom,
-  onDeleteBom,
-  onStatusChangeBom,
   maxWidthClass = DRAWER_WIDTH_DETAIL,
   stackLevel = 0,
 }) => {
-  const { canEdit, canDelete } = useResourcePermissions('materialCatalog');
+  const { canEdit, canDelete } = useResourcePermissions('bom');
   const isActive = data.trang_thai === 'Đang hoạt động';
-
-  const trangThaiBadgeConfig = useMemo(() => materialCatalogTrangThaiBadgeConfig(), []);
+  const trangThaiBadgeConfig = useMemo(() => bomTrangThaiBadgeConfig(), []);
 
   const toolbarActions: DetailToolbarAction[] = [
     ...(onStatusChange && canEdit
       ? [
           {
-            label: isActive
-              ? txt('materialCatalog.detail.deactivate')
-              : txt('materialCatalog.detail.activate'),
+            label: isActive ? txt('bom.detail.deactivate') : txt('bom.detail.activate'),
             icon: <Power size={16} />,
             onClick: () => onStatusChange(data),
             variant: 'info' as const,
@@ -114,9 +98,9 @@ const MaterialCatalogDetail: React.FC<Props> = ({
 
   return (
     <GenericDrawer
-      title={txt('materialCatalog.detail.title')}
-      subtitle={txt('materialCatalog.detail.subtitle')}
-      icon={<FlaskConical size={18} />}
+      title={txt('bom.detail.title')}
+      subtitle={txt('bom.detail.subtitle')}
+      icon={<GitBranch size={18} />}
       onClose={onClose}
       footer={renderFooter}
       footerCompact
@@ -127,68 +111,46 @@ const MaterialCatalogDetail: React.FC<Props> = ({
         <DetailSummaryCard
           leading={
             <DetailSummaryIconTile>
-              <FlaskConical size={26} className="text-white" />
+              <GitBranch size={26} className="text-white" />
             </DetailSummaryIconTile>
           }
-          title={data.ten_nguyen_lieu}
-          subtitle={data.ma_nguyen_lieu}
+          title={`${data.ten_san_pham} — ${data.ten_nguyen_lieu}`}
+          subtitle={`${data.ma_san_pham} · ${data.ma_nguyen_lieu}`}
           badge={<EnumBadge value={data.trang_thai} config={trangThaiBadgeConfig} />}
         />
 
-        {toolbarActions.length > 0 ? (
-          <DetailToolbar actions={toolbarActions} className="bg-card rounded-xl border border-border" />
-        ) : null}
+        {toolbarActions.length > 0 ? <DetailToolbar actions={toolbarActions} /> : null}
 
-        <DetailSection title={txt('materialCatalog.detail.basicInfo')} icon={<FlaskConical size={14} />}>
+        <DetailSection title={txt('bom.detail.productSection')} icon={<Package size={14} />}>
           <DetailFieldGrid>
-            <DetailField label={txt('materialCatalog.form.code')} value={data.ma_nguyen_lieu} icon={Hash} />
-            <DetailField
-              label={txt('materialCatalog.detail.categoryGroup')}
-              value={data.ten_nhom_danh_muc || '—'}
-              icon={FolderTree}
-            />
-            <DetailField
-              label={txt('materialCatalog.detail.category')}
-              value={data.ten_danh_muc}
-              icon={FolderTree}
-            />
-            <DetailField
-              label={txt('common.status')}
-              value={<EnumBadge value={data.trang_thai} config={trangThaiBadgeConfig} />}
-            />
-            {data.mo_ta ? (
-              <div className="sm:col-span-2">
-                <DetailField label={txt('materialCatalog.form.description')} value={data.mo_ta} />
-              </div>
-            ) : null}
+            <DetailField label={txt('bom.store.productCodeCol')} value={data.ma_san_pham} />
+            <DetailField label={txt('bom.store.productNameCol')} value={data.ten_san_pham} />
+            <DetailField label={txt('bom.detail.categoryGroup')} value={data.ten_nhom_danh_muc_sp || '—'} />
+            <DetailField label={txt('bom.detail.category')} value={data.ten_danh_muc_sp || '—'} />
           </DetailFieldGrid>
         </DetailSection>
 
-        <MaterialSpecFieldsDetailSection data={data} />
+        <DetailSection title={txt('bom.detail.materialSection')} icon={<FlaskConical size={14} />}>
+          <DetailFieldGrid>
+            <DetailField label={txt('bom.store.materialCodeCol')} value={data.ma_nguyen_lieu} />
+            <DetailField label={txt('bom.store.materialNameCol')} value={data.ten_nguyen_lieu} />
+            <DetailField label={txt('bom.store.quantityCol')} value={String(data.so_luong)} />
+            <DetailField label={txt('bom.store.unitCol')} value={data.don_vi_tinh || '—'} />
+            <DetailField label={txt('bom.form.lineNote')} value={data.ghi_chu || '—'} />
+          </DetailFieldGrid>
+        </DetailSection>
 
-        {onViewBom && onAddBom && onEditBom && onDeleteBom && onStatusChangeBom ? (
-          <BomDetailSection
-            mode="material"
-            entityId={data.id}
-            onView={onViewBom}
-            onAdd={onAddBom}
-            onEdit={onEditBom}
-            onDelete={onDeleteBom}
-            onStatusChange={onStatusChangeBom}
-          />
-        ) : null}
-
-        <DetailSection title={txt('materialCatalog.detail.systemInfo')} icon={<Clock size={14} />}>
+        <DetailSection title={txt('bom.detail.systemInfo')} icon={<Calendar size={14} />}>
           <DetailFieldGrid>
             <DetailField
-              label={txt('materialCatalog.detail.createdAt')}
+              label={txt('bom.detail.createdAt')}
               value={formatDate(data.tg_tao)}
-              icon={Calendar}
+              icon={<Calendar size={12} />}
             />
             <DetailField
-              label={txt('materialCatalog.detail.updated')}
+              label={txt('bom.detail.updated')}
               value={formatDateTimeShort(data.tg_cap_nhat)}
-              icon={Clock}
+              icon={<Clock size={12} />}
             />
           </DetailFieldGrid>
         </DetailSection>
@@ -197,4 +159,4 @@ const MaterialCatalogDetail: React.FC<Props> = ({
   );
 };
 
-export default MaterialCatalogDetail;
+export default BomDetail;

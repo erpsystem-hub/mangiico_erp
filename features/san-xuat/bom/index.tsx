@@ -11,7 +11,7 @@ import React, {
 import { txt } from '@/lib/text';
 import { AnimatePresence } from 'framer-motion';
 import { toast } from 'sonner';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '@/store/useStore';
 import { useCan } from '@/hooks/use-can';
 import { useAppSessionReady } from '@/hooks/use-auth-session';
@@ -20,31 +20,25 @@ import { useResourcePermissions } from '@/hooks/use-resource-permissions';
 import { useQueryClient } from '@tanstack/react-query';
 import { queryKeys } from '@/lib/query-keys';
 import { DRAWER_Z_CONTENT_BASE } from '@/lib/dialog-sizes';
-import { useMaterialCategories } from '@/features/san-xuat/danh-muc-nguyen-lieu/hooks/use-danh-muc-nguyen-lieu';
-import MaterialCatalogToolbar from './components/danh-sach-nguyen-lieu-toolbar';
-import MaterialCatalogTable from './components/danh-sach-nguyen-lieu-table';
+import { useProductCategories } from '@/features/san-xuat/danh-muc-hang-hoa/hooks/use-danh-muc-hang-hoa';
+import BomToolbar from './components/bom-toolbar';
+import BomTable from './components/bom-table';
 import {
-  useMaterialCatalogList,
-  useDeleteMaterialCatalogItems,
-  useUpdateMaterialCatalogStatus,
-} from './hooks/use-danh-sach-nguyen-lieu';
+  useBomList,
+  useDeleteBomItems,
+  useUpdateBomStatus,
+} from './hooks/use-bom';
 import ErrorState from '@/components/shared/ErrorState';
-import { useMaterialCatalogStore } from './store/useMaterialCatalogStore';
+import { useBomStore } from './store/useBomStore';
 import { useConfirmStore } from '@/store/useConfirmStore';
 import { CONFIRM_DELETE, CONFIRM_YES } from '@/lib/button-labels';
 import { useListWithFilter } from '@/lib/hooks';
-import type { MaterialCatalogItem } from './core/types';
-import { matchesMaterialCatalogFilters } from './utils/catalog-list-filter';
+import type { BomItem } from './core/types';
+import { matchesBomFilters } from './utils/bom-list-filter';
 import type { TrangThaiHoatDong } from '@/lib/constants/trang-thai';
-import {
-  isMaterialCatalogNavState,
-  type MaterialCatalogNavState,
-} from '@/features/san-xuat/danh-muc-nguyen-lieu/utils/material-catalog-nav-state';
-import { useBomEmbeddedCrud } from '@/features/san-xuat/bom/hooks/use-bom-embedded-crud';
-import BomEmbeddedOverlays from '@/features/san-xuat/bom/components/bom-embedded-overlays';
 
-const MaterialCatalogForm = lazy(() => import('./components/danh-sach-nguyen-lieu-form'));
-const MaterialCatalogDetail = lazy(() => import('./components/danh-sach-nguyen-lieu-detail'));
+const BomForm = lazy(() => import('./components/bom-form'));
+const BomDetail = lazy(() => import('./components/bom-detail'));
 
 const DrawerLazyFallback: React.FC = () => (
   <div
@@ -60,42 +54,34 @@ const DrawerLazyFallback: React.FC = () => (
 
 type FormOrigin = 'list' | 'detail';
 
-const MaterialCatalogPage: React.FC = () => {
+const BomPage: React.FC = () => {
   const user = useAuthStore((s) => s.user);
-  const canView = useCan('view', 'materialCatalog');
+  const canView = useCan('view', 'bom');
   const { isInitializing } = useAppSessionReady();
-  const { canCreate, canEdit, canDelete } = useResourcePermissions('materialCatalog');
+  const { canCreate, canEdit, canDelete } = useResourcePermissions('bom');
   const navigate = useNavigate();
-  const location = useLocation();
   const didRedirect = useRef(false);
-  const pendingNavRef = useRef<MaterialCatalogNavState | null>(null);
   const queryClient = useQueryClient();
   const confirm = useConfirmStore((s) => s.confirm);
 
   const [showForm, setShowForm] = useState(false);
-  const [editingItem, setEditingItem] = useState<MaterialCatalogItem | null>(null);
-  const [viewingItem, setViewingItem] = useState<MaterialCatalogItem | null>(null);
+  const [editingItem, setEditingItem] = useState<BomItem | null>(null);
+  const [viewingItem, setViewingItem] = useState<BomItem | null>(null);
   const [formOrigin, setFormOrigin] = useState<FormOrigin>('list');
-  const [createDefaultDanhMucId, setCreateDefaultDanhMucId] = useState<string | undefined>();
 
-  const { searchTerm, filters, resetState, clearSelection, selectedIds } = useMaterialCatalogStore();
+  const { searchTerm, filters, resetState } = useBomStore();
 
   useEffect(() => {
     if (!user || canView || didRedirect.current) return;
     didRedirect.current = true;
-    toast.error(txt('materialCatalog.noViewPermission'));
+    toast.error(txt('bom.noViewPermission'));
     navigate('/san-xuat', { replace: true });
   }, [user, canView, navigate]);
 
-  const { data: categories = [] } = useMaterialCategories({ enabled: canView });
-  const { data: items = [], isLoading, isError, refetch } = useMaterialCatalogList({
-    enabled: canView,
-  });
-  const deleteMutation = useDeleteMaterialCatalogItems();
-  const statusMutation = useUpdateMaterialCatalogStatus();
-
-  const materialDetailOpen = Boolean(viewingItem) && !showForm;
-  const bomCrud = useBomEmbeddedCrud(materialDetailOpen);
+  const { data: categories = [] } = useProductCategories({ enabled: canView });
+  const { data: items = [], isLoading, isError, refetch } = useBomList({ enabled: canView });
+  const deleteMutation = useDeleteBomItems();
+  const statusMutation = useUpdateBomStatus();
 
   useEffect(() => () => resetState(), [resetState]);
 
@@ -105,42 +91,9 @@ const MaterialCatalogPage: React.FC = () => {
     if (fresh && fresh !== viewingItem) queueMicrotask(() => setViewingItem(fresh));
   }, [items, viewingItem]);
 
-  useEffect(() => {
-    if (!canView || pendingNavRef.current) return;
-    const raw = location.state;
-    if (!isMaterialCatalogNavState(raw)) return;
-    if (!raw.viewMaterialId && !raw.createWithDanhMucId) return;
-    pendingNavRef.current = raw;
-    navigate(location.pathname, { replace: true, state: null });
-  }, [canView, location.pathname, location.state, navigate]);
-
-  useEffect(() => {
-    const st = pendingNavRef.current;
-    if (!st || !canView) return;
-
-    if (st.createWithDanhMucId && canCreate) {
-      pendingNavRef.current = null;
-      setCreateDefaultDanhMucId(st.createWithDanhMucId);
-      setEditingItem(null);
-      setFormOrigin('list');
-      startTransition(() => setShowForm(true));
-      return;
-    }
-
-    if (st.viewMaterialId) {
-      if (isLoading) return;
-      const item = items.find((m) => m.id === st.viewMaterialId);
-      pendingNavRef.current = null;
-      if (item) {
-        queryClient.setQueryData(queryKeys.materialCatalog.detail(item.id), item);
-        startTransition(() => setViewingItem(item));
-      }
-    }
-  }, [canView, canCreate, items, isLoading, queryClient]);
-
   const filterFn = useCallback(
-    (item: MaterialCatalogItem, term: string, f: typeof filters) =>
-      matchesMaterialCatalogFilters(item, categories, term, f),
+    (item: BomItem, term: string, f: typeof filters) =>
+      matchesBomFilters(item, categories, term, f),
     [categories],
   );
 
@@ -155,14 +108,14 @@ const MaterialCatalogPage: React.FC = () => {
   );
 
   const handleView = useCallback(
-    (item: MaterialCatalogItem) => {
-      queryClient.setQueryData(queryKeys.materialCatalog.detail(item.id), item);
+    (item: BomItem) => {
+      queryClient.setQueryData(queryKeys.bom.detail(item.id), item);
       setViewingItem(item);
     },
     [queryClient],
   );
 
-  const handleEdit = (item: MaterialCatalogItem) => {
+  const handleEdit = (item: BomItem) => {
     if (!canEdit) return;
     startTransition(() => {
       setFormOrigin(viewingItem ? 'detail' : 'list');
@@ -174,8 +127,8 @@ const MaterialCatalogPage: React.FC = () => {
   const handleDelete = (id: string) => {
     if (!canDelete) return;
     confirm({
-      title: txt('materialCatalog.deleteTitle'),
-      message: txt('materialCatalog.deleteMessage'),
+      title: txt('bom.deleteTitle'),
+      message: txt('bom.deleteMessage'),
       variant: 'danger',
       confirmText: CONFIRM_DELETE(),
       onConfirm: async () => {
@@ -188,13 +141,13 @@ const MaterialCatalogPage: React.FC = () => {
     });
   };
 
-  const handleStatusChange = (item: MaterialCatalogItem) => {
+  const handleStatusChange = (item: BomItem) => {
     if (!canEdit) return;
     const newStatus: TrangThaiHoatDong =
       item.trang_thai === 'Đang hoạt động' ? 'Ngừng hoạt động' : 'Đang hoạt động';
     confirm({
-      title: txt('materialCatalog.statusChangeTitle'),
-      message: `${txt('materialCatalog.statusChangeMessage')} ${newStatus}?`,
+      title: txt('bom.statusChangeTitle'),
+      message: `${txt('bom.statusChangeMessage')} ${newStatus}?`,
       confirmText: CONFIRM_YES(),
       onConfirm: () => statusMutation.mutate({ ids: [item.id], status: newStatus }),
     });
@@ -203,8 +156,8 @@ const MaterialCatalogPage: React.FC = () => {
   const handleDeleteMany = (ids: string[]) => {
     if (!canDelete || ids.length === 0) return;
     confirm({
-      title: txt('materialCatalog.bulkDeleteTitle'),
-      message: txt('materialCatalog.bulkDeleteMessage', { count: ids.length }),
+      title: txt('bom.bulkDeleteTitle'),
+      message: txt('bom.bulkDeleteMessage', { count: ids.length }),
       variant: 'danger',
       confirmText: CONFIRM_DELETE(),
       onConfirm: () => deleteMutation.mutate(ids),
@@ -220,7 +173,6 @@ const MaterialCatalogPage: React.FC = () => {
     const wasEditing = editingItem;
     setShowForm(false);
     setEditingItem(null);
-    setCreateDefaultDanhMucId(undefined);
     if (formOrigin === 'detail' && wasEditing && viewingItem?.id === wasEditing.id) {
       const fresh = items.find((d) => d.id === wasEditing.id);
       if (fresh) setViewingItem(fresh);
@@ -244,12 +196,13 @@ const MaterialCatalogPage: React.FC = () => {
   return (
     <div className="flex flex-col h-page relative">
       <div className="flex-1 min-h-0 flex flex-col mt-1.5 rounded-xl border border-border bg-card shadow-sm overflow-hidden">
-        <MaterialCatalogToolbar
+        <BomToolbar
           categories={categories}
           items={items}
           onAdd={() => {
             if (!canCreate) return;
             setFormOrigin('list');
+            setEditingItem(null);
             startTransition(() => setShowForm(true));
           }}
           onDeleteMany={handleDeleteMany}
@@ -259,14 +212,14 @@ const MaterialCatalogPage: React.FC = () => {
         <div className="flex-1 min-h-0 flex flex-col">
           {isError ? (
             <ErrorState
-              title={txt('materialCatalog.listLoadErrorTitle')}
-              message={txt('materialCatalog.listLoadErrorHint')}
+              title={txt('bom.listLoadErrorTitle')}
+              message={txt('bom.listLoadErrorHint')}
               onRetry={() => refetch()}
               primaryButtons
               className="m-4 border-0 shadow-none"
             />
           ) : (
-            <MaterialCatalogTable
+            <BomTable
               data={filteredItems}
               isLoading={isLoading}
               statusCounts={statusCounts}
@@ -282,11 +235,7 @@ const MaterialCatalogPage: React.FC = () => {
       <AnimatePresence>
         {showForm && (
           <Suspense fallback={<DrawerLazyFallback />}>
-            <MaterialCatalogForm
-              initialData={editingItem}
-              defaultDanhMucId={createDefaultDanhMucId}
-              onClose={handleCloseForm}
-            />
+            <BomForm initialData={editingItem} onClose={handleCloseForm} />
           </Suspense>
         )}
       </AnimatePresence>
@@ -294,39 +243,18 @@ const MaterialCatalogPage: React.FC = () => {
       <AnimatePresence>
         {viewingItem && !showForm && (
           <Suspense fallback={<DrawerLazyFallback />}>
-            <MaterialCatalogDetail
+            <BomDetail
               data={viewingItem}
               onClose={() => setViewingItem(null)}
               onEdit={handleEdit}
               onDelete={handleDelete}
               onStatusChange={handleStatusChange}
-              onViewBom={bomCrud.handleViewBom}
-              onAddBom={() => bomCrud.handleAddBomForMaterial(viewingItem.id)}
-              onEditBom={bomCrud.handleEditBom}
-              onDeleteBom={bomCrud.handleDeleteBom}
-              onStatusChangeBom={bomCrud.handleBomStatusChange}
             />
           </Suspense>
         )}
       </AnimatePresence>
-
-      <BomEmbeddedOverlays
-        stackLevel={bomCrud.bomStackLevel}
-        viewingBom={bomCrud.viewingBom}
-        editingBom={bomCrud.editingBom}
-        showForm={bomCrud.showBomForm}
-        presetSanPhamId={bomCrud.presetSanPhamId}
-        presetNguyenLieuId={bomCrud.presetNguyenLieuId}
-        lockSanPham={bomCrud.lockSanPham}
-        lockNguyenLieu={bomCrud.lockNguyenLieu}
-        onCloseForm={bomCrud.handleCloseBomForm}
-        onCloseDetail={bomCrud.handleCloseBomDetail}
-        onEdit={bomCrud.handleEditBom}
-        onDelete={bomCrud.handleDeleteBom}
-        onStatusChange={bomCrud.handleBomStatusChange}
-      />
     </div>
   );
 };
 
-export default MaterialCatalogPage;
+export default BomPage;

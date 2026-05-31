@@ -83,6 +83,12 @@ export const materialCategory = {
     addChild: 'Thêm con',
     noChildren: 'Chưa có danh mục con',
     noChildrenHint: 'Bấm Thêm để tạo danh mục cấp 2 trực tiếp.',
+    materialsSection: 'Danh sách nguyên liệu',
+    noMaterials: 'Chưa có nguyên liệu trong danh mục này',
+    noMaterialsHint: 'Thêm nguyên liệu thuộc danh mục cấp 2 tại module Danh sách nguyên liệu.',
+    addMaterial: 'Thêm nguyên liệu',
+    noMaterialCatalogPermission: 'Bạn không có quyền xem danh sách nguyên liệu.',
+    openMaterialCatalog: 'Mở danh sách nguyên liệu',
   },
   store: {
     orderCol: 'Thứ tự',

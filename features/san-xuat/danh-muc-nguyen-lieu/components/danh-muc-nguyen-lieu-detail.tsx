@@ -17,6 +17,8 @@ import {
   Folder,
   FileText,
   Hash,
+  FlaskConical,
+  Eye,
 } from 'lucide-react';
 import Button from '@/components/ui/Button';
 import { MaterialCategory } from '../core/types';
@@ -31,7 +33,11 @@ import EmptyState from '@/components/shared/EmptyState';
 import EmbeddedChildDataGrid from '@/components/shared/EmbeddedChildDataGrid';
 import { BTN_CLOSE, BTN_EDIT, BTN_DELETE } from '@/lib/button-labels';
 import { useResourcePermissions } from '@/hooks/use-resource-permissions';
+import { useCan } from '@/hooks/use-can';
 import { MaterialCategoryTableRowActions } from './material-category-table-row-actions';
+import { useMaterialCatalogList } from '@/features/san-xuat/danh-sach-nguyen-lieu/hooks/use-danh-sach-nguyen-lieu';
+import type { MaterialCatalogItem } from '@/features/san-xuat/danh-sach-nguyen-lieu/core/types';
+import { materialCatalogTrangThaiBadgeConfig } from '@/features/san-xuat/danh-sach-nguyen-lieu/utils/material-catalog-badges';
 
 interface Props {
   data: MaterialCategory;
@@ -42,6 +48,9 @@ interface Props {
   onStatusChange?: (item: MaterialCategory) => void;
   onAddChild?: (parent: MaterialCategory) => void;
   onViewChild?: (child: MaterialCategory) => void;
+  /** Mở detail NL chồng drawer (từ DM cấp 2) */
+  onViewMaterial?: (item: MaterialCatalogItem) => void;
+  onAddMaterial?: (danhMucId: string) => void;
   maxWidthClass?: string;
   stackLevel?: number;
 }
@@ -55,17 +64,35 @@ const MaterialCategoryDetail: React.FC<Props> = ({
   onStatusChange,
   onAddChild,
   onViewChild,
+  onViewMaterial,
+  onAddMaterial,
   maxWidthClass = DRAWER_WIDTH_DETAIL,
   stackLevel = 0,
 }) => {
   const { canEdit, canDelete, canCreate } = useResourcePermissions('materialCategories');
+  const canViewMaterials = useCan('view', 'materialCatalog');
+  const canCreateMaterial = useCan('create', 'materialCatalog');
   const [childMenuOpenId, setChildMenuOpenId] = useState<string | null>(null);
   const isActive = data.trang_thai === 'Đang hoạt động';
   const parentDept = data.cha_id ? allCategories.find((d) => d.id === data.cha_id) : null;
 
   const levelBadgeConfig = useMemo(() => buildMaterialCategoryLevelBadgeConfig(), []);
   const statusBadgeConfig = useMemo(() => materialCategoryTrangThaiBadgeConfig(), []);
+  const materialStatusBadgeConfig = useMemo(() => materialCatalogTrangThaiBadgeConfig(), []);
   const isRootLevel = data.cap_do === 1;
+  const isLevel2 = data.cap_do === 2;
+
+  const { data: allMaterials = [], isLoading: materialsLoading } = useMaterialCatalogList({
+    enabled: isLevel2 && canViewMaterials,
+  });
+
+  const materialsInCategory = useMemo(
+    () =>
+      allMaterials
+        .filter((m) => m.danh_muc_id === data.id)
+        .sort((a, b) => a.ten_nguyen_lieu.localeCompare(b.ten_nguyen_lieu, 'vi')),
+    [allMaterials, data.id],
+  );
 
   const children = useMemo(
     () =>
@@ -201,6 +228,125 @@ const MaterialCategoryDetail: React.FC<Props> = ({
             />
           </DetailFieldGrid>
         </DetailSection>
+
+        {isLevel2 ? (
+          <DetailSection
+            title={txt('materialCategory.detail.materialsSection')}
+            icon={<FlaskConical size={14} />}
+            variant="primary"
+            headerRight={
+              canViewMaterials ? (
+                <>
+                  <span className="inline-flex items-center rounded-full border border-primary/20 bg-primary/10 px-2.5 py-1 text-xs font-medium tabular-nums text-primary">
+                    {materialsInCategory.length} {txt('materialCategory.footerRecords')}
+                  </span>
+                  {canCreateMaterial && onAddMaterial ? (
+                    <Button
+                      type="button"
+                      size="sm"
+                      onClick={() => onAddMaterial(data.id)}
+                      className="h-8 shrink-0 bg-primary px-3 text-white shadow-sm hover:bg-primary/90"
+                    >
+                      <Plus size={14} className="mr-1.5" />
+                      {txt('materialCategory.detail.addMaterial')}
+                    </Button>
+                  ) : null}
+                </>
+              ) : null
+            }
+          >
+            {!canViewMaterials ? (
+              <p className="text-sm text-muted-foreground">
+                {txt('materialCategory.detail.noMaterialCatalogPermission')}
+              </p>
+            ) : materialsLoading ? (
+              <p className="text-sm text-muted-foreground">{txt('materialCatalog.loading')}</p>
+            ) : materialsInCategory.length === 0 ? (
+              <EmptyState
+                title={txt('materialCategory.detail.noMaterials')}
+                description={txt('materialCategory.detail.noMaterialsHint')}
+                icon={<FlaskConical className="h-10 w-10 text-muted-foreground" />}
+                action={
+                  canCreateMaterial && onAddMaterial ? (
+                    <Button
+                      type="button"
+                      size="sm"
+                      onClick={() => onAddMaterial(data.id)}
+                      className="bg-primary text-white hover:bg-primary/90"
+                    >
+                      <Plus size={14} className="mr-2" />
+                      {txt('materialCategory.detail.addMaterial')}
+                    </Button>
+                  ) : undefined
+                }
+              />
+            ) : (
+              <EmbeddedChildDataGrid<MaterialCatalogItem>
+                rows={materialsInCategory}
+                getRowKey={(m) => m.id}
+                labelColumn={{
+                  header: txt('materialCatalog.form.name'),
+                  minWidthClass: 'min-w-[160px]',
+                  renderCell: (m) => (
+                    <span className="font-medium text-foreground">{m.ten_nguyen_lieu}</span>
+                  ),
+                }}
+                columns={[
+                  {
+                    id: 'code',
+                    header: txt('materialCatalog.store.codeCol'),
+                    renderCell: (m) => (
+                      <span className="font-mono text-xs text-muted-foreground">{m.ma_nguyen_lieu}</span>
+                    ),
+                  },
+                  {
+                    id: 'unit',
+                    header: txt('materialCatalog.store.unitCol'),
+                    renderCell: (m) => (
+                      <span className="text-xs text-muted-foreground">{m.don_vi_tinh || '—'}</span>
+                    ),
+                  },
+                  {
+                    id: 'color',
+                    header: txt('materialCatalog.store.colorCol'),
+                    renderCell: (m) => (
+                      <span className="text-xs text-foreground truncate">{m.mau_sac || '—'}</span>
+                    ),
+                  },
+                  {
+                    id: 'status',
+                    header: txt('common.status'),
+                    renderCell: (m) => (
+                      <EnumBadge shape="pill" value={m.trang_thai} config={materialStatusBadgeConfig} />
+                    ),
+                  },
+                ]}
+                actionsColumn={{
+                  header: txt('common.actions'),
+                  widthClass: 'w-[52px] min-w-[52px]',
+                  renderCell: (m) =>
+                    onViewMaterial ? (
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        className="h-8 w-8 p-0"
+                        aria-label={txt('common.view', 'Xem')}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onViewMaterial(m);
+                        }}
+                      >
+                        <Eye size={14} />
+                      </Button>
+                    ) : null,
+                }}
+                onRowClick={onViewMaterial ? (m) => onViewMaterial(m) : undefined}
+                containerClassName="border-0 shadow-none"
+              />
+            )}
+          </DetailSection>
+        ) : null}
 
         <DetailSection title={txt('materialCategory.detail.systemInfo')} icon={<Clock size={14} />} variant="primary">
           <DetailFieldGrid>

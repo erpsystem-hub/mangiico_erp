@@ -27,6 +27,7 @@
     "seed:sx-danh-muc-hang-hoa": "npx supabase@latest db query --linked --file supabase/scripts/seed_sx_danh_muc_hang_hoa.sql",
     "seed:sx-danh-muc-nguyen-lieu": "npx supabase@latest db query --linked --file supabase/scripts/seed_sx_danh_muc_nguyen_lieu.sql",
     "seed:sx-danh-sach-nguyen-lieu": "npx supabase@latest db query --linked --file supabase/scripts/seed_sx_danh_sach_nguyen_lieu.sql",
+    "seed:sx-bom": "npx supabase@latest db query --linked --file supabase/scripts/seed_sx_bom.sql",
     "seed:sx-danh-muc-links-demo": "npx supabase@latest db query --linked --file supabase/scripts/seed_sx_danh_muc_links_demo.sql",
     "seed:sx-danh-sach-san-pham": "npx supabase@latest db query --linked --file supabase/scripts/seed_sx_danh_sach_san_pham.sql",
     "drop:sx-thuoc-tinh-loai": "npx supabase@latest db query --linked --file supabase/scripts/drop_sx_thuoc_tinh_loai_gia_tri_mau.sql",

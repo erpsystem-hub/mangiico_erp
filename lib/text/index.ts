@@ -20,6 +20,7 @@ import { productCategory } from '../../features/san-xuat/danh-muc-hang-hoa/text'
 import { productCatalog } from '../../features/san-xuat/danh-sach-hang-hoa/text';
 import { materialCategory } from '../../features/san-xuat/danh-muc-nguyen-lieu/text';
 import { materialCatalog } from '../../features/san-xuat/danh-sach-nguyen-lieu/text';
+import { bom } from '../../features/san-xuat/bom/text';
 
 function flatten(prefix: string, obj: unknown): Record<string, string> {
   const out: Record<string, string> = {};
@@ -55,6 +56,7 @@ export const STRINGS: Readonly<Record<string, string>> = Object.freeze({
   ...flatten('productCatalog', productCatalog),
   ...flatten('materialCategory', materialCategory),
   ...flatten('materialCatalog', materialCatalog),
+  ...flatten('bom', bom),
   ...flatten('tenure', tenure),
   ...flatten('taiLieu', taiLieu),
 });

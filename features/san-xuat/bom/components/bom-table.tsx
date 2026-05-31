@@ -1,32 +1,32 @@
 import React, { useState, useCallback, useMemo } from 'react';
 import { txt } from '@/lib/text';
-import { FlaskConical } from 'lucide-react';
-import type { MaterialCatalogItem } from '../core/types';
-import { useMaterialCatalogStore } from '../store/useMaterialCatalogStore';
+import { GitBranch, Package, FlaskConical } from 'lucide-react';
+import type { BomItem } from '../core/types';
+import { useBomStore } from '../store/useBomStore';
 import type { ColumnConfig } from '@/store/createGenericStore';
 import GenericTable from '@/components/shared/GenericTable';
 import EnumBadge from '@/components/ui/EnumBadge';
 import { formatDateShort } from '@/lib/utils';
-import { materialCatalogTrangThaiBadgeConfig } from '../utils/material-catalog-badges';
+import { bomTrangThaiBadgeConfig } from '../utils/bom-badges';
 import { MobileListCard } from '@/components/shared/MobileListCard';
 import {
   ColumnHeaderSortMenu,
   ColumnHeaderSearch,
   ColumnHeaderFilter,
 } from '@/components/shared/column-header';
-import { MaterialCatalogTableRowActions } from './material-catalog-table-row-actions';
+import { BomTableRowActions } from './bom-table-row-actions';
 
 interface Props {
-  data: MaterialCatalogItem[];
+  data: BomItem[];
   isLoading: boolean;
   statusCounts: { Active: number; Inactive: number };
-  onEdit: (item: MaterialCatalogItem) => void;
+  onEdit: (item: BomItem) => void;
   onDelete: (id: string) => void;
-  onStatusChange: (item: MaterialCatalogItem) => void;
-  onView?: (item: MaterialCatalogItem) => void;
+  onStatusChange: (item: BomItem) => void;
+  onView?: (item: BomItem) => void;
 }
 
-const MaterialCatalogTable: React.FC<Props> = ({
+const BomTable: React.FC<Props> = ({
   data,
   isLoading,
   statusCounts,
@@ -48,9 +48,9 @@ const MaterialCatalogTable: React.FC<Props> = ({
     setSort,
     filters,
     setFilter,
-  } = useMaterialCatalogStore();
+  } = useBomStore();
 
-  const trangThaiBadgeConfig = useMemo(() => materialCatalogTrangThaiBadgeConfig(), []);
+  const trangThaiBadgeConfig = useMemo(() => bomTrangThaiBadgeConfig(), []);
 
   const statusOptions = useMemo(
     () => [
@@ -104,8 +104,19 @@ const MaterialCatalogTable: React.FC<Props> = ({
     [filters, setFilter, sort, setSort, statusOptions],
   );
 
-  const renderCell = (colId: string, item: MaterialCatalogItem) => {
+  const renderCell = (colId: string, item: BomItem) => {
     switch (colId) {
+      case 'ma_san_pham':
+        return (
+          <span className="text-sm font-mono text-muted-foreground">{item.ma_san_pham}</span>
+        );
+      case 'ten_san_pham':
+        return (
+          <div className="flex items-center gap-2 min-w-0">
+            <Package size={14} className="shrink-0 text-muted-foreground" />
+            <span className="font-medium text-foreground truncate">{item.ten_san_pham}</span>
+          </div>
+        );
       case 'ma_nguyen_lieu':
         return (
           <span className="text-sm font-mono text-muted-foreground">{item.ma_nguyen_lieu}</span>
@@ -114,24 +125,26 @@ const MaterialCatalogTable: React.FC<Props> = ({
         return (
           <div className="flex items-center gap-2 min-w-0">
             <FlaskConical size={14} className="shrink-0 text-muted-foreground" />
-            <span className="font-medium text-foreground truncate">{item.ten_nguyen_lieu}</span>
+            <span className="text-sm text-foreground truncate">{item.ten_nguyen_lieu}</span>
           </div>
         );
-      case 'ten_nhom_danh_muc':
+      case 'so_luong':
         return (
-          <span className="text-sm text-muted-foreground truncate">{item.ten_nhom_danh_muc || '—'}</span>
-        );
-      case 'ten_danh_muc':
-        return (
-          <span className="text-sm text-foreground truncate">{item.ten_danh_muc}</span>
-        );
-      case 'mau_sac':
-        return (
-          <span className="text-sm text-foreground truncate">{item.mau_sac || '—'}</span>
+          <span className="text-sm tabular-nums text-right block w-full" title={String(item.so_luong)}>
+            {item.so_luong}
+          </span>
         );
       case 'don_vi_tinh':
         return (
-          <span className="text-sm text-muted-foreground">{item.don_vi_tinh || '—'}</span>
+          <span className="text-sm text-muted-foreground text-center block w-full">
+            {item.don_vi_tinh || '—'}
+          </span>
+        );
+      case 'ten_nhom_danh_muc_sp':
+        return (
+          <span className="text-sm text-muted-foreground truncate">
+            {item.ten_nhom_danh_muc_sp || '—'}
+          </span>
         );
       case 'trang_thai':
         return <EnumBadge value={item.trang_thai} config={trangThaiBadgeConfig} />;
@@ -139,7 +152,7 @@ const MaterialCatalogTable: React.FC<Props> = ({
         return formatDateShort(item.tg_cap_nhat);
       case 'actions':
         return (
-          <MaterialCatalogTableRowActions
+          <BomTableRowActions
             item={item}
             menuOpenId={rowMenuOpenId}
             onMenuOpenChange={setRowMenuOpenId}
@@ -153,27 +166,29 @@ const MaterialCatalogTable: React.FC<Props> = ({
     }
   };
 
-  const renderMobileCard = (item: MaterialCatalogItem, isSelected: boolean) => (
+  const renderMobileCard = (item: BomItem, isSelected: boolean) => (
     <MobileListCard
       selected={isSelected}
       onBodyClick={onView ? () => onView(item) : undefined}
       leading={
         <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary border border-primary/20">
-          <FlaskConical size={22} />
+          <GitBranch size={22} />
         </div>
       }
       titleRow={
         <div className="flex min-w-0 items-center justify-between gap-2">
-          <h4 className="truncate text-sm font-semibold text-foreground">{item.ten_nguyen_lieu}</h4>
+          <h4 className="truncate text-sm font-semibold text-foreground">{item.ten_san_pham}</h4>
           <EnumBadge value={item.trang_thai} config={trangThaiBadgeConfig} />
         </div>
       }
-      subheader={<span className="font-mono text-xs text-muted-foreground">{item.ma_nguyen_lieu}</span>}
-      metaLine={
+      subheader={
         <span className="text-xs text-muted-foreground truncate">
-          {item.ten_nhom_danh_muc ? `${item.ten_nhom_danh_muc} › ` : ''}
-          {item.ten_danh_muc}
-          {item.mau_sac ? ` · ${item.mau_sac}` : ''}
+          {item.ma_san_pham} · {item.ten_nguyen_lieu} ({item.ma_nguyen_lieu})
+        </span>
+      }
+      metaLine={
+        <span className="text-xs text-muted-foreground">
+          {item.so_luong} {item.don_vi_tinh}
         </span>
       }
       footerStart={
@@ -189,7 +204,7 @@ const MaterialCatalogTable: React.FC<Props> = ({
         </label>
       }
       footerEnd={
-        <MaterialCatalogTableRowActions
+        <BomTableRowActions
           compact
           item={item}
           menuOpenId={rowMenuOpenId}
@@ -207,9 +222,9 @@ const MaterialCatalogTable: React.FC<Props> = ({
       data={data}
       columns={columns}
       isLoading={isLoading}
-      loadingText={txt('materialCatalog.loading')}
-      emptyTitle={txt('materialCatalog.empty')}
-      emptyDescription={txt('materialCatalog.emptyHint')}
+      loadingText={txt('bom.loading')}
+      emptyTitle={txt('bom.empty')}
+      emptyDescription={txt('bom.emptyHint')}
       selectedIds={selectedIds}
       onToggleSelection={toggleSelection}
       onToggleAll={toggleAllSelection}
@@ -226,4 +241,4 @@ const MaterialCatalogTable: React.FC<Props> = ({
   );
 };
 
-export default MaterialCatalogTable;
+export default BomTable;

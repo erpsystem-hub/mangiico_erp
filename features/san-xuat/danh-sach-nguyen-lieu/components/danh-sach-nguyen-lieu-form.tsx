@@ -43,10 +43,20 @@ const DEFAULT_VALUES: MaterialCatalogFormValues = {
 
 interface Props {
   initialData?: MaterialCatalogItem | null;
+  /** Danh mục cấp 2 mặc định khi tạo mới (từ Danh mục NL) */
+  defaultDanhMucId?: string;
   onClose: () => void;
+  maxWidthClass?: string;
+  stackLevel?: number;
 }
 
-const MaterialCatalogForm: React.FC<Props> = ({ initialData, onClose }) => {
+const MaterialCatalogForm: React.FC<Props> = ({
+  initialData,
+  defaultDanhMucId,
+  onClose,
+  maxWidthClass,
+  stackLevel = 0,
+}) => {
   const isEdit = !!initialData;
   const sessionReady = useSupabaseReady();
   const createMutation = useCreateMaterialCatalogItem(onClose);
@@ -92,9 +102,12 @@ const MaterialCatalogForm: React.FC<Props> = ({ initialData, onClose }) => {
         trang_thai: normalizeTrangThaiHoatDong(initialData.trang_thai),
       });
     } else {
-      reset(DEFAULT_VALUES);
+      reset({
+        ...DEFAULT_VALUES,
+        danh_muc_id: defaultDanhMucId?.trim() ?? '',
+      });
     }
-  }, [initialData, reset]);
+  }, [initialData, defaultDanhMucId, reset]);
 
   const onSubmit: SubmitHandler<MaterialCatalogFormValues> = (data) => {
     if (isEdit && initialData) {
@@ -129,7 +142,8 @@ const MaterialCatalogForm: React.FC<Props> = ({ initialData, onClose }) => {
         />
       }
       footerCompact
-      maxWidthClass={DRAWER_WIDTH_FORM}
+      maxWidthClass={maxWidthClass ?? DRAWER_WIDTH_FORM}
+      stackLevel={stackLevel}
     >
       <form
         id="material-catalog-form"

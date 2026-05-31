@@ -25,6 +25,7 @@ const ProductCategoryPage = lazy(() => import('./features/san-xuat/danh-muc-hang
 const ProductCatalogPage = lazy(() => import('./features/san-xuat/danh-sach-hang-hoa/index'));
 const MaterialCategoryPage = lazy(() => import('./features/san-xuat/danh-muc-nguyen-lieu/index'));
 const MaterialCatalogPage = lazy(() => import('./features/san-xuat/danh-sach-nguyen-lieu/index'));
+const BomPage = lazy(() => import('./features/san-xuat/bom/index'));
 const FinanceCategoryPage = lazy(() => import('./features/tai-chinh/danh-muc-tai-chinh/index'));
 const FinanceAccountPage = lazy(() => import('./features/tai-chinh/tai-khoan/index'));
 import {
@@ -109,7 +110,7 @@ const App = () => {
           <Route path="/san-xuat/thong-so-do" element={<MeasurementSpecPage />} />
           <Route path="/san-xuat/danh-muc-nguyen-lieu" element={<MaterialCategoryPage />} />
           <Route path="/san-xuat/danh-sach-nguyen-lieu" element={<MaterialCatalogPage />} />
-          <Route path="/san-xuat/bom" element={<ProductionModulePlaceholder moduleKey="bom" />} />
+          <Route path="/san-xuat/bom" element={<BomPage />} />
           <Route path="/tai-chinh" element={<FinanceDashboard />} />
           <Route path="/tai-chinh/so-thu-chi" element={<FinanceModulePlaceholder moduleKey="so-thu-chi" />} />
           <Route path="/tai-chinh/tai-khoan" element={<FinanceAccountPage />} />

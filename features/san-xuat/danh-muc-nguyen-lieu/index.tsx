@@ -32,6 +32,15 @@ import { CONFIRM_DELETE, CONFIRM_DELETE_ALL, CONFIRM_YES } from '@/lib/button-la
 import { useListWithFilter } from '@/lib/hooks';
 import { useExportData } from '@/lib/useExportData';
 import { DRAWER_WIDTH_DETAIL_SMALL, DRAWER_Z_CONTENT_BASE } from '@/lib/dialog-sizes';
+import { useQueryClient } from '@tanstack/react-query';
+import { queryKeys } from '@/lib/query-keys';
+import type { TrangThaiHoatDong } from '@/lib/constants/trang-thai';
+import type { MaterialCatalogItem } from '@/features/san-xuat/danh-sach-nguyen-lieu/core/types';
+import {
+  useMaterialCatalogList,
+  useDeleteMaterialCatalogItems,
+  useUpdateMaterialCatalogStatus,
+} from '@/features/san-xuat/danh-sach-nguyen-lieu/hooks/use-danh-sach-nguyen-lieu';
 import { MaterialCategory } from './core/types';
 import type { MaterialCategoryFormValues } from './core/schema';
 import { parseTrangThaiHoatDongImport } from '@/lib/constants/trang-thai';
@@ -43,6 +52,14 @@ import { getVisibleMaterialCategoryIdsUnderRoots } from './utils/material-catego
 
 const MaterialCategoryForm = lazy(() => import('./components/danh-muc-nguyen-lieu-form'));
 const MaterialCategoryDetail = lazy(() => import('./components/danh-muc-nguyen-lieu-detail'));
+const MaterialCatalogForm = lazy(
+  () => import('@/features/san-xuat/danh-sach-nguyen-lieu/components/danh-sach-nguyen-lieu-form'),
+);
+const MaterialCatalogDetail = lazy(
+  () => import('@/features/san-xuat/danh-sach-nguyen-lieu/components/danh-sach-nguyen-lieu-detail'),
+);
+
+type MaterialFormOrigin = 'categoryDetail' | 'materialDetail';
 
 const DrawerLazyFallback: React.FC = () => (
   <div
@@ -65,6 +82,13 @@ const MaterialCategoryPage = () => {
   const didRedirect = useRef(false);
 
   const confirm = useConfirmStore((s) => s.confirm);
+  const queryClient = useQueryClient();
+  const canViewMaterialCatalog = useCan('view', 'materialCatalog');
+  const {
+    canCreate: canCreateMaterial,
+    canEdit: canEditMaterial,
+    canDelete: canDeleteMaterial,
+  } = useResourcePermissions('materialCatalog');
   const {
     searchTerm,
     filters,
@@ -82,6 +106,13 @@ const MaterialCategoryPage = () => {
   const [detailStack, setDetailStack] = useState<MaterialCategory[]>([]);
   const [addChildOf, setAddChildOf] = useState<MaterialCategory | null>(null);
   const [formOrigin, setFormOrigin] = useState<'list' | 'detail'>('list');
+  const [viewingMaterial, setViewingMaterial] = useState<MaterialCatalogItem | null>(null);
+  const [editingMaterial, setEditingMaterial] = useState<MaterialCatalogItem | null>(null);
+  const [showMaterialForm, setShowMaterialForm] = useState(false);
+  const [materialCreateDanhMucId, setMaterialCreateDanhMucId] = useState<string | undefined>();
+  const [materialFormOrigin, setMaterialFormOrigin] = useState<MaterialFormOrigin>('categoryDetail');
+  const viewingMaterialRef = useRef<MaterialCatalogItem | null>(null);
+  const materialFormOriginRef = useRef<MaterialFormOrigin>('categoryDetail');
   const [showExport, setShowExport] = useState(false);
   const [showImport, setShowImport] = useState(false);
   const [page, setPage] = useState(1);
@@ -97,6 +128,29 @@ const MaterialCategoryPage = () => {
   const { data: categories = [], isLoading, isError, refetch } = useMaterialCategories({
     enabled: canView,
   });
+
+  const materialOverlayActive =
+    detailStack.length > 0 || showMaterialForm || Boolean(viewingMaterial);
+  const { data: materials = [] } = useMaterialCatalogList({
+    enabled: canView && canViewMaterialCatalog && materialOverlayActive,
+  });
+  const deleteMaterialMutation = useDeleteMaterialCatalogItems();
+  const statusMaterialMutation = useUpdateMaterialCatalogStatus();
+
+  useEffect(() => {
+    viewingMaterialRef.current = viewingMaterial;
+  }, [viewingMaterial]);
+  useEffect(() => {
+    materialFormOriginRef.current = materialFormOrigin;
+  }, [materialFormOrigin]);
+
+  useEffect(() => {
+    if (!viewingMaterial) return;
+    const fresh = materials.find((m) => m.id === viewingMaterial.id);
+    if (fresh && fresh !== viewingMaterial) queueMicrotask(() => setViewingMaterial(fresh));
+  }, [materials, viewingMaterial]);
+
+  const materialStackLevel = Math.max(detailStack.length, 1);
 
   const deleteMutation = useDeleteMaterialCategory();
   const statusMutation = useUpdateStatusMaterialCategory();
@@ -358,6 +412,105 @@ const MaterialCategoryPage = () => {
     setFormOrigin('list');
   };
 
+  const handleViewMaterial = useCallback(
+    (item: MaterialCatalogItem) => {
+      if (!canViewMaterialCatalog) return;
+      queryClient.setQueryData(queryKeys.materialCatalog.detail(item.id), item);
+      startTransition(() => {
+        setMaterialFormOrigin('categoryDetail');
+        setViewingMaterial(item);
+      });
+    },
+    [canViewMaterialCatalog, queryClient],
+  );
+
+  const handleAddMaterial = useCallback(
+    (danhMucId: string) => {
+      if (!canCreateMaterial) return;
+      setMaterialCreateDanhMucId(danhMucId);
+      setEditingMaterial(null);
+      setMaterialFormOrigin('categoryDetail');
+      startTransition(() => setShowMaterialForm(true));
+    },
+    [canCreateMaterial],
+  );
+
+  const handleEditMaterial = useCallback(
+    (item: MaterialCatalogItem) => {
+      if (!canEditMaterial) return;
+      const origin: MaterialFormOrigin = viewingMaterialRef.current ? 'materialDetail' : 'categoryDetail';
+      startTransition(() => {
+        setMaterialFormOrigin(origin);
+        setEditingMaterial(item);
+        setShowMaterialForm(true);
+      });
+    },
+    [canEditMaterial],
+  );
+
+  const handleCloseMaterialForm = useCallback(() => {
+    setShowMaterialForm(false);
+    const edited = editingMaterial;
+    setEditingMaterial(null);
+    setMaterialCreateDanhMucId(undefined);
+    if (materialFormOriginRef.current === 'materialDetail' && edited) {
+      const fresh = materials.find((m) => m.id === edited.id);
+      startTransition(() => setViewingMaterial(fresh ?? null));
+    }
+    setMaterialFormOrigin('categoryDetail');
+  }, [editingMaterial, materials]);
+
+  const handleCloseMaterialDetail = useCallback(() => {
+    setViewingMaterial(null);
+  }, []);
+
+  const handleDeleteMaterial = useCallback(
+    (id: string) => {
+      if (!canDeleteMaterial) return;
+      confirm({
+        title: txt('materialCatalog.deleteTitle'),
+        message: txt('materialCatalog.deleteMessage'),
+        variant: 'danger',
+        confirmText: CONFIRM_DELETE(),
+        onConfirm: () => {
+          deleteMaterialMutation.mutate([id], {
+            onSuccess: () => {
+              if (viewingMaterialRef.current?.id === id) setViewingMaterial(null);
+            },
+          });
+        },
+      });
+    },
+    [canDeleteMaterial, confirm, deleteMaterialMutation],
+  );
+
+  const handleMaterialStatusChange = useCallback(
+    (item: MaterialCatalogItem) => {
+      if (!canEditMaterial) return;
+      const newStatus: TrangThaiHoatDong =
+        item.trang_thai === 'Đang hoạt động' ? 'Ngừng hoạt động' : 'Đang hoạt động';
+      confirm({
+        title: txt('materialCatalog.statusChangeTitle'),
+        message: `${txt('materialCatalog.statusChangeMessage')} ${newStatus}?`,
+        confirmText: CONFIRM_YES(),
+        onConfirm: () =>
+          statusMaterialMutation.mutate(
+            { ids: [item.id], status: newStatus },
+            {
+              onSuccess: () => {
+                if (viewingMaterialRef.current?.id === item.id) {
+                  setViewingMaterial((prev) =>
+                    prev ? { ...prev, trang_thai: newStatus } : null,
+                  );
+                }
+              },
+            },
+          ),
+      });
+    },
+    [canEditMaterial, confirm, statusMaterialMutation],
+  );
+
   const handleAddChild = (parent: MaterialCategory) => {
     if (!canCreate) return;
     setDetailStack((s) => (s.length ? [s[0]] : []));
@@ -449,8 +602,32 @@ const MaterialCategoryPage = () => {
         )}
       </AnimatePresence>
 
-      <AnimatePresence>
-        {detailStack.length > 0 && !showForm ? (
+      <AnimatePresence mode="sync">
+        {showMaterialForm && (
+          <Suspense fallback={<DrawerLazyFallback />}>
+            <MaterialCatalogForm
+              key={editingMaterial?.id ?? `new-${materialCreateDanhMucId ?? ''}`}
+              initialData={editingMaterial}
+              defaultDanhMucId={materialCreateDanhMucId}
+              onClose={handleCloseMaterialForm}
+              stackLevel={materialStackLevel + (viewingMaterial ? 1 : 0)}
+            />
+          </Suspense>
+        )}
+        {viewingMaterial && !showMaterialForm && (
+          <Suspense fallback={<DrawerLazyFallback />}>
+            <MaterialCatalogDetail
+              data={viewingMaterial}
+              onClose={handleCloseMaterialDetail}
+              onEdit={handleEditMaterial}
+              onDelete={handleDeleteMaterial}
+              onStatusChange={handleMaterialStatusChange}
+              maxWidthClass={DRAWER_WIDTH_DETAIL_SMALL}
+              stackLevel={materialStackLevel}
+            />
+          </Suspense>
+        )}
+        {detailStack.length > 0 && !showForm && !showMaterialForm && !viewingMaterial ? (
           <Suspense fallback={<DrawerLazyFallback />}>
             <>
               {detailStack.map((dept, index) => (
@@ -463,6 +640,8 @@ const MaterialCategoryPage = () => {
                   onDelete={handleDelete}
                   onStatusChange={handleStatusChange}
                   onAddChild={handleAddChild}
+                  onViewMaterial={handleViewMaterial}
+                  onAddMaterial={handleAddMaterial}
                   onViewChild={(child) => {
                     setDetailStack((s) => {
                       const last = s[s.length - 1];

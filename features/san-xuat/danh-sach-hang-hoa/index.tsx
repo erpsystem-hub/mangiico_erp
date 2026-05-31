@@ -36,6 +36,8 @@ import { useListWithFilter } from '@/lib/hooks';
 import type { ProductCatalogItem } from './core/types';
 import { matchesProductCatalogFilters } from './utils/catalog-list-filter';
 import type { TrangThaiHoatDong } from '@/lib/constants/trang-thai';
+import { useBomEmbeddedCrud } from '@/features/san-xuat/bom/hooks/use-bom-embedded-crud';
+import BomEmbeddedOverlays from '@/features/san-xuat/bom/components/bom-embedded-overlays';
 
 const ProductCatalogForm = lazy(() => import('./components/danh-sach-hang-hoa-form'));
 const ProductCatalogDetail = lazy(() => import('./components/danh-sach-hang-hoa-detail'));
@@ -84,6 +86,9 @@ const ProductCatalogPage: React.FC = () => {
   });
   const deleteMutation = useDeleteProductCatalogItems();
   const statusMutation = useUpdateProductCatalogStatus();
+
+  const productDetailOpen = Boolean(viewingItem) && !showForm;
+  const bomCrud = useBomEmbeddedCrud(productDetailOpen);
 
   useEffect(() => () => resetState(), [resetState]);
 
@@ -250,10 +255,31 @@ const ProductCatalogPage: React.FC = () => {
               onEdit={handleEdit}
               onDelete={handleDelete}
               onStatusChange={handleStatusChange}
+              onViewBom={bomCrud.handleViewBom}
+              onAddBom={() => bomCrud.handleAddBomForProduct(viewingItem.id)}
+              onEditBom={bomCrud.handleEditBom}
+              onDeleteBom={bomCrud.handleDeleteBom}
+              onStatusChangeBom={bomCrud.handleBomStatusChange}
             />
           </Suspense>
         )}
       </AnimatePresence>
+
+      <BomEmbeddedOverlays
+        stackLevel={bomCrud.bomStackLevel}
+        viewingBom={bomCrud.viewingBom}
+        editingBom={bomCrud.editingBom}
+        showForm={bomCrud.showBomForm}
+        presetSanPhamId={bomCrud.presetSanPhamId}
+        presetNguyenLieuId={bomCrud.presetNguyenLieuId}
+        lockSanPham={bomCrud.lockSanPham}
+        lockNguyenLieu={bomCrud.lockNguyenLieu}
+        onCloseForm={bomCrud.handleCloseBomForm}
+        onCloseDetail={bomCrud.handleCloseBomDetail}
+        onEdit={bomCrud.handleEditBom}
+        onDelete={bomCrud.handleDeleteBom}
+        onStatusChange={bomCrud.handleBomStatusChange}
+      />
     </div>
   );
 };

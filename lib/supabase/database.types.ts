@@ -489,6 +489,60 @@ export type Database = {
           },
         ]
       }
+      sx_bom: {
+        Row: {
+          don_vi_tinh: string
+          ghi_chu: string | null
+          id: number
+          nguyen_lieu_id: number
+          san_pham_id: number
+          so_luong: number
+          tg_cap_nhat: string
+          tg_tao: string
+          thu_tu: number
+          trang_thai: string
+        }
+        Insert: {
+          don_vi_tinh?: string
+          ghi_chu?: string | null
+          id?: never
+          nguyen_lieu_id: number
+          san_pham_id: number
+          so_luong: number
+          tg_cap_nhat?: string
+          tg_tao?: string
+          thu_tu?: number
+          trang_thai?: string
+        }
+        Update: {
+          don_vi_tinh?: string
+          ghi_chu?: string | null
+          id?: never
+          nguyen_lieu_id?: number
+          san_pham_id?: number
+          so_luong?: number
+          tg_cap_nhat?: string
+          tg_tao?: string
+          thu_tu?: number
+          trang_thai?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sx_bom_nguyen_lieu_id_fkey"
+            columns: ["nguyen_lieu_id"]
+            isOneToOne: false
+            referencedRelation: "sx_danh_sach_nguyen_lieu"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sx_bom_san_pham_id_fkey"
+            columns: ["san_pham_id"]
+            isOneToOne: false
+            referencedRelation: "sx_danh_sach_san_pham"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       sx_danh_sach_nguyen_lieu: {
         Row: {
           danh_muc_id: number

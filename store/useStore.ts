@@ -168,7 +168,7 @@ export const useUIStore = create<UIState>()(
     }),
     {
       name: 'ui-storage', // Persist UI settings including branding
-      version: 4,
+      version: 5,
       migrate: (persisted: unknown, version: number) => {
         if (!persisted || typeof persisted !== 'object') return persisted as UIState;
         const state = persisted as Record<string, unknown> & Partial<ThemeState>;
@@ -197,6 +197,20 @@ export const useUIStore = create<UIState>()(
           const ci = { ...(state.companyInfo as Record<string, unknown>) };
           delete ci.taxId;
           state.companyInfo = { ...DEFAULT_COMPANY_INFO, ...ci } as CompanyInfo;
+        }
+        // v4 → v5: logo + tên Mangiico mới (chỉ khi vẫn dùng mặc định cũ)
+        if (version < 5 && state.companyInfo && typeof state.companyInfo === 'object') {
+          const ci = state.companyInfo as CompanyInfo;
+          const oldLogo = 'https://datafiles.nghean.gov.vn/nan-ubnd/6556/Album/quochuy%20(1).png';
+          const oldNames = new Set(['Mangiico ERP', '5F template']);
+          const oldDescs = new Set(['Hệ thống quản trị doanh nghiệp', 'Hệ thống nền tảng số']);
+          const updates: Partial<CompanyInfo> = {};
+          if (!ci.appLogo || ci.appLogo === oldLogo) updates.appLogo = DEFAULT_BRANDING_LOGO;
+          if (oldNames.has(ci.appName)) updates.appName = DEFAULT_BRANDING_APP_NAME;
+          if (oldDescs.has(ci.appDescription)) updates.appDescription = DEFAULT_BRANDING_APP_DESCRIPTION;
+          if (Object.keys(updates).length > 0) {
+            state.companyInfo = { ...ci, ...updates };
+          }
         }
         return persisted as UIState;
       },

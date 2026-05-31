@@ -7,6 +7,7 @@ import type { BadgeConfig } from '@/components/ui/EnumBadge';
 import type { ProductCatalogItem } from '../core/types';
 import { formatDate, formatDateTimeShort } from '@/lib/utils';
 import GenericDrawer, { DRAWER_WIDTH_DETAIL } from '@/components/shared/GenericDrawer';
+import { DRAWER_WIDTH_DETAIL_SMALL } from '@/lib/dialog-sizes';
 import DetailSummaryCard, { DetailSummaryIconTile } from '@/components/shared/DetailSummaryCard';
 import DetailSection from '@/components/shared/DetailSection';
 import DetailField from '@/components/shared/DetailField';
@@ -16,6 +17,8 @@ import { BTN_CLOSE, BTN_EDIT, BTN_DELETE } from '@/lib/button-labels';
 import { useResourcePermissions } from '@/hooks/use-resource-permissions';
 import { useProductAttributeValues } from '../hooks/use-danh-sach-hang-hoa';
 import ProductAttributeValuesSection from './product-attribute-values-section';
+import BomDetailSection from '@/features/san-xuat/bom/components/bom-detail-section';
+import type { BomItem } from '@/features/san-xuat/bom/core/types';
 
 interface Props {
   data: ProductCatalogItem;
@@ -23,6 +26,13 @@ interface Props {
   onEdit: (item: ProductCatalogItem) => void;
   onDelete: (id: string) => void;
   onStatusChange?: (item: ProductCatalogItem) => void;
+  onViewBom?: (item: BomItem) => void;
+  onAddBom?: () => void;
+  onEditBom?: (item: BomItem) => void;
+  onDeleteBom?: (id: string) => void;
+  onStatusChangeBom?: (item: BomItem) => void;
+  maxWidthClass?: string;
+  stackLevel?: number;
 }
 
 const ProductCatalogDetail: React.FC<Props> = ({
@@ -31,6 +41,13 @@ const ProductCatalogDetail: React.FC<Props> = ({
   onEdit,
   onDelete,
   onStatusChange,
+  onViewBom,
+  onAddBom,
+  onEditBom,
+  onDeleteBom,
+  onStatusChangeBom,
+  maxWidthClass = DRAWER_WIDTH_DETAIL,
+  stackLevel = 0,
 }) => {
   const { canEdit, canDelete } = useResourcePermissions('productCatalog');
   const isActive = data.trang_thai === 'Đang hoạt động';
@@ -119,7 +136,8 @@ const ProductCatalogDetail: React.FC<Props> = ({
       onClose={onClose}
       footer={renderFooter}
       footerCompact
-      maxWidthClass={DRAWER_WIDTH_DETAIL}
+      maxWidthClass={maxWidthClass ?? (stackLevel > 0 ? DRAWER_WIDTH_DETAIL_SMALL : DRAWER_WIDTH_DETAIL)}
+      stackLevel={stackLevel}
     >
       <div className="space-y-5">
         <DetailSummaryCard
@@ -171,6 +189,18 @@ const ProductCatalogDetail: React.FC<Props> = ({
           onChange={() => {}}
           readOnly
         />
+
+        {onViewBom && onAddBom && onEditBom && onDeleteBom && onStatusChangeBom ? (
+          <BomDetailSection
+            mode="product"
+            entityId={data.id}
+            onView={onViewBom}
+            onAdd={onAddBom}
+            onEdit={onEditBom}
+            onDelete={onDeleteBom}
+            onStatusChange={onStatusChangeBom}
+          />
+        ) : null}
 
         <DetailSection title={txt('productCatalog.detail.systemInfo')} icon={<Clock size={14} />}>
           <DetailFieldGrid>

@@ -43,7 +43,7 @@ export const ui = {
     "logoutConfirmTitle": "Xác nhận đăng xuất",
     "logoutConfirmMessage": "Bạn có chắc chắn muốn kết thúc phiên làm việc?",
     "logoutCancel": "Hủy bỏ",
-    "defaultAppDescription": "Hệ thống nền tảng số",
+    "defaultAppDescription": "Hệ thống quản trị",
     "mainNav": "Điều hướng chính",
     "changePasswordLabel": "Đổi mật khẩu",
     "commandPalette": {

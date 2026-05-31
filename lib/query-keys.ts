@@ -91,6 +91,10 @@ export const queryKeys = {
     all: ['material-catalog'] as const,
     detail: (id: string) => ['material-catalog', id] as const,
   },
+  bom: {
+    all: ['bom'] as const,
+    detail: (id: string) => ['bom', id] as const,
+  },
   thongTinToChuc: {
     singleton: ['thong-tin-to-chuc', 'singleton'] as const,
   },
