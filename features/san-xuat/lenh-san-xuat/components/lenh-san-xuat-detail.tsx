@@ -13,7 +13,7 @@ import {
 import Button from '@/components/ui/Button';
 import EnumBadge from '@/components/ui/EnumBadge';
 import { salesOrderStatusBadgeConfig } from '@/features/kinh-doanh/don-hang/utils/order-badges';
-import type { ProductionOrder } from '../core/types';
+import type { ProductionOrder, ProductionOrderLine } from '../core/types';
 import { formatDate, formatDateTimeShort } from '@/lib/utils';
 import GenericDrawer, { DRAWER_WIDTH_DETAIL } from '@/components/shared/GenericDrawer';
 import DetailSummaryCard, { DetailSummaryIconTile } from '@/components/shared/DetailSummaryCard';
@@ -23,11 +23,15 @@ import DetailFieldGrid from '@/components/shared/DetailFieldGrid';
 import DetailToolbar, { DetailToolbarAction } from '@/components/shared/DetailToolbar';
 import { BTN_CLOSE } from '@/lib/button-labels';
 import { useResourcePermissions } from '@/hooks/use-resource-permissions';
+import ProductionOrderProductsSection from './production-order-products-section';
+import ProductionOrderBomSection from './production-order-bom-section';
+import { useOrderLineProgress } from '../hooks/use-lenh-san-xuat';
 
 interface Props {
   data: ProductionOrder;
   onClose: () => void;
   onStatusChange?: (item: ProductionOrder) => void;
+  onViewLine?: (order: ProductionOrder, line: ProductionOrderLine) => void;
   maxWidthClass?: string;
   stackLevel?: number;
 }
@@ -36,11 +40,13 @@ const LenhSanXuatDetail: React.FC<Props> = ({
   data,
   onClose,
   onStatusChange,
+  onViewLine,
   maxWidthClass = DRAWER_WIDTH_DETAIL,
   stackLevel = 0,
 }) => {
   const navigate = useNavigate();
   const { canEdit } = useResourcePermissions('productionOrders');
+  const { data: receivedQtyMap } = useOrderLineProgress(data.id);
   const statusBadgeConfig = useMemo(() => salesOrderStatusBadgeConfig(), []);
 
   const toolbarActions: DetailToolbarAction[] = [
@@ -143,6 +149,10 @@ const LenhSanXuatDetail: React.FC<Props> = ({
             />
           </DetailFieldGrid>
         </DetailSection>
+
+        <ProductionOrderProductsSection order={data} onViewLine={onViewLine} receivedQtyMap={receivedQtyMap} />
+
+        <ProductionOrderBomSection order={data} onViewLine={onViewLine} />
 
         <DetailSection title={txt('productionOrder.detail.systemInfo')} icon={<Clock size={14} />}>
           <DetailFieldGrid>

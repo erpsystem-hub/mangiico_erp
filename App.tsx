@@ -27,6 +27,10 @@ const MaterialCategoryPage = lazy(() => import('./features/san-xuat/danh-muc-ngu
 const MaterialCatalogPage = lazy(() => import('./features/san-xuat/danh-sach-nguyen-lieu/index'));
 const BomPage = lazy(() => import('./features/san-xuat/bom/index'));
 const LenhSanXuatPage = lazy(() => import('./features/san-xuat/lenh-san-xuat/index'));
+const PhieuKhoPage = lazy(() => import('./features/san-xuat/phieu-kho/index'));
+const PhieuKhoPrintPage = lazy(
+  () => import('./features/san-xuat/phieu-kho/pages/phieu-kho-print-page'),
+);
 const DanhSachKhachHangPage = lazy(
   () => import('./features/kinh-doanh/danh-sach-khach-hang/index'),
 );
@@ -125,7 +129,8 @@ const App = () => {
             path="/san-xuat/bao-cao-san-xuat"
             element={<ProductionModulePlaceholder moduleKey="bao-cao-san-xuat" />}
           />
-          <Route path="/san-xuat/phieu-kho" element={<ProductionModulePlaceholder moduleKey="phieu-kho" />} />
+          <Route path="/san-xuat/phieu-kho" element={<PhieuKhoPage />} />
+          <Route path="/san-xuat/phieu-kho/:id/in" element={<PhieuKhoPrintPage />} />
           <Route
             path="/san-xuat/bao-cao-kho"
             element={<ProductionModulePlaceholder moduleKey="bao-cao-kho" />}

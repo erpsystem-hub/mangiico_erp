@@ -4,9 +4,9 @@ import { getSalesOrderById } from '@/features/kinh-doanh/don-hang/services/don-h
 import { getSupabase } from '@/lib/supabase/client';
 import { handleSupabaseError } from '@/lib/supabase/errors';
 import { txt } from '@/lib/text';
-import { PRODUCTION_ORDER_SELECT_LIST } from '../core/supabase-select';
+import { PRODUCTION_ORDER_SELECT_LIST, PRODUCTION_ORDER_SELECT_LIST_WITH_LINE_COUNT } from '../core/supabase-select';
 import { isProductionOrderStatus, TRANG_THAI_LENH_SX, type TrangThaiLenhSx } from '../core/constants';
-import type { ProductionOrderLineRow } from '../core/types';
+import type { ProductionOrderLineRow, ProductionOrderListItem } from '../core/types';
 
 type KhJoin = { ma_doi_tac: string; ten_doi_tac: string } | { ma_doi_tac: string; ten_doi_tac: string }[] | null;
 type CnJoin = { ten_chi_nhanh: string } | { ten_chi_nhanh: string }[] | null;
@@ -26,7 +26,22 @@ type ListRow = {
   tg_cap_nhat: string;
   khach_hang: KhJoin;
   chi_nhanh: CnJoin;
+  lines?: { count: number }[] | { count: number } | null;
 };
+
+function readLineCount(raw: ListRow): number {
+  const lines = raw.lines;
+  if (lines == null) return 0;
+  const row = Array.isArray(lines) ? lines[0] : lines;
+  return Number(row?.count ?? 0);
+}
+
+function normalizeListOrder(raw: ListRow): ProductionOrderListItem {
+  return {
+    ...normalizeOrder(raw),
+    so_dong_sp: readLineCount(raw),
+  };
+}
 
 function pickOne<T>(v: T | T[] | null | undefined): T | null {
   if (v == null) return null;
@@ -56,18 +71,18 @@ function normalizeOrder(raw: ListRow): SalesOrder {
   };
 }
 
-export const getProductionOrders = async (): Promise<SalesOrder[]> => {
+export const getProductionOrders = async (): Promise<ProductionOrderListItem[]> => {
   const supabase = getSupabase();
   if (!supabase) throw new Error('Supabase client is not configured.');
 
   const { data, error } = await supabase
     .from('kd_don_hang')
-    .select(PRODUCTION_ORDER_SELECT_LIST)
+    .select(PRODUCTION_ORDER_SELECT_LIST_WITH_LINE_COUNT)
     .in('trang_thai', [...TRANG_THAI_LENH_SX])
     .order('tg_cap_nhat', { ascending: false });
   handleSupabaseError(error);
 
-  return (data ?? []).map((row) => normalizeOrder(row as ListRow));
+  return (data ?? []).map((row) => normalizeListOrder(row as ListRow));
 };
 
 /** Detail tái sử dụng service đơn hàng (đã verify embed dòng) — UI không hiển thị giá. */
@@ -107,7 +122,27 @@ export const getProductionOrderLines = async (): Promise<ProductionOrderLineRow[
         tg_cap_nhat: line.tg_cap_nhat,
         thuoc_tinh_values: line.thuoc_tinh_values,
         thong_so_do_values: line.thong_so_do_values,
+        so_dong_bom: 0,
       });
+    }
+  }
+
+  const supabase = getSupabase();
+  if (supabase && rows.length > 0) {
+    const lineIds = rows.map((r) => Number(r.id));
+    const { data: bomRows, error } = await supabase
+      .from('kd_don_hang_chi_tiet_bom')
+      .select('don_hang_chi_tiet_id')
+      .in('don_hang_chi_tiet_id', lineIds);
+    handleSupabaseError(error);
+
+    const bomCountByLine = new Map<string, number>();
+    for (const b of bomRows ?? []) {
+      const key = String(b.don_hang_chi_tiet_id);
+      bomCountByLine.set(key, (bomCountByLine.get(key) ?? 0) + 1);
+    }
+    for (const row of rows) {
+      row.so_dong_bom = bomCountByLine.get(row.id) ?? 0;
     }
   }
 

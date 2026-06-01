@@ -1,7 +1,7 @@
 import React, { useState, useCallback, useMemo } from 'react';
 import { txt } from '@/lib/text';
 import { ClipboardList } from 'lucide-react';
-import type { ProductionOrder } from '../core/types';
+import type { ProductionOrderListItem } from '../core/types';
 import { useProductionOrderStore } from '../store/useProductionOrderStore';
 import type { ColumnConfig } from '@/store/createGenericStore';
 import GenericTable from '@/components/shared/GenericTable';
@@ -16,14 +16,17 @@ import {
 } from '@/components/shared/column-header';
 import { TRANG_THAI_LENH_SX } from '../core/constants';
 import { ProductionOrderTableRowActions } from './production-order-table-row-actions';
+import { getTienDo, TIEN_DO_BADGE } from './lenh-san-xuat-lines-table';
 
 interface Props {
-  data: ProductionOrder[];
+  data: ProductionOrderListItem[];
   isLoading: boolean;
-  onView: (item: ProductionOrder) => void;
+  onView: (item: ProductionOrderListItem) => void;
+  /** Key = don_hang_id → { lenh: number; nhap: number } */
+  progressSummary?: Map<string, { lenh: number; nhap: number }>;
 }
 
-const LenhSanXuatTable: React.FC<Props> = ({ data, isLoading, onView }) => {
+const LenhSanXuatTable: React.FC<Props> = ({ data, isLoading, onView, progressSummary }) => {
   const [rowMenuOpenId, setRowMenuOpenId] = useState<string | null>(null);
   const {
     columns,
@@ -95,7 +98,7 @@ const LenhSanXuatTable: React.FC<Props> = ({ data, isLoading, onView }) => {
     [filters, setFilter, sort, setSort, statusOptions],
   );
 
-  const renderCell = (colId: string, item: ProductionOrder) => {
+  const renderCell = (colId: string, item: ProductionOrderListItem) => {
     switch (colId) {
       case 'ma_don_hang':
         return (
@@ -108,6 +111,10 @@ const LenhSanXuatTable: React.FC<Props> = ({ data, isLoading, onView }) => {
             <span className="font-medium text-foreground truncate">{item.ten_khach_hang}</span>
           </div>
         );
+      case 'so_dong_sp':
+        return (
+          <span className="tabular-nums text-sm font-medium text-foreground">{item.so_dong_sp}</span>
+        );
       case 'ngay_dat':
         return <span className="text-sm">{formatDateShort(item.ngay_dat)}</span>;
       case 'ngay_giao_du_kien':
@@ -116,6 +123,18 @@ const LenhSanXuatTable: React.FC<Props> = ({ data, isLoading, onView }) => {
             {item.ngay_giao_du_kien ? formatDateShort(item.ngay_giao_du_kien) : '—'}
           </span>
         );
+      case 'tien_do_tong': {
+        const summary = progressSummary?.get(item.id);
+        const lenh = summary?.lenh ?? 0;
+        const nhap = summary?.nhap ?? 0;
+        const tienDo = getTienDo(lenh, nhap);
+        const cfg = TIEN_DO_BADGE[tienDo];
+        return (
+          <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${cfg.className}`}>
+            {cfg.label}
+          </span>
+        );
+      }
       case 'trang_thai':
         return <EnumBadge value={item.trang_thai} config={statusBadgeConfig} />;
       case 'tg_cap_nhat':
@@ -134,7 +153,13 @@ const LenhSanXuatTable: React.FC<Props> = ({ data, isLoading, onView }) => {
     }
   };
 
-  const renderMobileCard = (item: ProductionOrder, isSelected: boolean) => (
+  const renderMobileCard = (item: ProductionOrderListItem, isSelected: boolean) => {
+    const summary = progressSummary?.get(item.id);
+    const lenh = summary?.lenh ?? 0;
+    const nhap = summary?.nhap ?? 0;
+    const tienDo = getTienDo(lenh, nhap);
+    const tienDoCfg = TIEN_DO_BADGE[tienDo];
+    return (
     <MobileListCard
       selected={isSelected}
       onBodyClick={() => onView(item)}
@@ -153,10 +178,16 @@ const LenhSanXuatTable: React.FC<Props> = ({ data, isLoading, onView }) => {
         <span className="text-xs text-muted-foreground truncate">{item.ten_khach_hang}</span>
       }
       metaLine={
-        <span className="text-xs text-muted-foreground">
-          {formatDateShort(item.ngay_dat)}
-          {item.ngay_giao_du_kien ? ` · Giao ${formatDateShort(item.ngay_giao_du_kien)}` : ''}
-        </span>
+        <div className="flex items-center gap-1.5 flex-wrap">
+          <span className="text-xs text-muted-foreground">
+            {formatDateShort(item.ngay_dat)}
+            {item.ngay_giao_du_kien ? ` · Giao ${formatDateShort(item.ngay_giao_du_kien)}` : ''}
+            {` · ${item.so_dong_sp} SP`}
+          </span>
+          <span className={`inline-flex items-center rounded-full px-1.5 py-0.5 text-[10px] font-medium ${tienDoCfg.className}`}>
+            {tienDoCfg.label}
+          </span>
+        </div>
       }
       footerStart={
         <label className="inline-flex h-7 w-7 shrink-0 cursor-pointer items-center justify-center rounded">
@@ -181,6 +212,7 @@ const LenhSanXuatTable: React.FC<Props> = ({ data, isLoading, onView }) => {
       }
     />
   );
+  };
 
   return (
     <GenericTable

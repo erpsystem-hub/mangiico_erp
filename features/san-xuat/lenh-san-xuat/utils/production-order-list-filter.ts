@@ -1,4 +1,4 @@
-import type { ProductionOrder, ProductionOrderFilters } from '../core/types';
+import type { ProductionOrderListItem, ProductionOrderFilters } from '../core/types';
 import { matchesSearchTerm } from '@/lib/searchUtils';
 import { PRODUCTION_ORDER_SEARCHABLE_KEYS } from './search-keys';
 import { productionOrderMatchesColumnSearch } from './column-search';
@@ -8,7 +8,7 @@ import {
 } from './production-order-date-filter';
 
 export function matchesProductionOrderFilters(
-  item: ProductionOrder,
+  item: ProductionOrderListItem,
   searchTerm: string,
   filters: ProductionOrderFilters,
 ): boolean {

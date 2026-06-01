@@ -21,6 +21,10 @@ function lineMatchesColumnSearch(
   for (const [colId, raw] of Object.entries(columnSearch)) {
     const q = raw?.trim();
     if (!q) continue;
+    if (colId === 'so_luong' || colId === 'so_dong_bom') {
+      if (!String(item[colId]).includes(q)) return false;
+      continue;
+    }
     const val = item[colId as keyof ProductionOrderLineRow];
     if (val == null) return false;
     if (!String(val).toLowerCase().includes(q.toLowerCase())) return false;

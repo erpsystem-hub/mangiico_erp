@@ -20,6 +20,12 @@ export const PRODUCTION_ORDER_SELECT_LIST = `
   )
 `;
 
+/** List kèm đếm số dòng SP (PostgREST aggregate). */
+export const PRODUCTION_ORDER_SELECT_LIST_WITH_LINE_COUNT = `
+  ${PRODUCTION_ORDER_SELECT_LIST},
+  lines:kd_don_hang_chi_tiet(count)
+`;
+
 export const PRODUCTION_ORDER_LINE_SELECT = `
   id,
   don_hang_id,

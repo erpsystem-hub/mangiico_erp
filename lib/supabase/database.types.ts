@@ -1119,6 +1119,186 @@ export type Database = {
           },
         ]
       }
+      }
+      sx_danh_sach_kho: {
+        Row: {
+          chi_nhanh_id: number | null
+          dia_chi: string | null
+          ghi_chu: string | null
+          id: number
+          ma_kho: string
+          ten_kho: string
+          thu_tu: number
+          tg_cap_nhat: string
+          tg_tao: string
+          trang_thai: string
+        }
+        Insert: {
+          chi_nhanh_id?: number | null
+          dia_chi?: string | null
+          ghi_chu?: string | null
+          id?: never
+          ma_kho: string
+          ten_kho: string
+          thu_tu?: number
+          tg_cap_nhat?: string
+          tg_tao?: string
+          trang_thai?: string
+        }
+        Update: {
+          chi_nhanh_id?: number | null
+          dia_chi?: string | null
+          ghi_chu?: string | null
+          id?: never
+          ma_kho?: string
+          ten_kho?: string
+          thu_tu?: number
+          tg_cap_nhat?: string
+          tg_tao?: string
+          trang_thai?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sx_danh_sach_kho_chi_nhanh_id_fkey"
+            columns: ["chi_nhanh_id"]
+            isOneToOne: false
+            referencedRelation: "var_chi_nhanh"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sx_phieu_kho: {
+        Row: {
+          chi_nhanh_id: number | null
+          da_post_ton: boolean
+          don_hang_id: number | null
+          don_mua_id: number | null
+          ghi_chu: string | null
+          id: number
+          kho_dich_id: number | null
+          kho_id: number
+          loai_phieu: string
+          ma_phieu_kho: string
+          muc_dich: string
+          ngay_phieu: string
+          nhan_vien_id: number | null
+          tg_cap_nhat: string
+          tg_tao: string
+          trang_thai: string
+        }
+        Insert: {
+          chi_nhanh_id?: number | null
+          da_post_ton?: boolean
+          don_hang_id?: number | null
+          don_mua_id?: number | null
+          ghi_chu?: string | null
+          id?: never
+          kho_dich_id?: number | null
+          kho_id: number
+          loai_phieu: string
+          ma_phieu_kho: string
+          muc_dich: string
+          ngay_phieu?: string
+          nhan_vien_id?: number | null
+          tg_cap_nhat?: string
+          tg_tao?: string
+          trang_thai?: string
+        }
+        Update: {
+          chi_nhanh_id?: number | null
+          da_post_ton?: boolean
+          don_hang_id?: number | null
+          don_mua_id?: number | null
+          ghi_chu?: string | null
+          id?: never
+          kho_dich_id?: number | null
+          kho_id?: number
+          loai_phieu?: string
+          ma_phieu_kho?: string
+          muc_dich?: string
+          ngay_phieu?: string
+          nhan_vien_id?: number | null
+          tg_cap_nhat?: string
+          tg_tao?: string
+          trang_thai?: string
+        }
+        Relationships: []
+      }
+      sx_phieu_kho_chi_tiet: {
+        Row: {
+          danh_muc_id: number | null
+          don_vi_tinh: string
+          ghi_chu: string | null
+          id: number
+          loai_hang: string
+          nguyen_lieu_id: number | null
+          phieu_kho_id: number
+          so_luong: number
+          tg_cap_nhat: string
+          tg_tao: string
+          thu_tu: number
+        }
+        Insert: {
+          danh_muc_id?: number | null
+          don_vi_tinh?: string
+          ghi_chu?: string | null
+          id?: never
+          loai_hang: string
+          nguyen_lieu_id?: number | null
+          phieu_kho_id: number
+          so_luong: number
+          tg_cap_nhat?: string
+          tg_tao?: string
+          thu_tu?: number
+        }
+        Update: {
+          danh_muc_id?: number | null
+          don_vi_tinh?: string
+          ghi_chu?: string | null
+          id?: never
+          loai_hang?: string
+          nguyen_lieu_id?: number | null
+          phieu_kho_id?: number
+          so_luong?: number
+          tg_cap_nhat?: string
+          tg_tao?: string
+          thu_tu?: number
+        }
+        Relationships: []
+      }
+      sx_ton_kho: {
+        Row: {
+          danh_muc_id: number | null
+          don_vi_tinh: string
+          id: number
+          kho_id: number
+          loai_hang: string
+          nguyen_lieu_id: number | null
+          so_luong: number
+          tg_cap_nhat: string
+        }
+        Insert: {
+          danh_muc_id?: number | null
+          don_vi_tinh?: string
+          id?: never
+          kho_id: number
+          loai_hang: string
+          nguyen_lieu_id?: number | null
+          so_luong?: number
+          tg_cap_nhat?: string
+        }
+        Update: {
+          danh_muc_id?: number | null
+          don_vi_tinh?: string
+          id?: never
+          kho_id?: number
+          loai_hang?: string
+          nguyen_lieu_id?: number | null
+          so_luong?: number
+          tg_cap_nhat?: string
+        }
+        Relationships: []
+      }
       sx_thong_so_do: {
         Row: {
           don_vi: string
@@ -1384,6 +1564,14 @@ export type Database = {
         Returns: string
       }
       kd_upsert_don_mua: {
+        Args: { p_header: Json; p_lines: Json }
+        Returns: Json
+      }
+      sx_cancel_phieu_kho: {
+        Args: { p_phieu_kho_id: number }
+        Returns: undefined
+      }
+      sx_upsert_phieu_kho: {
         Args: { p_header: Json; p_lines: Json }
         Returns: Json
       }

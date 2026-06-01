@@ -16,13 +16,38 @@ import {
 } from '@/components/shared/column-header';
 import { TRANG_THAI_LENH_SX } from '../core/constants';
 
+export type TienDoSanXuat = 'Chưa sản xuất' | 'Nhập 1 phần' | 'Hoàn thành';
+
+export function getTienDo(soLuong: number, slDaNhap: number): TienDoSanXuat {
+  if (slDaNhap <= 0) return 'Chưa sản xuất';
+  if (slDaNhap >= soLuong) return 'Hoàn thành';
+  return 'Nhập 1 phần';
+}
+
+export const TIEN_DO_BADGE: Record<TienDoSanXuat, { label: string; className: string }> = {
+  'Chưa sản xuất': {
+    label: txt('productionOrder.progress.chuaSanXuat'),
+    className: 'bg-muted text-muted-foreground border border-border',
+  },
+  'Nhập 1 phần': {
+    label: txt('productionOrder.progress.nhap1Phan'),
+    className: 'bg-amber-50 text-amber-700 border border-amber-200',
+  },
+  'Hoàn thành': {
+    label: txt('productionOrder.progress.hoanThanh'),
+    className: 'bg-emerald-50 text-emerald-700 border border-emerald-200',
+  },
+};
+
 interface Props {
   data: ProductionOrderLineRow[];
   isLoading: boolean;
   onView: (item: ProductionOrderLineRow) => void;
+  /** Key = `${don_hang_id}:${danh_muc_id}` → SL đã nhập */
+  receivedQtyMap?: Map<string, number>;
 }
 
-const LenhSanXuatLinesTable: React.FC<Props> = ({ data, isLoading, onView }) => {
+const LenhSanXuatLinesTable: React.FC<Props> = ({ data, isLoading, onView, receivedQtyMap }) => {
   const {
     columns,
     pagination,
@@ -38,6 +63,12 @@ const LenhSanXuatLinesTable: React.FC<Props> = ({ data, isLoading, onView }) => 
   } = useProductionOrderLineStore();
 
   const statusBadgeConfig = useMemo(() => salesOrderStatusBadgeConfig(), []);
+
+  const getSlDaNhap = useCallback(
+    (item: ProductionOrderLineRow) =>
+      receivedQtyMap?.get(`${item.don_hang_id}:${item.danh_muc_id}`) ?? 0,
+    [receivedQtyMap],
+  );
 
   const statusOptions = useMemo(
     () =>
@@ -122,6 +153,39 @@ const LenhSanXuatLinesTable: React.FC<Props> = ({ data, isLoading, onView }) => 
             {item.so_luong} {item.don_vi_tinh}
           </span>
         );
+      case 'so_dong_bom':
+        return (
+          <span className="tabular-nums text-sm font-medium text-foreground">{item.so_dong_bom}</span>
+        );
+      case 'sl_da_nhap': {
+        const slDaNhap = getSlDaNhap(item);
+        return (
+          <span className={`tabular-nums text-sm ${slDaNhap > 0 ? 'text-primary font-medium' : 'text-muted-foreground'}`}>
+            {slDaNhap > 0 ? slDaNhap.toLocaleString('vi-VN') : '—'}
+            {slDaNhap > 0 && <span className="ml-1 text-xs text-muted-foreground">{item.don_vi_tinh}</span>}
+          </span>
+        );
+      }
+      case 'sl_con_lai': {
+        const slDaNhap = getSlDaNhap(item);
+        const conLai = Math.max(0, item.so_luong - slDaNhap);
+        return (
+          <span className={`tabular-nums text-sm ${conLai === 0 ? 'text-muted-foreground' : conLai < item.so_luong ? 'text-amber-600 font-medium' : 'text-foreground'}`}>
+            {conLai.toLocaleString('vi-VN')}
+            <span className="ml-1 text-xs text-muted-foreground">{item.don_vi_tinh}</span>
+          </span>
+        );
+      }
+      case 'tien_do': {
+        const slDaNhap = getSlDaNhap(item);
+        const tienDo = getTienDo(item.so_luong, slDaNhap);
+        const cfg = TIEN_DO_BADGE[tienDo];
+        return (
+          <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${cfg.className}`}>
+            {cfg.label}
+          </span>
+        );
+      }
       case 'trang_thai':
         return <EnumBadge value={item.trang_thai} config={statusBadgeConfig} />;
       case 'ngay_dat':
@@ -157,14 +221,26 @@ const LenhSanXuatLinesTable: React.FC<Props> = ({ data, isLoading, onView }) => 
           {item.ma_don_hang} · {item.ten_khach_hang}
         </span>
       }
-      metaLine={
-        <span className="text-xs text-muted-foreground tabular-nums">
-          {item.so_luong} {item.don_vi_tinh}
-          {item.ngay_giao_du_kien
-            ? ` · Giao ${formatDateShort(item.ngay_giao_du_kien)}`
-            : ''}
-        </span>
-      }
+      metaLine={(() => {
+        const slDaNhap = getSlDaNhap(item);
+        const tienDo = getTienDo(item.so_luong, slDaNhap);
+        const cfg = TIEN_DO_BADGE[tienDo];
+        return (
+          <div className="flex items-center gap-1.5 flex-wrap">
+            <span className="text-xs text-muted-foreground tabular-nums">
+              {item.so_luong} {item.don_vi_tinh}
+              {slDaNhap > 0 && ` · đã nhập ${slDaNhap.toLocaleString('vi-VN')}`}
+              {` · ${item.so_dong_bom} BOM`}
+              {item.ngay_giao_du_kien
+                ? ` · Giao ${formatDateShort(item.ngay_giao_du_kien)}`
+                : ''}
+            </span>
+            <span className={`inline-flex items-center rounded-full px-1.5 py-0.5 text-[10px] font-medium ${cfg.className}`}>
+              {cfg.label}
+            </span>
+          </div>
+        );
+      })()}
       footerStart={
         <label className="inline-flex h-7 w-7 shrink-0 cursor-pointer items-center justify-center rounded">
           <input

@@ -113,6 +113,15 @@ export const queryKeys = {
     detail: (id: string) => ['production-orders', id] as const,
     lines: ['production-orders', 'lines'] as const,
     lineBom: (lineId: string) => ['production-orders', 'line-bom', lineId] as const,
+    orderBom: (orderId: string) => ['production-orders', 'order-bom', orderId] as const,
+  },
+  warehouseSlips: {
+    all: ['warehouse-slips'] as const,
+    detail: (id: string) => ['warehouse-slips', id] as const,
+    lines: ['warehouse-slips', 'lines'] as const,
+  },
+  warehouses: {
+    all: ['warehouses'] as const,
   },
   customerPriceMatrix: {
     all: ['customer-price-matrix'] as const,

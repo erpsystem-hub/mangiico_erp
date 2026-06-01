@@ -23,21 +23,36 @@ const DEFAULT_COLUMNS: ColumnConfig[] = [
     order: 1,
   },
   {
+    id: 'so_dong_sp',
+    label: txt('productionOrder.store.lineCountCol'),
+    visible: true,
+    minWidth: 88,
+    maxWidth: 112,
+    order: 2,
+  },
+  {
     id: 'ngay_dat',
     label: txt('productionOrder.store.orderDateCol'),
     visible: true,
     ...P.date,
-    order: 2,
+    order: 3,
   },
   {
     id: 'ngay_giao_du_kien',
     label: txt('productionOrder.store.deliveryDateCol'),
     visible: true,
     ...P.date,
-    order: 3,
+    order: 4,
   },
-  { id: 'trang_thai', label: txt('productionOrder.store.statusCol'), visible: true, ...P.enumBadge, order: 4 },
-  { id: 'tg_cap_nhat', label: txt('productionOrder.store.updatedCol'), visible: true, ...P.datetime, order: 5 },
+  {
+    id: 'tien_do_tong',
+    label: txt('productionOrder.store.tienDoTongCol'),
+    visible: true,
+    ...P.enumBadge,
+    order: 5,
+  },
+  { id: 'trang_thai', label: txt('productionOrder.store.statusCol'), visible: true, ...P.enumBadge, order: 6 },
+  { id: 'tg_cap_nhat', label: txt('productionOrder.store.updatedCol'), visible: true, ...P.datetime, order: 7 },
 ];
 
 const initialFilters: ProductionOrderFilters = {

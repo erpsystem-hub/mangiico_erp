@@ -9,7 +9,7 @@ import React, {
 } from 'react';
 import { txt } from '@/lib/text';
 import { AnimatePresence } from 'framer-motion';
-import { List, Package } from 'lucide-react';
+import { List, Package, Layers } from 'lucide-react';
 import { toast } from 'sonner';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
@@ -25,21 +25,27 @@ import LenhSanXuatToolbar from './components/lenh-san-xuat-toolbar';
 import LenhSanXuatTable from './components/lenh-san-xuat-table';
 import LenhSanXuatLinesToolbar from './components/lenh-san-xuat-lines-toolbar';
 import LenhSanXuatLinesTable from './components/lenh-san-xuat-lines-table';
+import LenhSanXuatBomTable from './components/lenh-san-xuat-bom-table';
 import {
   useProductionOrders,
   useProductionOrderDetail,
   useProductionOrderLines,
   useUpdateProductionOrderStatus,
+  useAllOrdersReceivedQty,
+  useOrdersProgressSummary,
 } from './hooks/use-lenh-san-xuat';
+import { useAllOrdersBomFlat } from './hooks/use-order-line-bom';
 import { getProductionOrderById } from './services/lenh-san-xuat-service';
 import ErrorState from '@/components/shared/ErrorState';
 import { useProductionOrderStore } from './store/useProductionOrderStore';
 import { useProductionOrderLineStore } from './store/useProductionOrderLineStore';
+import { useProductionOrderBomListStore } from './store/useProductionOrderBomListStore';
 import { useListWithFilter } from '@/lib/hooks';
 import { DRAWER_Z_CONTENT_BASE } from '@/lib/dialog-sizes';
 import { queryKeys } from '@/lib/query-keys';
-import type { ProductionOrder, ProductionOrderLineRow } from './core/types';
+import type { ProductionOrder, ProductionOrderLineRow, ProductionOrderListItem, ProductionOrderLine } from './core/types';
 import type { TrangThaiLenhSx } from './core/constants';
+import type { ProductionOrderBomRow } from './hooks/use-order-line-bom';
 import { matchesProductionOrderFilters } from './utils/production-order-list-filter';
 import { matchesProductionOrderLineFilters } from './utils/production-order-line-list-filter';
 import {
@@ -57,7 +63,7 @@ type LenhSxLocationState = {
   viewOrderId?: string;
 };
 
-const TAB_IDS = ['danh-sach', 'chi-tiet'] as const;
+const TAB_IDS = ['danh-sach', 'chi-tiet', 'bom'] as const;
 
 const DrawerLazyFallback: React.FC = () => (
   <div
@@ -84,6 +90,10 @@ const LenhSanXuatPage: React.FC = () => {
   const [activeTab, setActiveTab] = useTabSearchParam(TAB_IDS, 'danh-sach');
   const [viewingItem, setViewingItem] = useState<ProductionOrder | null>(null);
   const [viewingLineRow, setViewingLineRow] = useState<ProductionOrderLineRow | null>(null);
+  const [viewingLineFromOrder, setViewingLineFromOrder] = useState<{
+    order: ProductionOrder;
+    line: ProductionOrderLine;
+  } | null>(null);
   const [statusChangeTarget, setStatusChangeTarget] = useState<ProductionOrder | null>(null);
 
   const { searchTerm, filters, resetState, sort } = useProductionOrderStore();
@@ -93,6 +103,12 @@ const LenhSanXuatPage: React.FC = () => {
     resetState: resetLineState,
     sort: lineSort,
   } = useProductionOrderLineStore();
+  const {
+    searchTerm: bomSearchTerm,
+    filters: bomFilters,
+    resetState: resetBomState,
+    sort: bomSort,
+  } = useProductionOrderBomListStore();
 
   const { data: orders = [], isLoading, isError, refetch } = useProductionOrders({
     enabled: canView && activeTab === 'danh-sach',
@@ -105,7 +121,21 @@ const LenhSanXuatPage: React.FC = () => {
   } = useProductionOrderLines({
     enabled: canView && activeTab === 'chi-tiet',
   });
+  const {
+    data: bomRows = [],
+    isLoading: isBomLoading,
+    isError: isBomError,
+    refetch: refetchBom,
+  } = useAllOrdersBomFlat({
+    enabled: canView && activeTab === 'bom',
+  });
   const { data: customers = [] } = usePartnerList('khach_hang', { enabled: canView });
+  const { data: allReceivedQty } = useAllOrdersReceivedQty({
+    enabled: canView && activeTab === 'chi-tiet',
+  });
+  const { data: progressSummary } = useOrdersProgressSummary({
+    enabled: canView && activeTab === 'danh-sach',
+  });
   const statusMutation = useUpdateProductionOrderStatus();
 
   const pendingViewId = (location.state as LenhSxLocationState | null)?.viewOrderId;
@@ -144,8 +174,9 @@ const LenhSanXuatPage: React.FC = () => {
     () => () => {
       resetState();
       resetLineState();
+      resetBomState();
     },
-    [resetState, resetLineState],
+    [resetState, resetLineState, resetBomState],
   );
 
   useEffect(() => {
@@ -175,7 +206,7 @@ const LenhSanXuatPage: React.FC = () => {
   }, [pendingViewId, pendingViewOrder, setActiveTab]);
 
   const filterFn = useCallback(
-    (item: ProductionOrder, term: string, f: typeof filters) =>
+    (item: ProductionOrderListItem, term: string, f: typeof filters) =>
       matchesProductionOrderFilters(item, term, f),
     [],
   );
@@ -186,8 +217,38 @@ const LenhSanXuatPage: React.FC = () => {
     [],
   );
 
+  const bomFilterFn = useCallback(
+    (item: ProductionOrderBomRow, term: string) => {
+      if (!term) return true;
+      const t = term.toLowerCase();
+      return (
+        item.ma_don_hang.toLowerCase().includes(t) ||
+        item.ten_khach_hang.toLowerCase().includes(t) ||
+        item.ten_danh_muc.toLowerCase().includes(t) ||
+        item.ma_danh_muc.toLowerCase().includes(t) ||
+        item.ten_nguyen_lieu.toLowerCase().includes(t) ||
+        item.ma_nguyen_lieu.toLowerCase().includes(t)
+      );
+    },
+    [],
+  );
+
   const filteredOrders = useListWithFilter(orders, searchTerm, filters, filterFn);
   const filteredLines = useListWithFilter(lines, lineSearchTerm, lineFilters, lineFilterFn);
+  const filteredBom = useMemo(() => {
+    const cs = bomFilters.columnSearch ?? {};
+    let list = bomRows;
+    if (bomSearchTerm) {
+      const t = bomSearchTerm.toLowerCase();
+      list = list.filter((r) => bomFilterFn(r, t));
+    }
+    for (const [col, val] of Object.entries(cs)) {
+      if (!val?.trim()) continue;
+      const t = val.toLowerCase();
+      list = list.filter((r) => String(r[col as keyof ProductionOrderBomRow] ?? '').toLowerCase().includes(t));
+    }
+    return list;
+  }, [bomRows, bomSearchTerm, bomFilters, bomFilterFn]);
 
   const sortedFilteredOrders = useMemo(() => {
     const list = [...filteredOrders];
@@ -199,8 +260,11 @@ const LenhSanXuatPage: React.FC = () => {
     }
     const mul = direction === 'asc' ? 1 : -1;
     list.sort((a, b) => {
-      const av = a[column as keyof ProductionOrder];
-      const bv = b[column as keyof ProductionOrder];
+      const av = a[column as keyof ProductionOrderListItem];
+      const bv = b[column as keyof ProductionOrderListItem];
+      if (column === 'so_dong_sp') {
+        return mul * (Number(av) - Number(bv));
+      }
       if (column === 'ngay_dat' || column === 'ngay_giao_du_kien' || column === 'tg_cap_nhat') {
         return mul * String(av ?? '').localeCompare(String(bv ?? ''));
       }
@@ -220,13 +284,29 @@ const LenhSanXuatPage: React.FC = () => {
       if (column === 'ngay_dat' || column === 'ngay_giao_du_kien') {
         return mul * String(av ?? '').localeCompare(String(bv ?? ''));
       }
-      if (column === 'so_luong') {
+      if (column === 'so_luong' || column === 'so_dong_bom') {
         return mul * (Number(av) - Number(bv));
       }
       return mul * String(av ?? '').localeCompare(String(bv ?? ''), 'vi');
     });
     return list;
   }, [filteredLines, lineSort]);
+
+  const sortedFilteredBom = useMemo(() => {
+    const list = [...filteredBom];
+    const { column, direction } = bomSort;
+    if (!column || !direction) return list;
+    const mul = direction === 'asc' ? 1 : -1;
+    list.sort((a, b) => {
+      const av = a[column as keyof ProductionOrderBomRow];
+      const bv = b[column as keyof ProductionOrderBomRow];
+      if (column === 'so_luong_dinh_muc' || column === 'so_luong_tong' || column === 'sl_san_pham') {
+        return mul * (Number(av) - Number(bv));
+      }
+      return mul * String(av ?? '').localeCompare(String(bv ?? ''), 'vi');
+    });
+    return list;
+  }, [filteredBom, bomSort]);
 
   const handleView = useCallback(
     (item: ProductionOrder) => {
@@ -245,6 +325,17 @@ const LenhSanXuatPage: React.FC = () => {
     setViewingLineRow(row);
   }, []);
 
+  const handleViewLineFromOrder = useCallback(
+    (order: ProductionOrder, line: ProductionOrderLine) => {
+      setViewingLineFromOrder({ order, line });
+    },
+    [],
+  );
+
+  const handleCloseLineFromOrder = useCallback(() => {
+    setViewingLineFromOrder(null);
+  }, []);
+
   const handleCloseLineDetail = useCallback(() => {
     setViewingLineRow(null);
   }, []);
@@ -252,6 +343,7 @@ const LenhSanXuatPage: React.FC = () => {
   const handleCloseOrderDetail = useCallback(() => {
     if (statusChangeTarget) return;
     setViewingItem(null);
+    setViewingLineFromOrder(null);
   }, [statusChangeTarget]);
 
   const handleStatusChange = useCallback(
@@ -277,6 +369,7 @@ const LenhSanXuatPage: React.FC = () => {
     () => [
       { id: 'danh-sach' as const, label: txt('productionOrder.tabList'), icon: List },
       { id: 'chi-tiet' as const, label: txt('productionOrder.tabLines'), icon: Package },
+      { id: 'bom' as const, label: txt('productionOrder.tabBom'), icon: Layers },
     ],
     [],
   );
@@ -297,7 +390,7 @@ const LenhSanXuatPage: React.FC = () => {
         <TabGroup tabs={tabs} activeTab={activeTab} onChange={setActiveTab} />
       </div>
 
-      {activeTab === 'danh-sach' ? (
+      {activeTab === 'danh-sach' && (
         <div className="flex-1 min-h-0 flex flex-col mt-1.5 rounded-xl border border-border bg-card shadow-sm overflow-hidden">
           <LenhSanXuatToolbar orders={orders} customers={customers} />
 
@@ -315,11 +408,14 @@ const LenhSanXuatPage: React.FC = () => {
                 data={sortedFilteredOrders}
                 isLoading={isLoading}
                 onView={handleView}
+                progressSummary={progressSummary}
               />
             )}
           </div>
         </div>
-      ) : (
+      )}
+
+      {activeTab === 'chi-tiet' && (
         <div className="flex-1 min-h-0 flex flex-col mt-1.5 rounded-xl border border-border bg-card shadow-sm overflow-hidden">
           <LenhSanXuatLinesToolbar lines={lines} customers={customers} />
 
@@ -337,6 +433,28 @@ const LenhSanXuatPage: React.FC = () => {
                 data={sortedFilteredLines}
                 isLoading={isLinesLoading}
                 onView={handleViewLine}
+                receivedQtyMap={allReceivedQty}
+              />
+            )}
+          </div>
+        </div>
+      )}
+
+      {activeTab === 'bom' && (
+        <div className="flex-1 min-h-0 flex flex-col mt-1.5 rounded-xl border border-border bg-card shadow-sm overflow-hidden">
+          <div className="flex-1 min-h-0 flex flex-col">
+            {isBomError ? (
+              <ErrorState
+                title={txt('productionOrder.bomLoadErrorTitle')}
+                message={txt('productionOrder.bomLoadErrorHint')}
+                onRetry={() => refetchBom()}
+                primaryButtons
+                className="m-4 border-0 shadow-none"
+              />
+            ) : (
+              <LenhSanXuatBomTable
+                data={sortedFilteredBom}
+                isLoading={isBomLoading}
               />
             )}
           </div>
@@ -350,6 +468,17 @@ const LenhSanXuatPage: React.FC = () => {
               data={detailData}
               onClose={handleCloseOrderDetail}
               onStatusChange={handleStatusChange}
+              onViewLine={handleViewLineFromOrder}
+            />
+          </Suspense>
+        )}
+        {activeTab === 'danh-sach' && viewingLineFromOrder && (
+          <Suspense fallback={<DrawerLazyFallback />}>
+            <LenhSanXuatLineDetail
+              order={viewingLineFromOrder.order}
+              line={viewingLineFromOrder.line}
+              onClose={handleCloseLineFromOrder}
+              stackLevel={1}
             />
           </Suspense>
         )}

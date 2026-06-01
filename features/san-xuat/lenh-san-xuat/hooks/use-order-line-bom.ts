@@ -1,14 +1,16 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   getOrderLineBom,
+  getOrderLineBomForLines,
   getTemplateMaterialIdsForCategory,
   generateOrderLineBomFromCategory,
   createOrderLineBom,
   updateOrderLineBom,
   deleteOrderLineBom,
+  getAllOrdersBomFlat,
 } from '../services/order-line-bom-service';
 import type { OrderLineBomFormValues } from '../core/order-line-bom-schema';
-import type { OrderLineBomItem } from '../core/order-line-bom-types';
+import type { OrderLineBomItem, ProductionOrderBomRow } from '../core/order-line-bom-types';
 import { toast } from 'sonner';
 import { txt } from '@/lib/text';
 import { queryKeys } from '@/lib/query-keys';
@@ -20,6 +22,13 @@ import { useSupabaseReady } from '@/lib/supabase/use-supabase-list-enabled';
 import { getErrorMessage } from '@/lib/utils';
 
 const lineBomKey = (lineId: string) => queryKeys.productionOrders.lineBom(lineId);
+const linesListKey = queryKeys.productionOrders.lines;
+const orderBomKeyPrefix = ['production-orders', 'order-bom'] as const;
+
+function invalidateLineBomCounts(queryClient: ReturnType<typeof useQueryClient>) {
+  queryClient.invalidateQueries({ queryKey: linesListKey });
+  queryClient.invalidateQueries({ queryKey: orderBomKeyPrefix });
+}
 
 export const useOrderLineBom = (
   lineId: string | undefined,
@@ -29,6 +38,25 @@ export const useOrderLineBom = (
   return useQuery({
     queryKey: lineBomKey(lineId ?? ''),
     queryFn: () => getOrderLineBom(lineId!),
+    enabled,
+    staleTime: 0,
+    gcTime: transactionalCrudListQueryOptions.gcTime,
+    refetchOnMount: 'always',
+    ...supabaseListQueryRetryOptions,
+  });
+};
+
+export const useProductionOrderBom = (
+  orderId: string | undefined,
+  lineIds: string[],
+  options?: { enabled?: boolean },
+) => {
+  const enabled = useSupabaseReady(
+    Boolean(options?.enabled !== false && orderId && lineIds.length > 0),
+  );
+  return useQuery({
+    queryKey: queryKeys.productionOrders.orderBom(orderId ?? ''),
+    queryFn: () => getOrderLineBomForLines(lineIds),
     enabled,
     staleTime: 0,
     gcTime: transactionalCrudListQueryOptions.gcTime,
@@ -57,6 +85,7 @@ export const useGenerateOrderLineBom = (lineId: string) => {
     mutationFn: (replace: boolean) => generateOrderLineBomFromCategory(lineId, replace),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: lineBomKey(lineId) });
+      invalidateLineBomCounts(queryClient);
       toast.success(txt('productionOrder.lineBom.toast.generateSuccess'));
     },
     onError: (err: unknown) => toast.error(getErrorMessage(err)),
@@ -79,6 +108,7 @@ export const useCreateOrderLineBom = (lineId: string, lineQty: number, onSuccess
         return [...list, created].sort((a, b) => a.thu_tu - b.thu_tu || a.id.localeCompare(b.id));
       });
       toast.success(txt('productionOrder.lineBom.toast.createSuccess'));
+      invalidateLineBomCounts(queryClient);
       onSuccess?.();
     },
     onError: (err: unknown) => toast.error(getErrorMessage(err)),
@@ -96,6 +126,7 @@ export const useUpdateOrderLineBom = (lineId: string, lineQty: number, onSuccess
         return old.map((r) => (r.id === updated.id ? updated : r));
       });
       toast.success(txt('productionOrder.lineBom.toast.updateSuccess'));
+      invalidateLineBomCounts(queryClient);
       onSuccess?.();
     },
     onError: (err: unknown) => toast.error(getErrorMessage(err)),
@@ -110,8 +141,24 @@ export const useDeleteOrderLineBom = (lineId: string) => {
       queryClient.setQueryData<OrderLineBomItem[]>(lineBomKey(lineId), (old) =>
         (old ?? []).filter((r) => r.id !== id),
       );
+      invalidateLineBomCounts(queryClient);
       toast.success(txt('productionOrder.lineBom.toast.deleteSuccess'));
     },
     onError: (err: unknown) => toast.error(getErrorMessage(err)),
   });
 };
+
+export const useAllOrdersBomFlat = (options?: { enabled?: boolean }) => {
+  const enabled = useSupabaseReady(options?.enabled !== false);
+  return useQuery<ProductionOrderBomRow[]>({
+    queryKey: ['production-orders', 'bom-flat-list'],
+    queryFn: getAllOrdersBomFlat,
+    enabled,
+    staleTime: 0,
+    gcTime: transactionalCrudListQueryOptions.gcTime,
+    refetchOnMount: 'always',
+    ...supabaseListQueryRetryOptions,
+  });
+};
+
+export type { ProductionOrderBomRow };

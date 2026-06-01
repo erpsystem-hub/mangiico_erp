@@ -1,7 +1,7 @@
-import type { ProductionOrder } from '../core/types';
+import type { ProductionOrderListItem } from '../core/types';
 
 export function productionOrderMatchesColumnSearch(
-  item: ProductionOrder,
+  item: ProductionOrderListItem,
   columnSearch: Record<string, string>,
 ): boolean {
   for (const [colId, raw] of Object.entries(columnSearch)) {
@@ -14,6 +14,9 @@ export function productionOrderMatchesColumnSearch(
         break;
       case 'ten_khach_hang':
         hay = `${item.ten_khach_hang} ${item.ma_khach_hang}`;
+        break;
+      case 'so_dong_sp':
+        hay = String(item.so_dong_sp);
         break;
       case 'ngay_dat':
         hay = item.ngay_dat;

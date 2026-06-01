@@ -503,6 +503,7 @@ export const ui = {
     "clearSelection": "Xóa chọn",
     "clearFilter": "Xóa bộ lọc",
     "clearFilters": "Xóa {{count}} bộ lọc",
+    "filter": "Bộ lọc",
     "moreFilters": "Thêm bộ lọc",
     "columnDisplay": "Cột hiển thị",
     "columnOptions": "Tùy chọn cột",

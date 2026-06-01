@@ -1,6 +1,7 @@
 import type { DateRangeValue } from '@/components/ui/DateRangePicker';
 import type { TrangThaiLenhSx } from './constants';
 import type {
+  SalesOrder,
   SalesOrderLineAttributeValue,
   SalesOrderLineMeasurementValue,
 } from '@/features/kinh-doanh/don-hang/core/types';
@@ -12,6 +13,11 @@ export type {
   SalesOrderLineMeasurementValue,
   SalesOrderFilters as ProductionOrderFilters,
 } from '@/features/kinh-doanh/don-hang/core/types';
+
+export type ProductionOrderListItem = SalesOrder & {
+  /** Số dòng sản phẩm trên đơn */
+  so_dong_sp: number;
+};
 
 /** Dòng sản phẩm phẳng trên tab Chi tiết — kèm thông tin đơn cha. */
 export interface ProductionOrderLineRow {
@@ -35,6 +41,8 @@ export interface ProductionOrderLineRow {
   tg_cap_nhat?: string;
   thuoc_tinh_values?: SalesOrderLineAttributeValue[];
   thong_so_do_values?: SalesOrderLineMeasurementValue[];
+  /** Số dòng BOM đã sinh cho dòng SP này */
+  so_dong_bom: number;
 }
 
 export interface ProductionOrderLineFilters {

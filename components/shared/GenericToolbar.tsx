@@ -516,21 +516,48 @@ const GenericToolbar: React.FC<GenericToolbarProps> = ({
                             {(filters || (activeFilterCount > 0 && onClearAllFilters)) && (
                                 <div
                                     className={cn(
-                                        'flex min-w-0 flex-1 flex-wrap items-center gap-2 py-0.5',
+                                        'flex min-w-0 flex-1 items-center gap-2 py-0.5',
                                         (showBack || !hideSearch || desktopStartSlot) &&
                                             'border-l border-border pl-3 ml-0.5',
                                     )}
                                 >
-                                    <FilterChipOverflowRow maxVisible={maxVisibleFilterChips}>{filters}</FilterChipOverflowRow>
-                                    {activeFilterCount > 0 && onClearAllFilters && (
+                                    {/* sm→md: compact filter button (tránh chip xuống dòng) */}
+                                    {hasMobileFilterSheet && (
                                         <button
-                                            onClick={onClearAllFilters}
-                                            className="shrink-0 h-7 px-2 flex items-center gap-1 text-xs font-medium text-destructive hover:bg-destructive/10 rounded-lg transition-all border border-destructive/20 hover:border-destructive/30 active:scale-95"
+                                            type="button"
+                                            onClick={() => setShowMobileFilters(true)}
+                                            className={cn(
+                                                'flex md:hidden shrink-0 h-8 items-center gap-1.5 px-2.5 rounded-lg border text-xs font-medium transition-all active:scale-95 relative',
+                                                activeFilterCount > 0
+                                                    ? 'bg-primary/5 border-primary/40 text-primary'
+                                                    : 'bg-background border-border text-muted-foreground hover:bg-muted hover:text-foreground',
+                                            )}
                                         >
-                                            <X size={11} className="stroke-[2.5px]" />
-                                            {txt('common.clearFilters', { count: activeFilterCount })}
+                                            <Filter size={13} strokeWidth={2.25} />
+                                            {txt('common.filter')}
+                                            {activeFilterCount > 0 && (
+                                                <span className="absolute -top-1 -right-1 w-4 h-4 flex items-center justify-center bg-primary text-white text-[10px] font-bold rounded-full tabular-nums">
+                                                    {activeFilterCount}
+                                                </span>
+                                            )}
                                         </button>
                                     )}
+                                    {/* md+: full chip row */}
+                                    <div className={cn(
+                                        'min-w-0 flex-1 flex-wrap items-center gap-2',
+                                        hasMobileFilterSheet ? 'hidden md:flex' : 'flex',
+                                    )}>
+                                        <FilterChipOverflowRow maxVisible={maxVisibleFilterChips}>{filters}</FilterChipOverflowRow>
+                                        {activeFilterCount > 0 && onClearAllFilters && (
+                                            <button
+                                                onClick={onClearAllFilters}
+                                                className="shrink-0 h-7 px-2 flex items-center gap-1 text-xs font-medium text-destructive hover:bg-destructive/10 rounded-lg transition-all border border-destructive/20 hover:border-destructive/30 active:scale-95"
+                                            >
+                                                <X size={11} className="stroke-[2.5px]" />
+                                                {txt('common.clearFilters', { count: activeFilterCount })}
+                                            </button>
+                                        )}
+                                    </div>
                                 </div>
                             )}
 
@@ -601,29 +628,83 @@ const GenericToolbar: React.FC<GenericToolbarProps> = ({
 
                             {(filters || (activeFilterCount > 0 && onClearAllFilters)) &&
                             (showBack || !hideSearch || desktopStartSlot) ? (
-                                <div className="border-l border-border pl-3 ml-1 flex items-center gap-2 flex-wrap min-w-0 flex-1">
-                                    <FilterChipOverflowRow maxVisible={maxVisibleFilterChips}>{filters}</FilterChipOverflowRow>
-                                    {activeFilterCount > 0 && onClearAllFilters && (
+                                <div className="border-l border-border pl-3 ml-1 flex items-center gap-2 min-w-0 flex-1">
+                                    {/* sm→md: compact filter button */}
+                                    {hasMobileFilterSheet && (
                                         <button
-                                            onClick={onClearAllFilters}
-                                            className="shrink-0 h-7 px-2 flex items-center gap-1 text-xs font-medium text-destructive hover:bg-destructive/10 rounded-lg transition-all border border-destructive/20 hover:border-destructive/30 active:scale-95"
+                                            type="button"
+                                            onClick={() => setShowMobileFilters(true)}
+                                            className={cn(
+                                                'flex md:hidden shrink-0 h-8 items-center gap-1.5 px-2.5 rounded-lg border text-xs font-medium transition-all active:scale-95 relative',
+                                                activeFilterCount > 0
+                                                    ? 'bg-primary/5 border-primary/40 text-primary'
+                                                    : 'bg-background border-border text-muted-foreground hover:bg-muted hover:text-foreground',
+                                            )}
                                         >
-                                            <X size={11} className="stroke-[2.5px]" />
-                                            {txt('common.clearFilters', { count: activeFilterCount })}
+                                            <Filter size={13} strokeWidth={2.25} />
+                                            {txt('common.filter')}
+                                            {activeFilterCount > 0 && (
+                                                <span className="absolute -top-1 -right-1 w-4 h-4 flex items-center justify-center bg-primary text-white text-[10px] font-bold rounded-full tabular-nums">
+                                                    {activeFilterCount}
+                                                </span>
+                                            )}
                                         </button>
                                     )}
+                                    {/* md+: full chip row */}
+                                    <div className={cn(
+                                        'flex-wrap items-center gap-2 min-w-0 flex-1',
+                                        hasMobileFilterSheet ? 'hidden md:flex' : 'flex',
+                                    )}>
+                                        <FilterChipOverflowRow maxVisible={maxVisibleFilterChips}>{filters}</FilterChipOverflowRow>
+                                        {activeFilterCount > 0 && onClearAllFilters && (
+                                            <button
+                                                onClick={onClearAllFilters}
+                                                className="shrink-0 h-7 px-2 flex items-center gap-1 text-xs font-medium text-destructive hover:bg-destructive/10 rounded-lg transition-all border border-destructive/20 hover:border-destructive/30 active:scale-95"
+                                            >
+                                                <X size={11} className="stroke-[2.5px]" />
+                                                {txt('common.clearFilters', { count: activeFilterCount })}
+                                            </button>
+                                        )}
+                                    </div>
                                 </div>
                             ) : (
                                 <>
+                                    {/* sm→md: compact filter button */}
+                                    {hasMobileFilterSheet && (
+                                        <button
+                                            type="button"
+                                            onClick={() => setShowMobileFilters(true)}
+                                            className={cn(
+                                                'flex md:hidden shrink-0 h-8 items-center gap-1.5 px-2.5 rounded-lg border text-xs font-medium transition-all active:scale-95 relative',
+                                                activeFilterCount > 0
+                                                    ? 'bg-primary/5 border-primary/40 text-primary'
+                                                    : 'bg-background border-border text-muted-foreground hover:bg-muted hover:text-foreground',
+                                            )}
+                                        >
+                                            <Filter size={13} strokeWidth={2.25} />
+                                            {txt('common.filter')}
+                                            {activeFilterCount > 0 && (
+                                                <span className="absolute -top-1 -right-1 w-4 h-4 flex items-center justify-center bg-primary text-white text-[10px] font-bold rounded-full tabular-nums">
+                                                    {activeFilterCount}
+                                                </span>
+                                            )}
+                                        </button>
+                                    )}
                                     {filters && (
-                                        <div className="flex items-center gap-2 flex-wrap min-w-0 flex-1">
+                                        <div className={cn(
+                                            'items-center gap-2 flex-wrap min-w-0 flex-1',
+                                            hasMobileFilterSheet ? 'hidden md:flex' : 'flex',
+                                        )}>
                                             <FilterChipOverflowRow maxVisible={maxVisibleFilterChips}>{filters}</FilterChipOverflowRow>
                                         </div>
                                     )}
                                     {activeFilterCount > 0 && onClearAllFilters && (
                                         <button
                                             onClick={onClearAllFilters}
-                                            className="shrink-0 h-7 px-2 flex items-center gap-1 text-xs font-medium text-destructive hover:bg-destructive/10 rounded-lg transition-all border border-destructive/20 hover:border-destructive/30 active:scale-95"
+                                            className={cn(
+                                                'shrink-0 h-7 px-2 flex items-center gap-1 text-xs font-medium text-destructive hover:bg-destructive/10 rounded-lg transition-all border border-destructive/20 hover:border-destructive/30 active:scale-95',
+                                                hasMobileFilterSheet && 'hidden md:flex',
+                                            )}
                                         >
                                             <X size={11} className="stroke-[2.5px]" />
                                             {txt('common.clearFilters', { count: activeFilterCount })}
