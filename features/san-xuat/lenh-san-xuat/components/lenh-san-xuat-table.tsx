@@ -23,7 +23,7 @@ interface Props {
   isLoading: boolean;
   onView: (item: ProductionOrderListItem) => void;
   /** Key = don_hang_id → { lenh: number; nhap: number } */
-  progressSummary?: Map<string, { lenh: number; nhap: number }>;
+  progressSummary?: Record<string, { lenh: number; nhap: number }>;
 }
 
 const LenhSanXuatTable: React.FC<Props> = ({ data, isLoading, onView, progressSummary }) => {
@@ -124,7 +124,7 @@ const LenhSanXuatTable: React.FC<Props> = ({ data, isLoading, onView, progressSu
           </span>
         );
       case 'tien_do_tong': {
-        const summary = progressSummary?.get(item.id);
+        const summary = progressSummary?.[item.id];
         const lenh = summary?.lenh ?? 0;
         const nhap = summary?.nhap ?? 0;
         const tienDo = getTienDo(lenh, nhap);
@@ -154,7 +154,7 @@ const LenhSanXuatTable: React.FC<Props> = ({ data, isLoading, onView, progressSu
   };
 
   const renderMobileCard = (item: ProductionOrderListItem, isSelected: boolean) => {
-    const summary = progressSummary?.get(item.id);
+    const summary = progressSummary?.[item.id];
     const lenh = summary?.lenh ?? 0;
     const nhap = summary?.nhap ?? 0;
     const tienDo = getTienDo(lenh, nhap);

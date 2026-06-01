@@ -30,15 +30,40 @@ const DEFAULT_COLUMNS: ColumnConfig[] = [
     order: 2,
   },
   {
+    id: 'sl_don_dat',
+    label: txt('salesOrder.store.slDonDatCol'),
+    visible: true,
+    minWidth: 96,
+    maxWidth: 128,
+    order: 3,
+  },
+  {
+    id: 'sl_da_sx',
+    label: txt('salesOrder.store.slDaSxCol'),
+    visible: true,
+    minWidth: 96,
+    maxWidth: 128,
+    order: 4,
+  },
+  {
+    id: 'sl_con_lai',
+    label: txt('salesOrder.store.slConLaiCol'),
+    visible: true,
+    minWidth: 96,
+    maxWidth: 128,
+    order: 5,
+  },
+  { id: 'tien_do', label: txt('salesOrder.store.tienDoCol'), visible: true, ...P.enumBadge, order: 6 },
+  {
     id: 'tong_tien',
     label: txt('salesOrder.store.totalCol'),
     visible: true,
     minWidth: 120,
     maxWidth: 160,
-    order: 3,
+    order: 7,
   },
-  { id: 'trang_thai', label: txt('salesOrder.store.statusCol'), visible: true, ...P.enumBadge, order: 4 },
-  { id: 'tg_cap_nhat', label: txt('salesOrder.store.updatedCol'), visible: true, ...P.datetime, order: 5 },
+  { id: 'trang_thai', label: txt('salesOrder.store.statusCol'), visible: true, ...P.enumBadge, order: 8 },
+  { id: 'tg_cap_nhat', label: txt('salesOrder.store.updatedCol'), visible: true, ...P.datetime, order: 9 },
 ];
 
 const initialFilters: SalesOrderFilters = {

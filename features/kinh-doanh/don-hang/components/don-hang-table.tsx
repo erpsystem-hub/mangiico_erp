@@ -16,6 +16,10 @@ import {
 } from '@/components/shared/column-header';
 import { TRANG_THAI_DON_HANG } from '../core/constants';
 import { SalesOrderTableRowActions } from './sales-order-table-row-actions';
+import {
+  getTienDo,
+  TIEN_DO_BADGE,
+} from '@/features/san-xuat/lenh-san-xuat/components/lenh-san-xuat-lines-table';
 
 interface Props {
   data: SalesOrder[];
@@ -23,9 +27,11 @@ interface Props {
   onEdit: (item: SalesOrder) => void;
   onDelete: (id: string) => void;
   onView?: (item: SalesOrder) => void;
+  /** Key = don_hang_id → { lenh: tổng SL; nhap: SL đã nhập kho SX } */
+  progressSummary?: Record<string, { lenh: number; nhap: number }>;
 }
 
-const DonHangTable: React.FC<Props> = ({ data, isLoading, onEdit, onDelete, onView }) => {
+const DonHangTable: React.FC<Props> = ({ data, isLoading, onEdit, onDelete, onView, progressSummary }) => {
   const [rowMenuOpenId, setRowMenuOpenId] = useState<string | null>(null);
   const {
     columns,
@@ -112,6 +118,46 @@ const DonHangTable: React.FC<Props> = ({ data, isLoading, onEdit, onDelete, onVi
         );
       case 'ngay_dat':
         return <span className="text-sm">{formatDateShort(item.ngay_dat)}</span>;
+      case 'sl_don_dat': {
+        const lenh = progressSummary?.[item.id]?.lenh ?? 0;
+        return (
+          <span className="tabular-nums text-sm text-foreground">
+            {lenh > 0 ? lenh.toLocaleString('vi-VN') : '—'}
+          </span>
+        );
+      }
+      case 'sl_da_sx': {
+        const nhap = progressSummary?.[item.id]?.nhap ?? 0;
+        return (
+          <span className={`tabular-nums text-sm ${nhap > 0 ? 'text-primary font-medium' : 'text-muted-foreground'}`}>
+            {nhap > 0 ? nhap.toLocaleString('vi-VN') : '—'}
+          </span>
+        );
+      }
+      case 'sl_con_lai': {
+        const s = progressSummary?.[item.id];
+        const lenh = s?.lenh ?? 0;
+        const nhap = s?.nhap ?? 0;
+        const conLai = Math.max(0, lenh - nhap);
+        return (
+          <span className={`tabular-nums text-sm ${conLai === 0 && lenh > 0 ? 'text-muted-foreground' : conLai < lenh && lenh > 0 ? 'text-amber-600 font-medium' : 'text-foreground'}`}>
+            {lenh > 0 ? conLai.toLocaleString('vi-VN') : '—'}
+          </span>
+        );
+      }
+      case 'tien_do': {
+        const s = progressSummary?.[item.id];
+        const lenh = s?.lenh ?? 0;
+        const nhap = s?.nhap ?? 0;
+        if (lenh === 0) return <span className="text-muted-foreground text-xs">—</span>;
+        const tienDo = getTienDo(lenh, nhap);
+        const cfg = TIEN_DO_BADGE[tienDo];
+        return (
+          <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${cfg.className}`}>
+            {cfg.label}
+          </span>
+        );
+      }
       case 'tong_tien':
         return (
           <span className="text-sm font-medium tabular-nums">{formatCurrency(item.tong_tien)}</span>
@@ -135,7 +181,13 @@ const DonHangTable: React.FC<Props> = ({ data, isLoading, onEdit, onDelete, onVi
     }
   };
 
-  const renderMobileCard = (item: SalesOrder, isSelected: boolean) => (
+  const renderMobileCard = (item: SalesOrder, isSelected: boolean) => {
+    const s = progressSummary?.[item.id];
+    const lenh = s?.lenh ?? 0;
+    const nhap = s?.nhap ?? 0;
+    const tienDo = lenh > 0 ? getTienDo(lenh, nhap) : null;
+    const tienDoCfg = tienDo ? TIEN_DO_BADGE[tienDo] : null;
+    return (
     <MobileListCard
       selected={isSelected}
       onBodyClick={onView ? () => onView(item) : undefined}
@@ -154,9 +206,16 @@ const DonHangTable: React.FC<Props> = ({ data, isLoading, onEdit, onDelete, onVi
         <span className="text-xs text-muted-foreground truncate">{item.ten_khach_hang}</span>
       }
       metaLine={
-        <span className="text-xs text-muted-foreground">
-          {formatDateShort(item.ngay_dat)} · {formatCurrency(item.tong_tien)}
-        </span>
+        <div className="flex items-center gap-1.5 flex-wrap">
+          <span className="text-xs text-muted-foreground">
+            {formatDateShort(item.ngay_dat)} · {formatCurrency(item.tong_tien)}
+          </span>
+          {tienDoCfg && (
+            <span className={`inline-flex items-center rounded-full px-1.5 py-0.5 text-[10px] font-medium ${tienDoCfg.className}`}>
+              {tienDoCfg.label}
+            </span>
+          )}
+        </div>
       }
       footerStart={
         <label className="inline-flex h-7 w-7 shrink-0 cursor-pointer items-center justify-center rounded">
@@ -182,6 +241,7 @@ const DonHangTable: React.FC<Props> = ({ data, isLoading, onEdit, onDelete, onVi
       }
     />
   );
+  };
 
   return (
     <GenericTable

@@ -11,7 +11,7 @@ export interface ProductQtyMap {
 
 interface Props {
   products: ProductionOrderProductLine[];
-  receivedByProduct: Map<string, number>;
+  receivedByProduct: Record<string, number>;
   value: ProductQtyMap;
   onChange: (next: ProductQtyMap) => void;
 }
@@ -24,7 +24,7 @@ const ProductionOrderProductsEditor: React.FC<Props> = ({
 }) => {
   const getRemaining = useCallback(
     (p: ProductionOrderProductLine) => {
-      const received = receivedByProduct.get(p.danh_muc_id) ?? 0;
+      const received = receivedByProduct[p.danh_muc_id] ?? 0;
       return Math.max(0, p.so_luong_lenh - received);
     },
     [receivedByProduct],
@@ -68,7 +68,7 @@ const ProductionOrderProductsEditor: React.FC<Props> = ({
         </thead>
         <tbody>
           {products.map((p, idx) => {
-            const received = receivedByProduct.get(p.danh_muc_id) ?? 0;
+            const received = receivedByProduct[p.danh_muc_id] ?? 0;
             const remaining = getRemaining(p);
             const inputQty = value[p.danh_muc_id] ?? 0;
             const isExceeding = inputQty > remaining;

@@ -17,7 +17,7 @@ interface Props {
   order: ProductionOrder;
   onViewLine?: (order: ProductionOrder, line: ProductionOrderLine) => void;
   /** Key = danh_muc_id → SL đã nhập (từ phiếu Nhập sản xuất Hoàn thành) */
-  receivedQtyMap?: Map<string, number>;
+  receivedQtyMap?: Record<string, number>;
 }
 
 const ProductionOrderProductsSection: React.FC<Props> = ({ order, onViewLine, receivedQtyMap }) => {
@@ -79,7 +79,7 @@ const ProductionOrderProductsSection: React.FC<Props> = ({ order, onViewLine, re
               headerClassName: 'min-w-[96px] text-right',
               cellClassName: 'text-right',
               renderCell: (ln) => {
-                const slDaNhap = receivedQtyMap?.get(ln.danh_muc_id) ?? 0;
+                const slDaNhap = receivedQtyMap?.[ln.danh_muc_id] ?? 0;
                 return (
                   <span className={`tabular-nums text-sm ${slDaNhap > 0 ? 'text-primary font-medium' : 'text-muted-foreground'}`}>
                     {slDaNhap > 0 ? slDaNhap.toLocaleString('vi-VN') : '—'}
@@ -93,7 +93,7 @@ const ProductionOrderProductsSection: React.FC<Props> = ({ order, onViewLine, re
               headerClassName: 'min-w-[96px] text-right',
               cellClassName: 'text-right',
               renderCell: (ln) => {
-                const slDaNhap = receivedQtyMap?.get(ln.danh_muc_id) ?? 0;
+                const slDaNhap = receivedQtyMap?.[ln.danh_muc_id] ?? 0;
                 const conLai = Math.max(0, ln.so_luong - slDaNhap);
                 return (
                   <span className={`tabular-nums text-sm ${conLai === 0 ? 'text-muted-foreground' : conLai < ln.so_luong ? 'text-amber-600 font-medium' : 'text-foreground'}`}>
@@ -107,7 +107,7 @@ const ProductionOrderProductsSection: React.FC<Props> = ({ order, onViewLine, re
               header: txt('productionOrder.store.tienDoCol'),
               headerClassName: 'min-w-[120px]',
               renderCell: (ln) => {
-                const slDaNhap = receivedQtyMap?.get(ln.danh_muc_id) ?? 0;
+                const slDaNhap = receivedQtyMap?.[ln.danh_muc_id] ?? 0;
                 const tienDo = getTienDo(ln.so_luong, slDaNhap);
                 return (
                   <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${TIEN_DO_CLASS[tienDo] ?? ''}`}>

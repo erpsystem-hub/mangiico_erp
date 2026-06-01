@@ -44,7 +44,7 @@ interface Props {
   isLoading: boolean;
   onView: (item: ProductionOrderLineRow) => void;
   /** Key = `${don_hang_id}:${danh_muc_id}` → SL đã nhập */
-  receivedQtyMap?: Map<string, number>;
+  receivedQtyMap?: Record<string, number>;
 }
 
 const LenhSanXuatLinesTable: React.FC<Props> = ({ data, isLoading, onView, receivedQtyMap }) => {
@@ -66,7 +66,7 @@ const LenhSanXuatLinesTable: React.FC<Props> = ({ data, isLoading, onView, recei
 
   const getSlDaNhap = useCallback(
     (item: ProductionOrderLineRow) =>
-      receivedQtyMap?.get(`${item.don_hang_id}:${item.danh_muc_id}`) ?? 0,
+      receivedQtyMap?.[`${item.don_hang_id}:${item.danh_muc_id}`] ?? 0,
     [receivedQtyMap],
   );
 

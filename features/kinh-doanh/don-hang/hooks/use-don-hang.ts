@@ -7,6 +7,7 @@ import {
   deleteSalesOrder,
   updateSalesOrderStatus,
 } from '../services/don-hang-service';
+import { getOrdersProgressSummary } from '@/features/san-xuat/phieu-kho/services/phieu-kho-service';
 import type { TrangThaiDonHang } from '../core/constants';
 import type { SalesOrderFormValues } from '../core/schema';
 import type { SalesOrder } from '../core/types';
@@ -108,6 +109,19 @@ export const useDeleteSalesOrder = () => {
       toast.success(txt('salesOrder.toast.deleteSuccess'));
     },
     onError: (err: unknown) => toast.error(getErrorMessage(err)),
+  });
+};
+
+export const useSalesOrderProgressSummary = (options?: { enabled?: boolean }) => {
+  const enabled = useSupabaseReady(options?.enabled !== false);
+  return useQuery<Record<string, { lenh: number; nhap: number }>>({
+    queryKey: ['sales-orders', 'progress-summary'],
+    queryFn: async () => Object.fromEntries(await getOrdersProgressSummary()),
+    enabled,
+    staleTime: 0,
+    gcTime: transactionalCrudListQueryOptions.gcTime,
+    refetchOnMount: 'always',
+    ...supabaseListQueryRetryOptions,
   });
 };
 

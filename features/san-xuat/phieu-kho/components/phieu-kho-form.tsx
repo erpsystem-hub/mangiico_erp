@@ -229,7 +229,7 @@ const PhieuKhoForm: React.FC<Props> = ({
     const { products, receivedByProduct } = orderProductsData;
     const map: ProductQtyMap = {};
     for (const p of products) {
-      const received = receivedByProduct.get(p.danh_muc_id) ?? 0;
+      const received = receivedByProduct[p.danh_muc_id] ?? 0;
       const remaining = Math.max(0, p.so_luong_lenh - received);
       map[p.danh_muc_id] = remaining;
     }
@@ -516,7 +516,7 @@ const PhieuKhoForm: React.FC<Props> = ({
             ) : (
               <ProductionOrderProductsEditor
                 products={orderProductsData?.products ?? []}
-                receivedByProduct={orderProductsData?.receivedByProduct ?? new Map()}
+                receivedByProduct={orderProductsData?.receivedByProduct ?? {}}
                 value={nhapByProduct}
                 onChange={setNhapByProduct}
               />

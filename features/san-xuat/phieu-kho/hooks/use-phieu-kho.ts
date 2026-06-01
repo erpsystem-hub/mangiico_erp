@@ -174,7 +174,7 @@ export const usePurchaseLinesForImport = (
 
 export interface ProductionOrderProductsData {
   products: ProductionOrderProductLine[];
-  receivedByProduct: Map<string, number>;
+  receivedByProduct: Record<string, number>;
 }
 
 /**
@@ -190,11 +190,11 @@ export const useProductionOrderProducts = (
   return useQuery<ProductionOrderProductsData>({
     queryKey: ['warehouse-slips', 'order-products', donHangId ?? '', excludeSlipId ?? ''],
     queryFn: async () => {
-      const [products, receivedByProduct] = await Promise.all([
+      const [products, receivedMap] = await Promise.all([
         getProductLinesForProductionOrder(donHangId!),
         getReceivedQtyByProduct(donHangId!, excludeSlipId),
       ]);
-      return { products, receivedByProduct };
+      return { products, receivedByProduct: Object.fromEntries(receivedMap) };
     },
     enabled,
     staleTime: 0,

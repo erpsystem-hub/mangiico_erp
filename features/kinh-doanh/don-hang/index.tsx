@@ -23,6 +23,7 @@ import DonHangToolbar from './components/don-hang-toolbar';
 import DonHangTable from './components/don-hang-table';
 import {
   useSalesOrders,
+  useSalesOrderProgressSummary,
   useDeleteSalesOrder,
   useSalesOrderDetail,
   useUpsertSalesOrder,
@@ -97,6 +98,7 @@ const DonHangPage: React.FC = () => {
   const { searchTerm, filters, resetState, clearSelection, sort } = useSalesOrderStore();
 
   const { data: orders = [], isLoading, isError, refetch } = useSalesOrders({ enabled: canView });
+  const { data: progressSummary } = useSalesOrderProgressSummary({ enabled: canView });
   const { data: customers = [] } = usePartnerList('khach_hang', { enabled: canView });
   const deleteMutation = useDeleteSalesOrder();
   const upsertLineMutation = useUpsertSalesOrder();
@@ -435,6 +437,7 @@ const DonHangPage: React.FC = () => {
               onEdit={handleEdit}
               onDelete={handleDelete}
               onView={handleView}
+              progressSummary={progressSummary}
             />
           )}
         </div>

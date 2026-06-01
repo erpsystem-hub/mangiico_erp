@@ -31,6 +31,10 @@ export const salesOrder = {
     statusCol: 'Trạng thái',
     updatedCol: 'Cập nhật',
     branchCol: 'Chi nhánh',
+    slDonDatCol: 'SL đơn đặt',
+    slDaSxCol: 'SL đã SX',
+    slConLaiCol: 'SL còn lại',
+    tienDoCol: 'Tiến độ',
   },
   form: {
     createTitle: 'Thêm đơn hàng',

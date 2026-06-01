@@ -67,9 +67,9 @@ export const useProductionOrderLines = (options?: { enabled?: boolean }) => {
  */
 export const useAllOrdersReceivedQty = (options?: { enabled?: boolean }) => {
   const enabled = useSupabaseReady(options?.enabled !== false);
-  return useQuery({
+  return useQuery<Record<string, number>>({
     queryKey: ['production-orders', 'all-received-qty'],
-    queryFn: getAllOrdersReceivedQty,
+    queryFn: async () => Object.fromEntries(await getAllOrdersReceivedQty()),
     enabled,
     staleTime: 0,
     gcTime: transactionalCrudListQueryOptions.gcTime,
@@ -81,9 +81,9 @@ export const useAllOrdersReceivedQty = (options?: { enabled?: boolean }) => {
 /** SL đã nhập theo danh_muc_id cho một lệnh SX cụ thể — cho detail view. */
 export const useOrderLineProgress = (donHangId: string | undefined, options?: { enabled?: boolean }) => {
   const enabled = useSupabaseReady(Boolean(options?.enabled !== false && donHangId));
-  return useQuery({
+  return useQuery<Record<string, number>>({
     queryKey: ['production-orders', 'line-progress', donHangId ?? ''],
-    queryFn: () => getReceivedQtyByProduct(donHangId!),
+    queryFn: async () => Object.fromEntries(await getReceivedQtyByProduct(donHangId!)),
     enabled,
     staleTime: 0,
     gcTime: transactionalCrudListQueryOptions.gcTime,
@@ -95,9 +95,9 @@ export const useOrderLineProgress = (donHangId: string | undefined, options?: { 
 /** Tổng SL theo lệnh + SL đã nhập theo don_hang_id — cột tiến độ tổng ở danh sách đơn. */
 export const useOrdersProgressSummary = (options?: { enabled?: boolean }) => {
   const enabled = useSupabaseReady(options?.enabled !== false);
-  return useQuery({
+  return useQuery<Record<string, { lenh: number; nhap: number }>>({
     queryKey: ['production-orders', 'progress-summary'],
-    queryFn: getOrdersProgressSummary,
+    queryFn: async () => Object.fromEntries(await getOrdersProgressSummary()),
     enabled,
     staleTime: 0,
     gcTime: transactionalCrudListQueryOptions.gcTime,
