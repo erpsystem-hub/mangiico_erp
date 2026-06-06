@@ -1,3 +1,4 @@
+import { resolveAuthErrorMessage } from '@/lib/auth/auth-error-messages';
 import { getSupabase } from '@/lib/supabase/client';
 import { txt } from '@/lib/text';
 
@@ -64,7 +65,7 @@ export async function changeUserPassword(
 
   const { error: updateError } = await supabase.auth.updateUser({ password: newPassword });
   if (updateError) {
-    return { error: updateError.message || txt('nav.changePassword.errorGeneric') };
+    return { error: resolveAuthErrorMessage(updateError) || txt('nav.changePassword.errorGeneric') };
   }
 
   return {};

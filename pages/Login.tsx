@@ -6,7 +6,7 @@ import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowRight, X, Eye, EyeOff } from 'lucide-react';
+import { ArrowRight, X, Eye, EyeOff, Sparkles } from 'lucide-react';
 import Button from '../components/ui/Button';
 import Input from '../components/ui/Input';
 import { toast } from 'sonner';
@@ -15,6 +15,8 @@ import { cn } from '../lib/utils';
 import { loginNameToSupabaseEmail } from '../lib/auth-email';
 import { getAuthService } from '../lib/supabase/auth';
 import { initSessionManager, waitUntilAuthenticated } from '../lib/auth/session-manager';
+import { useUIStore } from '../store/useStore';
+import { DEFAULT_BRANDING_LOGO } from '../lib/branding-defaults';
 
 const AUTH_REMEMBER_KEY = 'auth-remember';
 
@@ -26,6 +28,9 @@ type LoginValues = {
 const Login: React.FC = () => {
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
+  const companyInfo = useUIStore((s) => s.companyInfo);
+  const logoUrl = companyInfo.appLogo?.trim() || DEFAULT_BRANDING_LOGO;
+  const [logoFailed, setLogoFailed] = useState(false);
 
   const loginSchema = useMemo(() => z.object({
     username: z
@@ -106,7 +111,7 @@ const Login: React.FC = () => {
       return waitUntilAuthenticated();
     })();
     if (!ready) {
-      toast.error('Không thể khởi tạo phiên đăng nhập. Vui lòng thử lại.');
+      toast.error(txt('page.login.errorSessionInit'));
       return;
     }
 
@@ -127,6 +132,18 @@ const Login: React.FC = () => {
         className="w-full max-w-md space-y-8"
       >
         <div className="text-center">
+          {logoUrl && !logoFailed ? (
+            <img
+              src={logoUrl}
+              alt=""
+              className="mx-auto h-16 w-16 rounded-xl object-contain mb-5 shadow-sm border border-border/50 bg-card p-1"
+              onError={() => setLogoFailed(true)}
+            />
+          ) : (
+            <div className="mx-auto mb-5 h-16 w-16 rounded-xl bg-primary shadow-sm flex items-center justify-center">
+              <Sparkles size={28} className="text-primary-foreground" />
+            </div>
+          )}
           <h2 className="text-3xl font-bold text-foreground tracking-tight">{txt('page.login.welcome')}</h2>
           <p className="text-muted-foreground mt-2">{txt('page.login.welcomeDesc')}</p>
         </div>

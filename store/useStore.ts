@@ -103,7 +103,7 @@ export const DEFAULT_COMPANY_INFO: CompanyInfo = {
   appName: DEFAULT_BRANDING_APP_NAME,
   appDescription: DEFAULT_BRANDING_APP_DESCRIPTION,
   appLogo: DEFAULT_BRANDING_LOGO,
-  companyName: 'Mangiico',
+  companyName: 'Mặt trận Tổ quốc Việt Nam — tỉnh Nghệ An',
   address: 'Khối 7, đường Hùng Vương, TP. Vinh, tỉnh Nghệ An',
   phone: '',
   email: '',
@@ -168,7 +168,7 @@ export const useUIStore = create<UIState>()(
     }),
     {
       name: 'ui-storage', // Persist UI settings including branding
-      version: 6,
+      version: 7,
       migrate: (persisted: unknown, version: number) => {
         if (!persisted || typeof persisted !== 'object') return persisted as UIState;
         const state = persisted as Record<string, unknown> & Partial<ThemeState>;
@@ -237,6 +237,43 @@ export const useUIStore = create<UIState>()(
             updates.appDescription = DEFAULT_BRANDING_APP_DESCRIPTION;
           }
           if (ci.companyName === 'Mặt trận Tổ quốc Việt Nam') {
+            updates.companyName = DEFAULT_COMPANY_INFO.companyName;
+          }
+          if (Object.keys(updates).length > 0) {
+            state.companyInfo = { ...ci, ...updates };
+          }
+        }
+        // v6 → v7: branding Mặt trận số Nghệ An (từ Mangiico ERP)
+        if (version < 7 && state.companyInfo && typeof state.companyInfo === 'object') {
+          const ci = state.companyInfo as CompanyInfo;
+          const oldAppNames = new Set([
+            '5f edu',
+            '5f template',
+            'mangiico',
+            'mangiico erp',
+          ]);
+          const oldDescs = new Set([
+            'số hóa doanh nghiệp hiệu quả',
+            'hệ thống quản trị',
+            'hệ thống quản trị doanh nghiệp',
+            'hệ thống nền tảng số',
+            'phần mềm quản trị erp',
+          ]);
+          const oldLogo =
+            'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRKffuRSheGugfycCmEm46856oXbHMXKHiOjg&s';
+          const updates: Partial<CompanyInfo> = {};
+          const appNameNorm = (ci.appName ?? '').trim().toLowerCase();
+          const appDescNorm = (ci.appDescription ?? '').trim().toLowerCase();
+          if (oldAppNames.has(appNameNorm)) {
+            updates.appName = DEFAULT_BRANDING_APP_NAME;
+          }
+          if (oldDescs.has(appDescNorm)) {
+            updates.appDescription = DEFAULT_BRANDING_APP_DESCRIPTION;
+          }
+          if (!ci.appLogo || ci.appLogo === oldLogo) {
+            updates.appLogo = DEFAULT_BRANDING_LOGO;
+          }
+          if (ci.companyName === 'Mangiico') {
             updates.companyName = DEFAULT_COMPANY_INFO.companyName;
           }
           if (Object.keys(updates).length > 0) {
